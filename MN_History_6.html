@@ -45,6 +45,7 @@
         
         #crosshair {
             position: absolute;
+            /* Initial Position Center */
             top: 50%; left: 50%;
             width: 20px; height: 20px;
             background: transparent;
@@ -52,8 +53,8 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            z-index: 5;
-            transition: all 0.2s;
+            z-index: 30; /* Above Modal (20) so we can see it as a cursor */
+            transition: width 0.2s, height 0.2s, border-color 0.2s, box-shadow 0.2s; /* Removed 'all' to prevent laggy movement */
         }
         #crosshair::after {
             content: '';
@@ -66,8 +67,12 @@
         #crosshair.active {
             border-color: #00ffcc;
             box-shadow: 0 0 10px #00ffcc;
-            transform: translate(-50%, -50%) scale(1.2);
+            width: 30px; height: 30px; /* Scale effect via width/height instead of transform to avoid overwriting translate */
             background: rgba(0, 255, 204, 0.1);
+        }
+        
+        body.game-active {
+            cursor: none;
         }
 
         /* CLUE MODAL */
@@ -244,8 +249,9 @@
 
     <div id="instructions">
         <h1>The MN History Escape</h1>
-        <p><b>CLICK TO BEGIN</b></p>
-        <p>WASD to Move | Mouse to Look</p>
+        <p><b>CLICK TO START</b></p>
+        <p>WASD to Move | ARROWS to Look</p>
+        <p>SPACE to Interact/Close | CLICK to Select</p>
         <p>Find 4 clues to get 4 digits.</p>
         <p>Write them down. You will need them to unlock the door.</p>
     </div>
@@ -279,155 +285,7 @@
 
     <script type="module">
         import * as THREE from 'three';
-        // --- CUSTOM POINTER LOCK CONTROLS (Patched for stability & Sandbox support) ---
-        const _euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
-        const _vector = new THREE.Vector3();
-        const _changeEvent = { type: 'change' };
-        const _lockEvent = { type: 'lock' };
-        const _unlockEvent = { type: 'unlock' };
-        const _PI_2 = Math.PI / 2;
-
-        class PointerLockControls extends THREE.EventDispatcher {
-            constructor( camera, domElement ) {
-                super();
-                this.camera = camera;
-                this.domElement = domElement;
-                this.isLocked = false;
-                this.isActive = false; // Logical active state (for fallback)
-                this.isFallback = false; // True if Pointer Lock fails
-                this.isDragging = false; // For fallback drag-to-look
-                
-                this.minPolarAngle = 0;
-                this.maxPolarAngle = Math.PI;
-                this.pointerSpeed = 1.0;
-                
-                this._onMouseMove = this.onMouseMove.bind( this );
-                this._onPointerlockChange = this.onPointerlockChange.bind( this );
-                this._onPointerlockError = this.onPointerlockError.bind( this );
-                this._onMouseDown = this.onMouseDown.bind( this );
-                this._onMouseUp = this.onMouseUp.bind( this );
-                this._onKeyDown = this.onKeyDown.bind( this );
-                
-                this.connect();
-            }
-            connect() {
-                this.domElement.ownerDocument.addEventListener( 'mousemove', this._onMouseMove );
-                this.domElement.ownerDocument.addEventListener( 'pointerlockchange', this._onPointerlockChange );
-                this.domElement.ownerDocument.addEventListener( 'pointerlockerror', this._onPointerlockError );
-                this.domElement.ownerDocument.addEventListener( 'mousedown', this._onMouseDown );
-                this.domElement.ownerDocument.addEventListener( 'mouseup', this._onMouseUp );
-                this.domElement.ownerDocument.addEventListener( 'keydown', this._onKeyDown );
-            }
-            disconnect() {
-                this.domElement.ownerDocument.removeEventListener( 'mousemove', this._onMouseMove );
-                this.domElement.ownerDocument.removeEventListener( 'pointerlockchange', this._onPointerlockChange );
-                this.domElement.ownerDocument.removeEventListener( 'pointerlockerror', this._onPointerlockError );
-                this.domElement.ownerDocument.removeEventListener( 'mousedown', this._onMouseDown );
-                this.domElement.ownerDocument.removeEventListener( 'mouseup', this._onMouseUp );
-                this.domElement.ownerDocument.removeEventListener( 'keydown', this._onKeyDown );
-            }
-            dispose() {
-                this.disconnect();
-            }
-            getObject() {
-                return this.camera;
-            }
-            getDirection( v ) {
-                return v.set( 0, 0, - 1 ).applyQuaternion( this.camera.quaternion );
-            }
-            moveForward( distance ) {
-                const camera = this.camera;
-                _vector.setFromMatrixColumn( camera.matrix, 0 );
-                _vector.crossVectors( camera.up, _vector );
-                camera.position.addScaledVector( _vector, distance );
-            }
-            moveRight( distance ) {
-                const camera = this.camera;
-                _vector.setFromMatrixColumn( camera.matrix, 0 );
-                camera.position.addScaledVector( _vector, distance );
-            }
-            lock() {
-                try {
-                    this.domElement.requestPointerLock();
-                } catch (e) {
-                    console.warn("PointerLock request failed:", e);
-                    this.enableFallback();
-                }
-            }
-            unlock() {
-                if (this.isFallback) {
-                    this.isActive = false;
-                    this.isFallback = false; 
-                    this.dispatchEvent( _unlockEvent );
-                } else {
-                    this.domElement.ownerDocument.exitPointerLock();
-                }
-            }
-            enableFallback() {
-                console.log("Enabling Fallback Controls (Drag to Look)");
-                this.isFallback = true;
-                this.isActive = true;
-                this.dispatchEvent( _lockEvent );
-                // Optional: Update UI to say "Drag to look"
-                const instructions = document.getElementById('instructions');
-                if(instructions) {
-                    const ps = instructions.querySelectorAll('p');
-                    if(ps.length > 1) ps[1].innerHTML = "WASD to Move | <b>Click & Drag</b> to Look";
-                }
-            }
-            onPointerlockChange() {
-                if ( this.domElement.ownerDocument.pointerLockElement === this.domElement ) {
-                    this.dispatchEvent( _lockEvent );
-                    this.isLocked = true;
-                    this.isActive = true;
-                    this.isFallback = false;
-                } else {
-                    this.dispatchEvent( _unlockEvent );
-                    this.isLocked = false;
-                    this.isActive = false;
-                }
-            }
-            onPointerlockError() {
-                console.error( 'THREE.PointerLockControls: Unable to use Pointer Lock API' );
-                this.enableFallback();
-            }
-            onMouseDown(event) {
-                if (this.isFallback && this.isActive) {
-                    this.isDragging = true;
-                }
-            }
-            onMouseUp(event) {
-                this.isDragging = false;
-            }
-            onKeyDown(event) {
-                if (this.isFallback && this.isActive && event.code === 'Escape') {
-                    this.isActive = false;
-                    this.dispatchEvent( _unlockEvent );
-                }
-            }
-            onMouseMove( event ) {
-                if ( this.isLocked === false && !(this.isFallback && this.isActive && this.isDragging) ) return;
-
-                // FIX: Clamp movement values to prevent "spinning" or "freaking out" due to browser bugs or large jumps
-                const maxDelta = 100;
-                let movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-                let movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-                if (movementX > maxDelta) movementX = maxDelta;
-                if (movementX < -maxDelta) movementX = -maxDelta;
-                if (movementY > maxDelta) movementY = maxDelta;
-                if (movementY < -maxDelta) movementY = -maxDelta;
-
-                const camera = this.camera;
-                _euler.setFromQuaternion( camera.quaternion );
-                _euler.y -= movementX * 0.002 * this.pointerSpeed;
-                _euler.x -= movementY * 0.002 * this.pointerSpeed;
-                _euler.x = Math.max( _PI_2 - this.maxPolarAngle, Math.min( _PI_2 - this.minPolarAngle, _euler.x ) );
-                camera.quaternion.setFromEuler( _euler );
-                this.dispatchEvent( _changeEvent );
-            }
-        }
-
+        
         // --- GAME DATA POOL ---
         const questionPool = [
             { t: "Flour Power", q: "Which city was the 'Flour Milling Capital of the World'?", o: ["Duluth", "Minneapolis", "St. Paul", "Rochester"], c: 1 },
@@ -493,7 +351,8 @@
             
             setTimeout(() => {
                 modal.style.display = 'none';
-                controls.lock();
+                // controls.lock();
+                isInteracting = false;
             }, 3000);
         }
 
@@ -509,16 +368,23 @@
         camera.position.set(3.5, 1.6, 3.5); 
         camera.lookAt(0, 1.4, 0); 
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true; 
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(renderer.domElement);
-
-        const controls = new PointerLockControls(camera, document.body);
-        controls.pointerSpeed = 0.3;
-        controls.minPolarAngle = 0.5;
-        controls.maxPolarAngle = 2.5; 
+        // --- CUSTOM KEYBOARD CONTROLS ---
+        const controls = { isLocked: true }; // Mock 'locked' state for compatibility
+        const _euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
+        const _PI_2 = Math.PI / 2;
+        
+        // Movement & Look Helpers
+        const _vector = new THREE.Vector3();
+        function moveForward( distance ) {
+            _vector.setFromMatrixColumn( camera.matrix, 0 );
+            _vector.crossVectors( camera.up, _vector );
+            camera.position.addScaledVector( _vector, distance );
+        }
+        function moveRight( distance ) {
+            _vector.setFromMatrixColumn( camera.matrix, 0 );
+            camera.position.addScaledVector( _vector, distance );
+        }
+ 
 
         // --- LIGHTING ---
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7); 
@@ -1025,24 +891,14 @@
         let currentCode = "";
         let isInteracting = false;
 
-        closeBtn.addEventListener('click', () => {
+        function closeModal() {
             isInteracting = false;
             modal.style.display = 'none';
-            controls.lock(); 
-        });
-
-        function checkIntersection() {
-            raycaster.far = 5.0; // Increased interaction distance for high/far objects
-            raycaster.setFromCamera(center, camera);
-            const intersects = raycaster.intersectObjects(interactables, false);
-            if (intersects.length > 0) {
-                crosshair.classList.add('active');
-                return intersects[0].object;
-            } else {
-                crosshair.classList.remove('active');
-                return null;
-            }
         }
+
+        closeBtn.addEventListener('click', closeModal);
+
+        // checkIntersection removed - logic moved to animate loop using mouse raycast
 
         function moveClue(slotIndex, fromObjName) {
             const emptyLocs = locations.filter(loc => locationMap[loc] === null && loc !== fromObjName);
@@ -1122,7 +978,7 @@
         function triggerVictory() {
             gameWon = true;
             modal.style.display = 'none';
-            controls.lock();
+            // controls.lock();
             isInteracting = false; 
 
             const startRot = doorPivot.rotation.y;
@@ -1142,7 +998,7 @@
                     setTimeout(() => {
                         document.getElementById('victoryModal').style.display = 'flex';
                         document.getElementById('victoryTime').textContent = `TIME LEFT: ${finalTimeStr}`;
-                        document.exitPointerLock();
+                        // document.exitPointerLock();
                     }, 500);
                 }
             }
@@ -1160,7 +1016,7 @@
                 takeBtn.textContent = "TAKE KEY";
                 takeBtn.onclick = () => { 
                     modal.style.display='none'; 
-                    controls.lock(); 
+                    // controls.lock(); 
                     isInteracting = false; // Fix: Reset interaction state
                 };
                 optionsContainer.appendChild(takeBtn);
@@ -1309,13 +1165,14 @@
                     modalTitle.textContent = "LOCKED";
                     modalContent.innerHTML = "<p>The door is locked tight.</p><p>It requires a specific key.</p>";
                     optionsContainer.innerHTML = ""; modalFeedback.textContent = "";
-                    modal.style.display = 'block'; controls.unlock(); isInteracting = true;
+                    modal.style.display = 'block'; isInteracting = true; // controls.unlock() removed
                 }
                 return;
             }
             
             if (objName === "safe") {
-                currentCode = ""; renderSafeKeypad(); modal.style.display = 'block'; controls.unlock(); isInteracting = true; return;
+                currentCode = ""; renderSafeKeypad(); modal.style.display = 'block'; isInteracting = true; // controls.unlock() removed
+                return;
             }
 
             const slotIndex = locationMap[objName];
@@ -1341,7 +1198,7 @@
                     });
                 }
             }
-            modal.style.display = 'block'; controls.unlock(); isInteracting = true;
+            modal.style.display = 'block'; isInteracting = true; // controls.unlock() removed
         }
 
         function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
@@ -1357,52 +1214,158 @@
             }
         }
 
-        document.addEventListener('mousedown', () => {
-            if (controls.isActive && !isInteracting) {
-                const obj = checkIntersection(); if (obj) showModal(obj.name);
+
+        // --- RENDERER ---
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; 
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        // --- INPUT HANDLING ---
+        const keys = { 
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            w: false, a: false, s: false, d: false,
+            Space: false
+        };
+        
+        document.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+                keys[e.key] = true;
+                keys[e.code] = true; // Handle both key and code for safety
+            }
+            // Space Interaction
+            if ((e.code === 'Space' || e.key === ' ')) {
+                if (isInteracting && modal.style.display === 'block') {
+                    closeModal();
+                } else if (!isInteracting) {
+                    // Use existing mouse raycast logic
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(interactables, false);
+                    if (intersects.length > 0) {
+                        showModal(intersects[0].object.name);
+                    }
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+                keys[e.key] = false;
+                keys[e.code] = false;
             }
         });
 
+        // Instructions Handling
         const instructions = document.getElementById('instructions');
-        instructions.addEventListener('click', () => controls.lock());
-        controls.addEventListener('lock', () => instructions.style.display = 'none');
-        controls.addEventListener('unlock', () => { if(!isInteracting) instructions.style.display = ''; });
-
-        const keys = { w: false, a: false, s: false, d: false };
-        document.addEventListener('keydown', (e) => {
-            if(e.code==='KeyW' || e.code==='ArrowUp') keys.w=true; if(e.code==='KeyA' || e.code==='ArrowLeft') keys.a=true;
-            if(e.code==='KeyS' || e.code==='ArrowDown') keys.s=true; if(e.code==='KeyD' || e.code==='ArrowRight') keys.d=true;
-        });
-        document.addEventListener('keyup', (e) => {
-            if(e.code==='KeyW' || e.code==='ArrowUp') keys.w=false; if(e.code==='KeyA' || e.code==='ArrowLeft') keys.a=false;
-            if(e.code==='KeyS' || e.code==='ArrowDown') keys.s=false; if(e.code==='KeyD' || e.code==='ArrowRight') keys.d=false;
+        instructions.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            isInteracting = false;
         });
 
+        // --- MOUSE INTERACTION ---
+        const mouse = new THREE.Vector2();
+        
+        document.addEventListener('mousemove', (event) => {
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            
+            // Move Custom Cursor (Crosshair)
+            if (!isInteracting) {
+                crosshair.style.left = event.clientX + 'px';
+                crosshair.style.top = event.clientY + 'px';
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (isInteracting) return; 
+            
+            // Raycast from mouse position
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactables, false);
+            
+            if (intersects.length > 0) {
+                showModal(intersects[0].object.name);
+            }
+        });
+        
+        function setGameCursor(active) {
+            if (active) {
+                document.body.classList.add('game-active');
+                // Ensure crosshair tracks mouse immediately if possible, or stays at last known pos
+            } else {
+                document.body.classList.remove('game-active');
+            }
+        }
+
+        // --- ANIMATION LOOP ---
         const velocity = new THREE.Vector3();
-        const direction = new THREE.Vector3();
         let prevTime = performance.now();
+        
+        // Rotation Parameters
+        let lookSpeed = 1.5;
+        let moveSpeed = 3.0;
+        let minPolarAngle = 0.5; // ~30 deg
+        let maxPolarAngle = 2.5; // ~150 deg
 
         function animate() {
             requestAnimationFrame(animate);
             const time = performance.now();
             const delta = (time - prevTime) / 1000;
+            prevTime = time;
+            
             updateTimer(delta);
-            if (controls.isActive) {
-                checkIntersection();
-                velocity.x -= velocity.x * 10.0 * delta;
-                velocity.z -= velocity.z * 10.0 * delta;
-                direction.z = Number(keys.w) - Number(keys.s);
-                direction.x = Number(keys.d) - Number(keys.a);
-                direction.normalize(); 
-                if (keys.w || keys.s) velocity.z -= direction.z * 100.0 * delta; 
-                if (keys.a || keys.d) velocity.x -= direction.x * 100.0 * delta;
-                controls.moveRight(-velocity.x * delta);
-                controls.moveForward(-velocity.z * delta);
-                const pos = controls.getObject().position;
+
+            // Cursor State Management
+            if (!isInteracting && instructions.style.display === 'none') {
+                 setGameCursor(true);
+            } else {
+                 setGameCursor(false);
+            }
+
+            if (!isInteracting) {
+                // Crosshair / Logic Update
+                // Use MOUSE position for raycasting now, as the crosshair follows the mouse
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(interactables, false);
+                
+                if (intersects.length > 0) {
+                    crosshair.classList.add('active');
+                    // document.body.style.cursor = 'pointer'; // Handled by custom cursor style
+                } else {
+                    crosshair.classList.remove('active');
+                    // document.body.style.cursor = 'none'; 
+                }
+
+                // --- LOOK (ARROWS) ---
+                _euler.setFromQuaternion( camera.quaternion );
+                
+                // Yaw (Left/Right Arrows)
+                if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
+                if (keys.ArrowRight) _euler.y -= lookSpeed * delta;
+                
+                // Pitch (Up/Down Arrows)
+                if (keys.ArrowUp) _euler.x += lookSpeed * delta;
+                if (keys.ArrowDown) _euler.x -= lookSpeed * delta;
+                
+                // Clamp Pitch
+                _euler.x = Math.max( _PI_2 - maxPolarAngle, Math.min( _PI_2 - minPolarAngle, _euler.x ) );
+                camera.quaternion.setFromEuler( _euler );
+
+                // --- MOVE (WASD) ---
+                const actualSpeed = moveSpeed * delta;
+                if (keys.w || keys.KeyW) moveForward(actualSpeed);
+                if (keys.s || keys.KeyS) moveForward(-actualSpeed);
+                if (keys.a || keys.KeyA) moveRight(-actualSpeed);
+                if (keys.d || keys.KeyD) moveRight(actualSpeed);
+
+                // Bounds
+                const pos = camera.position;
                 if (pos.x < -4.5) pos.x = -4.5; if (pos.x > 4.5) pos.x = 4.5;
                 if (pos.z < -4.5) pos.z = -4.5; if (pos.z > 4.5) pos.z = 4.5;
             }
-            prevTime = time;
+            
             renderer.render(scene, camera);
         }
         window.addEventListener('resize', () => {
