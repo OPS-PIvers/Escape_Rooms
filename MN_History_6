@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room: MN History</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Courier New', Courier, monospace; }
+        
+        /* UI OVERLAYS */
+        #instructions {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffccaa;
+            text-align: center;
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border: 2px solid #5d4037;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 8px; height: 8px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #crosshair.active {
+            background: #00ff00;
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+
+        /* CLUE MODAL */
+        #clueModal {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-width: 90%;
+            background: #2c2c2c;
+            color: #e0e0e0;
+            border: 4px solid #8d6e63;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,1);
+            z-index: 20;
+            font-family: sans-serif;
+            text-align: left;
+        }
+        #clueModal h2 { margin-top: 0; color: #ffcc80; border-bottom: 1px solid #555; padding-bottom: 10px;}
+        #clueModal p { line-height: 1.6; font-size: 16px; }
+        #clueModal .question-box { background: #444; padding: 15px; border-left: 4px solid #ffcc80; margin: 15px 0; }
+        
+        /* OPTIONS BUTTONS */
+        #optionsContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .option-btn {
+            background: #4e342e; color: white; border: 1px solid #6d4c41; 
+            padding: 12px; text-align: left; cursor: pointer; transition: background 0.2s;
+            font-size: 15px;
+        }
+        .option-btn:hover { background: #6d4c41; }
+        .option-btn.correct { background: #2e7d32; border-color: #4caf50; }
+        .option-btn.wrong { background: #c62828; border-color: #e57373; }
+
+        #modalFeedback { margin-top: 15px; font-weight: bold; min-height: 20px; font-size: 18px; }
+        
+        #closeModalBtn {
+            background: #333; color: #aaa; border: 1px solid #555; padding: 8px 16px;
+            cursor: pointer; float: right; margin-top: 10px;
+        }
+        #closeModalBtn:hover { background: #444; color: white; }
+
+        /* DOOR KEYPAD UI */
+        #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; max-width: 200px; margin-left: auto; margin-right: auto; }
+        .key-btn { background: #333; border: 1px solid #555; color: white; padding: 15px; font-size: 18px; cursor: pointer; }
+        .key-btn:hover { background: #555; }
+        #codeDisplay { background: black; color: #0f0; font-family: monospace; font-size: 24px; padding: 10px; text-align: center; letter-spacing: 5px; margin-bottom: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="instructions">
+        <h1>The MN History Escape</h1>
+        <p><b>CLICK TO BEGIN</b></p>
+        <p>WASD to Move | Mouse to Look</p>
+        <p>Find 4 clues to get 4 digits.</p>
+        <p>Write them down. You will need them to unlock the door.</p>
+    </div>
+    
+    <div id="crosshair"></div>
+
+    <!-- Clue Modal -->
+    <div id="clueModal">
+        <h2 id="modalTitle">Evidence Found</h2>
+        <div id="modalContent"></div>
+        <div id="optionsContainer"></div>
+        <div id="modalFeedback"></div>
+        <button id="closeModalBtn">Close</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // --- GAME DATA POOL ---
+        const questionPool = [
+            { t: "Flour Power", q: "Which city was the 'Flour Milling Capital of the World'?", o: ["Duluth", "Minneapolis", "St. Paul", "Rochester"], c: 1 },
+            { t: "Fur Trade", q: "Which animal pelt was most prized by Voyageurs?", o: ["Bear", "Deer", "Beaver", "Wolf"], c: 2 },
+            { t: "Iron Giants", q: "Name the largest Iron Range in MN.", o: ["Mesabi", "Cuyuna", "Vermilion", "Gunflint"], c: 0 },
+            { t: "State Seal", q: "The phrase 'L'Etoile du Nord' means:", o: ["Land of Lakes", "Star of the North", "True North", "Cold Waters"], c: 1 },
+            { t: "First People", q: "Which group lived in MN forests before the Ojibwe arrived?", o: ["Dakota", "Iroquois", "Apache", "Inuit"], c: 0 },
+            { t: "Water Source", q: "Lake Itasca is the source of which river?", o: ["Minnesota", "St. Croix", "Mississippi", "Red"], c: 2 },
+            { t: "Early Politics", q: "Who was Minnesota's first state governor?", o: ["Alexander Ramsey", "Henry Sibley", "Knute Nelson", "Hubert Humphrey"], c: 1 },
+            { t: "Transport", q: "What was the Red River Cart known for?", o: ["Its speed", "Its squeaky wheels", "Its iron frame", "Floating"], c: 1 },
+            { t: "Conflict", q: "The US-Dakota War took place in which year?", o: ["1812", "1862", "1900", "1776"], c: 1 },
+            { t: "Immigration", q: "Which European group settled heavily in MN in the late 1800s?", o: ["Italians", "Scandinavians", "Spanish", "Greeks"], c: 1 },
+            { t: "Civil War", q: "MN was the first state to offer troops to the Union. Which regiment is famous?", o: ["1st Minnesota", "Iron Brigade", "Rough Riders", "Green Mountain Boys"], c: 0 },
+            { t: "Folklore", q: "Who is the legendary giant lumberjack of MN folklore?", o: ["Pecos Bill", "John Henry", "Paul Bunyan", "Johnny Appleseed"], c: 2 },
+            { t: "Geography", q: "What is the largest lake entirely within Minnesota?", o: ["Mille Lacs", "Red Lake", "Leech Lake", "Lake Minnetonka"], c: 1 },
+            { t: "Capital City", q: "Which city is the capital of Minnesota?", o: ["Minneapolis", "St. Paul", "Duluth", "Bloomington"], c: 1 },
+            { t: "Territory", q: "Before statehood, MN was a territory. In what year did it become a territory?", o: ["1849", "1858", "1800", "1890"], c: 0 }
+        ];
+
+        let activeClues = [
+            { digit: 1, qIndex: 0, solved: false },
+            { digit: 8, qIndex: 1, solved: false },
+            { digit: 5, qIndex: 2, solved: false },
+            { digit: 8, qIndex: 3, solved: false }
+        ];
+
+        // Expanded locations list
+        const locations = [
+            "computer", "filing_cabinet", "papers", "safe", 
+            "briefcase", "mug", "hat", "lamp", 
+            "globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox"
+        ];
+        
+        let locationMap = {};
+
+        function initGame() {
+            locations.forEach(loc => locationMap[loc] = null);
+            questionPool.sort(() => 0.5 - Math.random());
+            for(let i=0; i<4; i++) {
+                activeClues[i].qIndex = i; 
+            }
+            const shuffledLocs = [...locations].sort(() => 0.5 - Math.random());
+            for(let i=0; i<4; i++) {
+                locationMap[shuffledLocs[i]] = i;
+            }
+        }
+        initGame();
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xebe5ce); 
+        scene.fog = new THREE.Fog(0xebe5ce, 5, 30);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(3.5, 1.6, 3.5); 
+        camera.lookAt(0, 1.4, 0); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; 
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new PointerLockControls(camera, document.body);
+        controls.pointerSpeed = 0.3;
+        controls.minPolarAngle = 0.5;
+        controls.maxPolarAngle = 2.5; 
+
+        // --- LIGHTING ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7); 
+        hemiLight.position.set(0, 20, 0);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffdfba, 1.2); 
+        dirLight.position.set(-10, 8, 2); 
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        const lights = [
+            {x: 2.8, y: 1.8, z: -3.2, col: 0xffaa00, int: 1.2},
+            {x: -1, y: 2.0, z: 1.5, col: 0xffddaa, int: 0.8},
+            {x: 3.5, y: 2.5, z: 3.5, col: 0xffeebb, int: 0.8}
+        ];
+        lights.forEach(l => {
+            const pl = new THREE.PointLight(l.col, l.int, 8);
+            pl.position.set(l.x, l.y, l.z);
+            pl.castShadow = true;
+            scene.add(pl);
+        });
+
+        // --- MATERIALS ---
+        const colors = { wall: 0xebe5ce, trim: 0x4e342e, floor: 0x5d4037, shelf: 0x263238, cork: 0x8d6e63 };
+        const mat = {
+            wall: new THREE.MeshStandardMaterial({ color: colors.wall, roughness: 0.9 }),
+            floor: new THREE.MeshStandardMaterial({ color: colors.floor, roughness: 0.8 }),
+            shelf: new THREE.MeshLambertMaterial({ color: colors.shelf }),
+            woodDark: new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.7 }),
+            woodOld: new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.9 }),
+            chrome: new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.4 }),
+            leather: new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.4 }),
+            glass: new THREE.MeshBasicMaterial({ color: 0x88ccff, opacity: 0.1, transparent: true }),
+            trim: new THREE.MeshLambertMaterial({ color: colors.trim }),
+            paper: new THREE.MeshLambertMaterial({ color: 0xfffdf0 }),
+            rug: new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 1.0 }),
+            door: new THREE.MeshStandardMaterial({ color: 0x3e2723 }),
+            cork: new THREE.MeshStandardMaterial({ color: colors.cork, roughness: 1.0 }),
+            safe: new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.3 }),
+            screenOn: new THREE.MeshBasicMaterial({ color: 0xccffff }), 
+            cabinet: new THREE.MeshStandardMaterial({ color: 0x777777, metalness: 0.4, roughness: 0.5 }),
+            bookColors: [0x3e2723, 0x263238, 0x1b5e20, 0x880e4f, 0xbf360c, 0x004d40],
+            gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 }),
+            plantGreen: new THREE.MeshLambertMaterial({ color: 0x2e7d32 }),
+            trashCan: new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.5 })
+        };
+
+        // --- UTILS ---
+        const interactables = []; 
+        function createBox(w, h, d, matOrColor, x, y, z, parent = scene, rX=0, rY=0, rZ=0, name=null) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const material = (typeof matOrColor === 'number') ? new THREE.MeshLambertMaterial({ color: matOrColor }) : matOrColor;
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, y, z);
+            mesh.rotation.set(rX, rY, rZ);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            if(name) {
+                mesh.name = name;
+                interactables.push(mesh);
+            }
+            parent.add(mesh);
+            return mesh;
+        }
+
+        // --- ROOM ---
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), mat.floor);
+        floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+        createBox(20, 4, 0.2, mat.wall, 0, 2, -5); 
+        createBox(20, 4, 0.2, mat.wall, 0, 2, 5);  
+        createBox(0.2, 1.0, 20, mat.wall, -5, 0.5, 0); createBox(0.2, 1.0, 20, mat.wall, -5, 3.5, 0);
+        createBox(0.2, 2.0, 8, mat.wall, -5, 2.0, -6); createBox(0.2, 2.0, 8, mat.wall, -5, 2.0, 6);
+        createBox(0.2, 4, 9.25, mat.wall, 5, 2, -5.375); 
+        createBox(0.2, 4, 9.25, mat.wall, 5, 2, 5.375); 
+        createBox(0.2, 1.8, 1.5, mat.wall, 5, 3.1, 0); 
+        createBox(20, 0.2, 20, mat.trim, 0, 4.1, 0); 
+
+        // --- PROPS ---
+        // Filing Cabinets (Back Wall)
+        const cabinetGroup = new THREE.Group(); cabinetGroup.position.set(0, 0, 4.6); cabinetGroup.rotation.y = Math.PI; scene.add(cabinetGroup);
+        for(let i=-1; i<=1; i++) {
+            const cab = createBox(0.8, 1.5, 0.6, mat.cabinet, i * 1.0, 0.75, 0, cabinetGroup, 0, 0, 0, "filing_cabinet");
+            createBox(0.7, 0.4, 0.05, 0x555555, 0, 0.5, 0.3, cab); createBox(0.7, 0.4, 0.05, 0x555555, 0, 0.0, 0.3, cab); createBox(0.7, 0.4, 0.05, 0x555555, 0, -0.5, 0.3, cab);
+        }
+        
+        // Safe
+        const safeGroup = new THREE.Group(); safeGroup.position.set(4.0, 0, 4.2); safeGroup.rotation.y = -Math.PI / 4;
+        createBox(0.8, 1.0, 0.8, mat.safe, 0, 0.5, 0, safeGroup, 0,0,0, "safe"); scene.add(safeGroup);
+        
+        // Computer Desk
+        const deskGroup = new THREE.Group(); deskGroup.position.set(2.5, 0, -3.0); scene.add(deskGroup);
+        createBox(1.8, 0.05, 3.5, mat.woodDark, 0, 0.75, 0, deskGroup);
+        createBox(1.6, 0.75, 0.2, mat.shelf, 0, 0.375, 1.55, deskGroup); createBox(1.6, 0.75, 0.2, mat.shelf, 0, 0.375, -1.55, deskGroup);
+        
+        // Computer Monitor (Rotated 90 deg)
+        const pcGroup = new THREE.Group();
+        pcGroup.position.set(0, 0.8, 0); 
+        // ROTATED 90 DEG CLOCKWISE from Math.PI/2 -> 0
+        pcGroup.rotation.y = 0; 
+        deskGroup.add(pcGroup);
+        createBox(0.1, 0.3, 0.1, 0x222222, 0, 0.15, 0, pcGroup); 
+        createBox(0.05, 0.6, 1.0, 0x222222, 0, 0.5, 0, pcGroup);
+        createBox(0.01, 0.55, 0.95, mat.screenOn, -0.03, 0.5, 0, pcGroup, 0, 0, 0, "computer");
+        createBox(0.3, 0.02, 0.8, 0x222222, -0.4, 0.76, 0, deskGroup); // Keyboard
+
+        const deskChair = new THREE.Group(); deskChair.position.set(1.2, 0, -3.0); deskChair.rotation.y = -Math.PI / 2; scene.add(deskChair);
+        const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 8), mat.chrome); cBase.position.y = 0.1; deskChair.add(cBase);
+        createBox(0.05, 0.4, 0.05, mat.chrome, 0, 0.3, 0, deskChair); createBox(0.65, 0.1, 0.65, mat.leather, 0, 0.55, 0, deskChair);
+        const cBack = createBox(0.6, 0.9, 0.1, mat.leather, 0, 1.0, 0.25, deskChair); cBack.rotation.x = -0.15;
+        
+        // Table
+        const tableGroup = new THREE.Group(); tableGroup.position.set(-1, 0, 1.5); tableGroup.rotation.y = 0.2; scene.add(tableGroup);
+        createBox(2.5, 0.1, 1.2, mat.woodOld, 0, 0.75, 0, tableGroup);
+        createBox(0.1, 0.7, 0.1, mat.woodOld, -1.1, 0.35, -0.5, tableGroup); createBox(0.1, 0.7, 0.1, mat.woodOld, 1.1, 0.35, -0.5, tableGroup);
+        createBox(0.1, 0.7, 0.1, mat.woodOld, -1.1, 0.35, 0.5, tableGroup); createBox(0.1, 0.7, 0.1, mat.woodOld, 1.1, 0.35, 0.5, tableGroup);
+        
+        function createPaperStack(x, z, parent) {
+            const group = new THREE.Group(); group.position.set(x, 0.76, z);
+            for(let i=0; i<10; i++) {
+                const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
+                paper.rotation.x = -Math.PI/2; paper.rotation.z = Math.random() * 0.5; paper.position.y = i * 0.005; group.add(paper);
+            }
+            const hitBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.4), new THREE.MeshBasicMaterial({visible: false}));
+            hitBox.name = "papers"; interactables.push(hitBox); group.add(hitBox); parent.add(group);
+        }
+        createPaperStack(0, 0, tableGroup); createPaperStack(-0.8, 0.2, tableGroup);
+        
+        // Shelves
+        const shelfGroup = new THREE.Group(); shelfGroup.position.set(0, 0, -4.8); scene.add(shelfGroup);
+        const shelfHeight = 3.5; const shelfDepth = 0.4; const shelfLevels = [0.2, 1.0, 1.8, 2.6, 3.4]; 
+        [-4.5, -2.5, -0.5, 1.5, 3.5].forEach(x => createBox(0.1, shelfHeight, shelfDepth, colors.shelf, x, shelfHeight/2, 0, shelfGroup));
+        shelfLevels.forEach(y => createBox(8.2, 0.05, shelfDepth, colors.shelf, -0.5, y, 0, shelfGroup));
+        function createBook(x, y, z, parent) {
+            const h = 0.2 + Math.random() * 0.15; const t = 0.04 + Math.random() * 0.04; const d = 0.22 + Math.random() * 0.05;
+            const col = mat.bookColors[Math.floor(Math.random() * mat.bookColors.length)];
+            const book = createBox(t, h, d, col, 0, 0, 0, parent); book.position.set(x, y + h/2, z);
+            if(Math.random() > 0.8) book.rotation.z = (Math.random() - 0.5) * 0.2; return t;
+        }
+        const shelfZones = [{minX: -4.4, maxX: -2.6}, {minX: -2.4, maxX: -0.6}, {minX: -0.4, maxX: 1.4}, {minX: 1.6, maxX: 3.4}];
+        shelfLevels.forEach((level, lvlIndex) => {
+            if(lvlIndex === 0) return; 
+            shelfZones.forEach((zone) => {
+                let cx = zone.minX + 0.1;
+                if (Math.random() > 0.2) { while(cx < zone.maxX - 0.15) { cx += createBook(cx, level, 0, shelfGroup) + 0.002; } } 
+                else { createBox(0.4, 0.25, 0.3, 0x8d6e63, cx+0.25, level+0.125, 0, shelfGroup); cx += 0.6; while(cx < zone.maxX - 0.1) cx += createBook(cx, level, 0, shelfGroup) + 0.002; }
+            });
+        });
+
+        // Lounge
+        const loungeGroup = new THREE.Group(); loungeGroup.position.set(2.5, 0, 2.5); loungeGroup.rotation.y = -Math.PI / 4; scene.add(loungeGroup);
+        const armChair = new THREE.Group();
+        createBox(0.8, 0.4, 0.8, mat.leather, 0, 0.2, 0, armChair); createBox(0.8, 0.8, 0.2, mat.leather, 0, 0.6, 0.3, armChair);
+        createBox(0.2, 0.6, 0.8, mat.leather, -0.3, 0.3, 0, armChair); createBox(0.2, 0.6, 0.8, mat.leather, 0.3, 0.3, 0, armChair);
+        loungeGroup.add(armChair);
+        
+        const coffeeTable = new THREE.Group(); coffeeTable.position.set(0, 0, -1.2);
+        createBox(1.0, 0.05, 0.6, mat.woodDark, 0, 0.4, 0, coffeeTable);
+        createBox(0.05, 0.4, 0.05, mat.chrome, -0.45, 0.2, -0.25, coffeeTable); createBox(0.05, 0.4, 0.05, mat.chrome, 0.45, 0.2, -0.25, coffeeTable);
+        createBox(0.05, 0.4, 0.05, mat.chrome, -0.45, 0.2, 0.25, coffeeTable); createBox(0.05, 0.4, 0.05, mat.chrome, 0.45, 0.2, 0.25, coffeeTable);
+        loungeGroup.add(coffeeTable);
+        
+        const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12), new THREE.MeshLambertMaterial({color: 0xffffff}));
+        mug.position.set(0.2, 0.47, -0.1); mug.name = "mug"; interactables.push(mug); coffeeTable.add(mug);
+        
+        const floorLamp = new THREE.Group(); floorLamp.position.set(1.0, 0, 0.5);
+        createBox(0.3, 0.05, 0.3, mat.chrome, 0, 0.025, 0, floorLamp); createBox(0.05, 1.8, 0.05, mat.chrome, 0, 0.9, 0, floorLamp);
+        const lampshade = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.4, 32, 1, true), new THREE.MeshLambertMaterial({color: 0xffeebb, side: THREE.DoubleSide}));
+        lampshade.position.set(0, 1.9, 0); 
+        const lampHit = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.5), new THREE.MeshBasicMaterial({visible: false}));
+        lampHit.position.set(0, 1.9, 0); lampHit.name = "lamp"; interactables.push(lampHit); floorLamp.add(lampHit);
+        floorLamp.add(lampshade); loungeGroup.add(floorLamp);
+        
+        const bagGroup = new THREE.Group(); bagGroup.position.set(2.5, 0, 4.0); bagGroup.rotation.y = 0.5;
+        const bagBody = createBox(0.6, 0.4, 0.15, mat.leather, 0, 0.2, 0, bagGroup);
+        bagBody.name = "briefcase"; interactables.push(bagBody);
+        createBox(0.02, 0.1, 0.1, mat.chrome, 0, 0.4, 0, bagGroup); scene.add(bagGroup);
+        
+        const rackGroup = new THREE.Group(); rackGroup.position.set(4.5, 0, -2.5);
+        createBox(0.05, 1.8, 0.05, mat.woodDark, 0, 0.9, 0, rackGroup);
+        const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1), new THREE.MeshStandardMaterial({color: 0x333333}));
+        hat.position.set(0.1, 1.82, 0); hat.rotation.z = 0.2; hat.name = "hat"; interactables.push(hat);
+        rackGroup.add(hat); scene.add(rackGroup);
+
+        // --- NEW INTERACTIVE OBJECTS ---
+        // 1. Globe (On cabinet)
+        const globeGroup = new THREE.Group();
+        globeGroup.position.set(0, 1.5, 0);
+        cabinetGroup.add(globeGroup);
+        const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
+        globeGroup.add(gBase);
+        const gSphere = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshLambertMaterial({color: 0x4fc3f7}));
+        gSphere.position.y = 0.25; 
+        gSphere.name = "globe"; interactables.push(gSphere); // Interactable
+        globeGroup.add(gSphere);
+
+        // 2. Radio (Window Seat)
+        const radio = createBox(0.4, 0.25, 0.2, 0x5d4037, -3.5, 0.65, -4.2, scene, 0, 0.2, 0, "radio");
+        createBox(0.1, 0.1, 0.02, 0xdddddd, 0.1, 0, 0.1, radio); // Speaker mesh area
+
+        // 3. Typewriter (Table)
+        const typewriter = createBox(0.4, 0.15, 0.35, 0x222222, 0.5, 0.85, -0.2, tableGroup, 0, -0.2, 0, "typewriter");
+        createBox(0.3, 0.1, 0.1, 0xdddddd, 0, 0.1, -0.1, typewriter); // Paper roller
+
+        // 4. Plant (Corner)
+        const plantGroup = new THREE.Group();
+        plantGroup.position.set(-4.5, 0, -4.5);
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.4), new THREE.MeshLambertMaterial({color: 0x8d6e63}));
+        pot.position.y = 0.2;
+        plantGroup.add(pot);
+        const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4), mat.plantGreen);
+        foliage.position.y = 0.6;
+        foliage.name = "plant"; interactables.push(foliage);
+        plantGroup.add(foliage);
+        scene.add(plantGroup);
+
+        // 5. Trophy (Shelf)
+        const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
+        trophy.position.set(1.0, 2.8, 0); // On high shelf
+        trophy.name = "trophy"; interactables.push(trophy);
+        shelfGroup.add(trophy);
+
+        // 6. Wall Clock (Above Window)
+        const clockGroup = new THREE.Group();
+        clockGroup.position.set(-4.9, 3.5, 0);
+        clockGroup.rotation.y = Math.PI/2;
+        const clockBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05), new THREE.MeshLambertMaterial({color: 0xffffff}));
+        clockBody.rotation.x = Math.PI/2;
+        clockBody.name = "clock"; interactables.push(clockBody);
+        clockGroup.add(clockBody);
+        scene.add(clockGroup);
+
+        // 7. Trash Can (Under desk)
+        const trashCan = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.5), mat.trashCan);
+        trashCan.position.set(2.5, 0.25, -2.0);
+        trashCan.name = "trash"; interactables.push(trashCan);
+        scene.add(trashCan);
+
+        // 8. Lunchbox (Coffee Table)
+        createBox(0.3, 0.2, 0.2, 0xff0000, -0.2, 0.55, 0.1, coffeeTable, 0, 0.3, 0, "lunchbox");
+
+
+        // --- DOOR & TIMER ---
+        const doorGroup = new THREE.Group(); doorGroup.position.set(5, 0, 0); doorGroup.rotation.y = -Math.PI / 2; scene.add(doorGroup);
+        createBox(1.7, 2.3, 0.15, mat.trim, 0, 1.15, 0, doorGroup);
+        const theDoor = createBox(1.5, 2.2, 0.05, mat.door, 0, 1.1, 0.02, doorGroup, 0,0,0, "door");
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome); knob.position.set(0.6, 1.1, 0.08); doorGroup.add(knob);
+        const timerGroup = new THREE.Group(); timerGroup.position.set(0, 2.6, 0.1); doorGroup.add(timerGroup);
+        createBox(0.8, 0.3, 0.1, new THREE.MeshStandardMaterial({color:0x111111}), 0, 0, 0, timerGroup);
+        const timerCanvas = document.createElement('canvas'); timerCanvas.width = 256; timerCanvas.height = 128;
+        const tCtx = timerCanvas.getContext('2d');
+        const timerTexture = new THREE.CanvasTexture(timerCanvas);
+        const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.25), new THREE.MeshBasicMaterial({ map: timerTexture }));
+        displayMesh.position.z = 0.06; timerGroup.add(displayMesh);
+        function updateTimer() {
+            const now = new Date(); const ms = now.getMilliseconds();
+            tCtx.fillStyle = '#000000'; tCtx.fillRect(0, 0, 256, 128);
+            tCtx.shadowColor = "red"; tCtx.shadowBlur = 20; tCtx.fillStyle = '#d50000'; 
+            tCtx.font = 'bold 80px monospace'; tCtx.textAlign = 'center'; tCtx.textBaseline = 'middle';
+            tCtx.fillText((ms < 500) ? "59:59" : "59 59", 128, 64);
+            timerTexture.needsUpdate = true;
+        }
+
+        // --- LOGIC ---
+        const crosshair = document.getElementById('crosshair');
+        const modal = document.getElementById('clueModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const modalFeedback = document.getElementById('modalFeedback');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const raycaster = new THREE.Raycaster();
+        const center = new THREE.Vector2(0, 0);
+
+        let currentCode = "";
+        let isInteracting = false;
+
+        closeBtn.addEventListener('click', () => {
+            isInteracting = false;
+            modal.style.display = 'none';
+            controls.lock(); 
+        });
+
+        function checkIntersection() {
+            raycaster.setFromCamera(center, camera);
+            const intersects = raycaster.intersectObjects(interactables, false);
+            if (intersects.length > 0) {
+                crosshair.classList.add('active');
+                return intersects[0].object;
+            } else {
+                crosshair.classList.remove('active');
+                return null;
+            }
+        }
+
+        function moveClue(slotIndex, fromObjName) {
+            const emptyLocs = locations.filter(loc => locationMap[loc] === null && loc !== fromObjName);
+            if(emptyLocs.length > 0) {
+                const newLoc = emptyLocs[Math.floor(Math.random() * emptyLocs.length)];
+                locationMap[newLoc] = slotIndex;
+                locationMap[fromObjName] = null;
+                
+                const usedQIndices = activeClues.map(c => c.qIndex);
+                const availableQIndices = [];
+                for(let i=0; i<questionPool.length; i++) {
+                    if(!usedQIndices.includes(i)) availableQIndices.push(i);
+                }
+                if(availableQIndices.length > 0) {
+                    const newQIndex = availableQIndices[Math.floor(Math.random() * availableQIndices.length)];
+                    activeClues[slotIndex].qIndex = newQIndex;
+                }
+                return newLoc;
+            }
+            return null;
+        }
+
+        function renderDoorKeypad() {
+            modalTitle.textContent = "SECURITY LOCK";
+            modalContent.innerHTML = `<div id="codeDisplay">${currentCode.padEnd(4, '_')}</div>`;
+            const kpDiv = document.createElement('div'); kpDiv.id = "keypad";
+            for(let i=1; i<=9; i++) {
+                const btn = document.createElement('div'); btn.className = 'key-btn'; btn.textContent = i; btn.onclick = () => handleKeypad(i); kpDiv.appendChild(btn);
+            }
+            const clearBtn = document.createElement('div'); clearBtn.className = 'key-btn'; clearBtn.textContent = "C"; clearBtn.onclick = () => { currentCode = ""; renderDoorKeypad(); }; kpDiv.appendChild(clearBtn);
+            const zeroBtn = document.createElement('div'); zeroBtn.className = 'key-btn'; zeroBtn.textContent = "0"; zeroBtn.onclick = () => handleKeypad(0); kpDiv.appendChild(zeroBtn);
+            const enterBtn = document.createElement('div'); enterBtn.className = 'key-btn'; enterBtn.textContent = "E"; enterBtn.style.color = '#4caf50'; enterBtn.onclick = () => checkCode(); kpDiv.appendChild(enterBtn);
+            modalContent.appendChild(kpDiv);
+            optionsContainer.innerHTML = ""; modalFeedback.textContent = "";
+        }
+
+        function handleKeypad(num) {
+            if(currentCode.length < 4) {
+                currentCode += num; document.getElementById('codeDisplay').textContent = currentCode.padEnd(4, '_');
+            }
+        }
+
+        function checkCode() {
+            if(currentCode === "1858") {
+                modalTitle.textContent = "ACCESS GRANTED";
+                modalContent.innerHTML = "<p>The lock beeps green.</p><p><strong>FINAL QUESTION:</strong> What does this number represent in Minnesota history?</p>";
+                const finals = [
+                    { t: "Height of Eagle Mountain", c: false }, { t: "Year of Statehood", c: true },
+                    { t: "Number of Lakes", c: false }, { t: "Year the Vikings won Super Bowl", c: false }
+                ];
+                const optContainer = document.createElement('div'); optContainer.id = "optionsContainer";
+                finals.forEach(opt => {
+                    const b = document.createElement('button'); b.className = 'option-btn'; b.textContent = opt.t;
+                    b.onclick = () => {
+                        if(opt.c) {
+                            modalContent.innerHTML = "<h1 style='color:#4caf50'>YOU ESCAPED!</h1><p>Congratulations, Detective.</p>";
+                            optContainer.innerHTML = "";
+                        } else {
+                             modalContent.innerHTML = "<h2 style='color:red'>ALARM TRIGGERED!</h2><p>Incorrect. Security lockout initiated.</p>";
+                             currentCode = ""; setTimeout(() => { modal.style.display='none'; controls.lock(); }, 2000);
+                        }
+                    };
+                    optContainer.appendChild(b);
+                });
+                modalContent.appendChild(optContainer);
+            } else {
+                modalFeedback.style.color = 'red'; modalFeedback.textContent = "INVALID CODE";
+                currentCode = ""; setTimeout(() => document.getElementById('codeDisplay').textContent = "____", 500);
+            }
+        }
+
+        function showModal(objName) {
+            if (objName === "door") {
+                currentCode = ""; renderDoorKeypad(); modal.style.display = 'block'; controls.unlock(); isInteracting = true; return;
+            }
+            const slotIndex = locationMap[objName];
+            modalFeedback.textContent = ""; optionsContainer.innerHTML = "";
+            if (slotIndex === null || slotIndex === undefined) {
+                modalTitle.textContent = "Nothing Here"; modalContent.innerHTML = "<p>Just clutter.</p>";
+            } else {
+                const clueData = activeClues[slotIndex]; const qData = questionPool[clueData.qIndex];
+                if(clueData.solved) {
+                     modalTitle.textContent = "SOLVED"; modalContent.innerHTML = `<p>${qData.q}</p><p style='color: #4caf50;'><strong>Digit Revealed: ${clueData.digit}</strong></p>`;
+                } else {
+                    modalTitle.textContent = qData.t; modalContent.innerHTML = `<div class='question-box'><strong>${qData.q}</strong></div>`;
+                    qData.o.forEach((opt, idx) => {
+                        const btn = document.createElement('button'); btn.className = 'option-btn'; btn.textContent = opt;
+                        btn.onclick = () => handleAnswer(slotIndex, idx, btn, objName, qData); optionsContainer.appendChild(btn);
+                    });
+                }
+            }
+            modal.style.display = 'block'; controls.unlock(); isInteracting = true;
+        }
+
+        function handleAnswer(slotIndex, choiceIdx, btnElement, objName, qData) {
+            const allBtns = document.querySelectorAll('.option-btn'); allBtns.forEach(b => b.disabled = true);
+            if(choiceIdx === qData.c) {
+                btnElement.classList.add('correct'); modalFeedback.style.color = "#4caf50";
+                modalFeedback.innerHTML = `CORRECT! <br>You found a digit: <strong>${activeClues[slotIndex].digit}</strong>`;
+                activeClues[slotIndex].solved = true;
+            } else {
+                btnElement.classList.add('wrong'); modalFeedback.style.color = "#e57373";
+                const newLoc = moveClue(slotIndex, objName);
+                modalFeedback.innerHTML = `WRONG! The clue has vanished.<br>You must find it again elsewhere.`;
+            }
+        }
+
+        document.addEventListener('mousedown', () => {
+            if (controls.isLocked && !isInteracting) {
+                const obj = checkIntersection(); if (obj) showModal(obj.name);
+            }
+        });
+
+        const instructions = document.getElementById('instructions');
+        instructions.addEventListener('click', () => controls.lock());
+        controls.addEventListener('lock', () => instructions.style.display = 'none');
+        controls.addEventListener('unlock', () => { if(!isInteracting) instructions.style.display = ''; });
+
+        const keys = { w: false, a: false, s: false, d: false };
+        document.addEventListener('keydown', (e) => {
+            if(e.code==='KeyW' || e.code==='ArrowUp') keys.w=true; if(e.code==='KeyA' || e.code==='ArrowLeft') keys.a=true;
+            if(e.code==='KeyS' || e.code==='ArrowDown') keys.s=true; if(e.code==='KeyD' || e.code==='ArrowRight') keys.d=true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if(e.code==='KeyW' || e.code==='ArrowUp') keys.w=false; if(e.code==='KeyA' || e.code==='ArrowLeft') keys.a=false;
+            if(e.code==='KeyS' || e.code==='ArrowDown') keys.s=false; if(e.code==='KeyD' || e.code==='ArrowRight') keys.d=false;
+        });
+
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        let prevTime = performance.now();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+            updateTimer();
+            if (controls.isLocked) {
+                checkIntersection();
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                direction.z = Number(keys.w) - Number(keys.s);
+                direction.x = Number(keys.d) - Number(keys.a);
+                direction.normalize(); 
+                if (keys.w || keys.s) velocity.z -= direction.z * 100.0 * delta; 
+                if (keys.a || keys.d) velocity.x -= direction.x * 100.0 * delta;
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+                const pos = controls.getObject().position;
+                if (pos.x < -4.5) pos.x = -4.5; if (pos.x > 4.5) pos.x = 4.5;
+                if (pos.z < -4.5) pos.z = -4.5; if (pos.z > 4.5) pos.z = 4.5;
+            }
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        animate();
+    </script>
+</body>
+</html>
