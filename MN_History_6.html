@@ -1354,6 +1354,12 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+        
+        // Expose for verification
+        window.camera = camera;
+        window.scene = scene;
+        window.renderer = renderer;
+
         animate();
     </script>
 </body>
