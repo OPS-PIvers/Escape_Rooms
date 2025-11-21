@@ -5,39 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escape Room: MN History</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Courier New', Courier, monospace; }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Share Tech Mono', monospace; }
         
         /* UI OVERLAYS */
         #instructions {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: #ffccaa;
+            color: #00ffcc;
             text-align: center;
-            background: rgba(0,0,0,0.95);
-            padding: 30px;
-            border: 2px solid #5d4037;
-            border-radius: 5px;
+            background: rgba(10, 20, 30, 0.95);
+            padding: 40px;
+            border: 1px solid #00ffcc;
+            border-radius: 10px;
             cursor: pointer;
             z-index: 10;
             user-select: none;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2), inset 0 0 50px rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            max-width: 600px;
+        }
+        #instructions h1 {
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00ffcc;
+            font-size: 32px;
+        }
+        #instructions p { font-size: 18px; color: #ccfffc; }
+        #instructions b { color: #ffffff; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         
         #crosshair {
             position: absolute;
             top: 50%; left: 50%;
-            width: 8px; height: 8px;
-            background: rgba(255, 255, 255, 0.4);
+            width: 20px; height: 20px;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 5;
-            transition: background 0.2s, transform 0.2s;
+            transition: all 0.2s;
+        }
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 2px; height: 2px;
+            background: white;
+            transform: translate(-50%, -50%);
         }
         #crosshair.active {
-            background: #00ff00;
-            transform: translate(-50%, -50%) scale(1.5);
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px #00ffcc;
+            transform: translate(-50%, -50%) scale(1.2);
+            background: rgba(0, 255, 204, 0.1);
         }
 
         /* CLUE MODAL */
@@ -46,45 +76,132 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 600px;
+            width: 650px;
             max-width: 90%;
-            background: #2c2c2c;
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
             color: #e0e0e0;
-            border: 4px solid #8d6e63;
-            padding: 20px;
-            box-shadow: 0 0 30px rgba(0,0,0,1);
+            border: 1px solid #00ffcc;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 255, 204, 0.3);
             z-index: 20;
-            font-family: sans-serif;
+            font-family: 'Share Tech Mono', monospace;
             text-align: left;
+            overflow: hidden;
         }
-        #clueModal h2 { margin-top: 0; color: #ffcc80; border-bottom: 1px solid #555; padding-bottom: 10px;}
-        #clueModal p { line-height: 1.6; font-size: 16px; }
-        #clueModal .question-box { background: #444; padding: 15px; border-left: 4px solid #ffcc80; margin: 15px 0; }
+        #clueModal::before {
+            content: "SECURE CONNECTION ESTABLISHED";
+            position: absolute;
+            top: 5px; right: 15px;
+            font-size: 10px;
+            color: #00ffcc;
+            opacity: 0.7;
+        }
+
+        #clueModal h2 {
+            margin-top: 0;
+            color: #00ffcc;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(0,255,204,0.5);
+        }
+        #clueModal p { line-height: 1.6; font-size: 18px; color: #b0bec5; }
+
+        #clueModal .question-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-left: 3px solid #ffb74d;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+            color: #fff;
+            font-size: 1.1em;
+        }
         
         /* OPTIONS BUTTONS */
-        #optionsContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        #optionsContainer { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
         .option-btn {
-            background: #4e342e; color: white; border: 1px solid #6d4c41; 
-            padding: 12px; text-align: left; cursor: pointer; transition: background 0.2s;
-            font-size: 15px;
+            background: rgba(255,255,255,0.05);
+            color: #00ffcc;
+            border: 1px solid rgba(0,255,204,0.3);
+            padding: 15px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
         }
-        .option-btn:hover { background: #6d4c41; }
-        .option-btn.correct { background: #2e7d32; border-color: #4caf50; }
-        .option-btn.wrong { background: #c62828; border-color: #e57373; }
+        .option-btn:hover {
+            background: rgba(0,255,204,0.1);
+            border-color: #00ffcc;
+            padding-left: 20px;
+            box-shadow: 0 0 10px rgba(0,255,204,0.2);
+        }
+        .option-btn.correct { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; color: #81c784; }
+        .option-btn.wrong { background: rgba(229, 57, 53, 0.2); border-color: #e57373; color: #ef9a9a; }
 
-        #modalFeedback { margin-top: 15px; font-weight: bold; min-height: 20px; font-size: 18px; }
+        #modalFeedback { margin-top: 15px; font-weight: bold; min-height: 25px; font-size: 18px; text-align: center;}
         
         #closeModalBtn {
-            background: #333; color: #aaa; border: 1px solid #555; padding: 8px 16px;
-            cursor: pointer; float: right; margin-top: 10px;
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #555;
+            padding: 8px 20px;
+            cursor: pointer;
+            float: right;
+            margin-top: 15px;
+            font-family: inherit;
+            transition: 0.2s;
+            border-radius: 3px;
         }
-        #closeModalBtn:hover { background: #444; color: white; }
+        #closeModalBtn:hover { background: #333; color: white; border-color: #fff; }
 
         /* DOOR KEYPAD UI */
-        #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; max-width: 200px; margin-left: auto; margin-right: auto; }
-        .key-btn { background: #333; border: 1px solid #555; color: white; padding: 15px; font-size: 18px; cursor: pointer; }
-        .key-btn:hover { background: #555; }
-        #codeDisplay { background: black; color: #0f0; font-family: monospace; font-size: 24px; padding: 10px; text-align: center; letter-spacing: 5px; margin-bottom: 10px; }
+        #keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            max-width: 240px;
+            margin-left: auto;
+            margin-right: auto;
+            background: #111;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        .key-btn {
+            background: linear-gradient(to bottom, #333, #222);
+            border: 1px solid #444;
+            color: #eee;
+            padding: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 0 2px 0 #000;
+            transition: 0.1s;
+        }
+        .key-btn:active { transform: translateY(2px); box-shadow: none; }
+        .key-btn:hover { border-color: #00ffcc; color: #00ffcc; }
+        #codeDisplay {
+            background: #000;
+            color: #00ffcc;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 32px;
+            padding: 15px;
+            text-align: center;
+            letter-spacing: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            box-shadow: inset 0 0 10px rgba(0,255,204,0.2);
+            text-shadow: 0 0 5px #00ffcc;
+        }
 
     </style>
 </head>
@@ -307,6 +424,19 @@
 
         // --- MATERIALS ---
         const colors = { wall: 0xebe5ce, trim: 0x4e342e, floor: 0x5d4037, shelf: 0x263238, cork: 0x8d6e63 };
+        // Computer Screen Texture
+        const compCanvas = document.createElement('canvas'); compCanvas.width = 512; compCanvas.height = 512;
+        const cCtx = compCanvas.getContext('2d');
+        cCtx.fillStyle = '#000000'; cCtx.fillRect(0,0,512,512);
+        cCtx.fillStyle = '#002200'; cCtx.font = '20px monospace';
+        for(let i=0; i<20; i++) cCtx.fillText(Math.random().toString(2).substring(2), 10, 30 + i*24);
+        cCtx.fillStyle = '#00ffcc'; cCtx.font = 'bold 40px "Share Tech Mono", monospace'; cCtx.textAlign = 'center';
+        cCtx.shadowColor='#00ffcc'; cCtx.shadowBlur=20;
+        cCtx.fillText("SYSTEM LOCKED", 256, 200);
+        cCtx.font = '20px "Share Tech Mono", monospace';
+        cCtx.fillText("MN HISTORY ARCHIVE", 256, 250);
+        cCtx.strokeStyle = '#00ffcc'; cCtx.lineWidth=5; cCtx.strokeRect(50, 140, 412, 150);
+
         const mat = {
             wall: new THREE.MeshStandardMaterial({ color: colors.wall, roughness: 0.9 }),
             floor: new THREE.MeshStandardMaterial({ color: colors.floor, roughness: 0.8 }),
@@ -322,7 +452,7 @@
             door: new THREE.MeshStandardMaterial({ color: 0x3e2723 }),
             cork: new THREE.MeshStandardMaterial({ color: colors.cork, roughness: 1.0 }),
             safe: new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.3 }),
-            screenOn: new THREE.MeshBasicMaterial({ color: 0xccffff }), 
+            screenOn: new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(compCanvas) }),
             cabinet: new THREE.MeshStandardMaterial({ color: 0x777777, metalness: 0.4, roughness: 0.5 }),
             bookColors: [0x3e2723, 0x263238, 0x1b5e20, 0x880e4f, 0xbf360c, 0x004d40],
             gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 }),
@@ -531,10 +661,10 @@
         const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome); knob.position.set(0.6, 1.1, 0.08); doorGroup.add(knob);
         const timerGroup = new THREE.Group(); timerGroup.position.set(0, 2.6, 0.1); doorGroup.add(timerGroup);
         createBox(0.8, 0.3, 0.1, new THREE.MeshStandardMaterial({color:0x111111}), 0, 0, 0, timerGroup);
-        const timerCanvas = document.createElement('canvas'); timerCanvas.width = 256; timerCanvas.height = 128;
+        const timerCanvas = document.createElement('canvas'); timerCanvas.width = 512; timerCanvas.height = 256;
         const tCtx = timerCanvas.getContext('2d');
         const timerTexture = new THREE.CanvasTexture(timerCanvas);
-        const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.25), new THREE.MeshBasicMaterial({ map: timerTexture }));
+        const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshBasicMaterial({ map: timerTexture }));
         displayMesh.position.z = 0.06; timerGroup.add(displayMesh);
         let timeLeft = 600;
         function updateTimer(dt) {
@@ -543,10 +673,28 @@
             const s = Math.floor(timeLeft % 60);
             const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
-            tCtx.fillStyle = '#000000'; tCtx.fillRect(0, 0, 256, 128);
-            tCtx.shadowColor = "red"; tCtx.shadowBlur = 20; tCtx.fillStyle = '#d50000'; 
-            tCtx.font = 'bold 80px monospace'; tCtx.textAlign = 'center'; tCtx.textBaseline = 'middle';
-            tCtx.fillText(timeStr, 128, 64);
+            // Background
+            tCtx.fillStyle = '#050505';
+            tCtx.fillRect(0, 0, 512, 256);
+
+            // Scanlines
+            tCtx.fillStyle = 'rgba(0, 255, 0, 0.05)';
+            for(let i=0; i<256; i+=4) tCtx.fillRect(0, i, 512, 1);
+
+            // Glow & Text
+            tCtx.shadowColor = "#ff0000";
+            tCtx.shadowBlur = 30;
+            tCtx.fillStyle = '#ff3333';
+            tCtx.font = 'bold 140px "Share Tech Mono", monospace';
+            tCtx.textAlign = 'center';
+            tCtx.textBaseline = 'middle';
+            tCtx.fillText(timeStr, 256, 128);
+
+            // Border
+            tCtx.strokeStyle = "#550000";
+            tCtx.lineWidth = 10;
+            tCtx.strokeRect(5, 5, 502, 246);
+
             timerTexture.needsUpdate = true;
         }
 
