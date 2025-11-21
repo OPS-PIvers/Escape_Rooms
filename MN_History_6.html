@@ -160,6 +160,41 @@
         }
         #closeModalBtn:hover { background: #333; color: white; border-color: #fff; }
 
+        /* VICTORY MODAL */
+        #victoryModal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 2s ease-in;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #victoryModal h1 {
+            font-size: 80px;
+            color: #4caf50;
+            text-shadow: 0 0 20px #4caf50;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+        #victoryModal p {
+            font-size: 32px;
+            color: #fff;
+            margin: 10px 0;
+        }
+        #victoryTime {
+            font-size: 60px;
+            color: #ff3333;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 20px #ff0000;
+            margin-top: 20px;
+        }
+
         /* DOOR KEYPAD UI */
         #keypad {
             display: grid;
@@ -224,6 +259,13 @@
         <div id="optionsContainer"></div>
         <div id="modalFeedback"></div>
         <button id="closeModalBtn">Close</button>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal">
+        <h1>Mission Accomplished</h1>
+        <p>You have escaped the archive.</p>
+        <div id="victoryTime"></div>
     </div>
 
     <script type="importmap">
@@ -657,8 +699,26 @@
         // --- DOOR & TIMER ---
         const doorGroup = new THREE.Group(); doorGroup.position.set(5, 0, 0); doorGroup.rotation.y = -Math.PI / 2; scene.add(doorGroup);
         createBox(1.7, 2.3, 0.15, mat.trim, 0, 1.15, 0, doorGroup);
-        const theDoor = createBox(1.5, 2.2, 0.05, mat.door, 0, 1.1, 0.02, doorGroup, 0,0,0, "door");
-        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome); knob.position.set(0.6, 1.1, 0.08); doorGroup.add(knob);
+
+        // Door Pivot Group for hinging
+        const doorPivot = new THREE.Group();
+        doorPivot.position.set(-0.75, 1.1, 0.02); // Hinge location (left side of door)
+        doorGroup.add(doorPivot);
+
+        // Door Mesh (relative to pivot)
+        // Door is 1.5 wide. Center is at +0.75 relative to pivot.
+        const theDoor = createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0,0,0, "door");
+
+        // Knob (relative to pivot)
+        // Old knob pos in doorGroup: 0.6, 1.1, 0.08
+        // Pivot pos in doorGroup: -0.75, 1.1, 0.02
+        // Relative x: 0.6 - (-0.75) = 1.35
+        // Relative y: 1.1 - 1.1 = 0
+        // Relative z: 0.08 - 0.02 = 0.06
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome);
+        knob.position.set(1.35, 0, 0.06);
+        doorPivot.add(knob);
+
         const timerGroup = new THREE.Group(); timerGroup.position.set(0, 2.6, 0.1); doorGroup.add(timerGroup);
         createBox(0.8, 0.3, 0.1, new THREE.MeshStandardMaterial({color:0x111111}), 0, 0, 0, timerGroup);
         const timerCanvas = document.createElement('canvas'); timerCanvas.width = 512; timerCanvas.height = 256;
@@ -667,11 +727,15 @@
         const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshBasicMaterial({ map: timerTexture }));
         displayMesh.position.z = 0.06; timerGroup.add(displayMesh);
         let timeLeft = 600;
+        let gameWon = false;
+        let finalTimeStr = "00:00";
+
         function updateTimer(dt) {
-            timeLeft = Math.max(0, timeLeft - dt);
+            if(!gameWon) timeLeft = Math.max(0, timeLeft - dt);
             const m = Math.floor(timeLeft / 60);
             const s = Math.floor(timeLeft % 60);
-            const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            finalTimeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            const timeStr = finalTimeStr;
 
             // Background
             tCtx.fillStyle = '#050505';
@@ -771,6 +835,39 @@
             }
         }
 
+        function triggerVictory() {
+            gameWon = true;
+            modal.style.display = 'none';
+            controls.lock();
+            isInteracting = false; // Player regains control briefly to see door open
+
+            // Animate Door Opening
+            const startRot = doorPivot.rotation.y;
+            const targetRot = -Math.PI / 2; // Open outward (or inward depending on perspective)
+            const duration = 2000;
+            const startTime = performance.now();
+
+            function animateDoor(time) {
+                const elapsed = time - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const ease = 1 - Math.pow(1 - t, 3);
+                doorPivot.rotation.y = startRot + (targetRot - startRot) * ease;
+
+                if (t < 1) {
+                    requestAnimationFrame(animateDoor);
+                } else {
+                    // Show Victory Modal after door opens
+                    setTimeout(() => {
+                        document.getElementById('victoryModal').style.display = 'flex';
+                        document.getElementById('victoryTime').textContent = `TIME LEFT: ${finalTimeStr}`;
+                        document.exitPointerLock();
+                    }, 500);
+                }
+            }
+            requestAnimationFrame(animateDoor);
+        }
+
         function checkCode() {
             if(currentCode === "1858") {
                 modalTitle.textContent = "ACCESS GRANTED";
@@ -784,8 +881,7 @@
                     const b = document.createElement('button'); b.className = 'option-btn'; b.textContent = opt.t;
                     b.onclick = () => {
                         if(opt.c) {
-                            modalContent.innerHTML = "<h1 style='color:#4caf50'>YOU ESCAPED!</h1><p>Congratulations, Detective.</p>";
-                            optContainer.innerHTML = "";
+                            triggerVictory();
                         } else {
                              modalContent.innerHTML = "<h2 style='color:red'>ALARM TRIGGERED!</h2><p>Incorrect. Security lockout initiated.</p>";
                              currentCode = ""; setTimeout(() => { modal.style.display='none'; controls.lock(); }, 2000);
