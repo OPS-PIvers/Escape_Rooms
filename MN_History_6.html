@@ -279,7 +279,7 @@
 
     <script type="module">
         import * as THREE from 'three';
-        // --- CUSTOM POINTER LOCK CONTROLS (Patched for stability) ---
+        // --- CUSTOM POINTER LOCK CONTROLS (Patched for stability & Sandbox support) ---
         const _euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
         const _vector = new THREE.Vector3();
         const _changeEvent = { type: 'change' };
@@ -293,23 +293,38 @@
                 this.camera = camera;
                 this.domElement = domElement;
                 this.isLocked = false;
+                this.isActive = false; // Logical active state (for fallback)
+                this.isFallback = false; // True if Pointer Lock fails
+                this.isDragging = false; // For fallback drag-to-look
+                
                 this.minPolarAngle = 0;
                 this.maxPolarAngle = Math.PI;
                 this.pointerSpeed = 1.0;
+                
                 this._onMouseMove = this.onMouseMove.bind( this );
                 this._onPointerlockChange = this.onPointerlockChange.bind( this );
                 this._onPointerlockError = this.onPointerlockError.bind( this );
+                this._onMouseDown = this.onMouseDown.bind( this );
+                this._onMouseUp = this.onMouseUp.bind( this );
+                this._onKeyDown = this.onKeyDown.bind( this );
+                
                 this.connect();
             }
             connect() {
                 this.domElement.ownerDocument.addEventListener( 'mousemove', this._onMouseMove );
                 this.domElement.ownerDocument.addEventListener( 'pointerlockchange', this._onPointerlockChange );
                 this.domElement.ownerDocument.addEventListener( 'pointerlockerror', this._onPointerlockError );
+                this.domElement.ownerDocument.addEventListener( 'mousedown', this._onMouseDown );
+                this.domElement.ownerDocument.addEventListener( 'mouseup', this._onMouseUp );
+                this.domElement.ownerDocument.addEventListener( 'keydown', this._onKeyDown );
             }
             disconnect() {
                 this.domElement.ownerDocument.removeEventListener( 'mousemove', this._onMouseMove );
                 this.domElement.ownerDocument.removeEventListener( 'pointerlockchange', this._onPointerlockChange );
                 this.domElement.ownerDocument.removeEventListener( 'pointerlockerror', this._onPointerlockError );
+                this.domElement.ownerDocument.removeEventListener( 'mousedown', this._onMouseDown );
+                this.domElement.ownerDocument.removeEventListener( 'mouseup', this._onMouseUp );
+                this.domElement.ownerDocument.removeEventListener( 'keydown', this._onKeyDown );
             }
             dispose() {
                 this.disconnect();
@@ -332,13 +347,66 @@
                 camera.position.addScaledVector( _vector, distance );
             }
             lock() {
-                this.domElement.requestPointerLock();
+                try {
+                    this.domElement.requestPointerLock();
+                } catch (e) {
+                    console.warn("PointerLock request failed:", e);
+                    this.enableFallback();
+                }
             }
             unlock() {
-                this.domElement.ownerDocument.exitPointerLock();
+                if (this.isFallback) {
+                    this.isActive = false;
+                    this.isFallback = false; 
+                    this.dispatchEvent( _unlockEvent );
+                } else {
+                    this.domElement.ownerDocument.exitPointerLock();
+                }
+            }
+            enableFallback() {
+                console.log("Enabling Fallback Controls (Drag to Look)");
+                this.isFallback = true;
+                this.isActive = true;
+                this.dispatchEvent( _lockEvent );
+                // Optional: Update UI to say "Drag to look"
+                const instructions = document.getElementById('instructions');
+                if(instructions) {
+                    const ps = instructions.querySelectorAll('p');
+                    if(ps.length > 1) ps[1].innerHTML = "WASD to Move | <b>Click & Drag</b> to Look";
+                }
+            }
+            onPointerlockChange() {
+                if ( this.domElement.ownerDocument.pointerLockElement === this.domElement ) {
+                    this.dispatchEvent( _lockEvent );
+                    this.isLocked = true;
+                    this.isActive = true;
+                    this.isFallback = false;
+                } else {
+                    this.dispatchEvent( _unlockEvent );
+                    this.isLocked = false;
+                    this.isActive = false;
+                }
+            }
+            onPointerlockError() {
+                console.error( 'THREE.PointerLockControls: Unable to use Pointer Lock API' );
+                this.enableFallback();
+            }
+            onMouseDown(event) {
+                if (this.isFallback && this.isActive) {
+                    this.isDragging = true;
+                }
+            }
+            onMouseUp(event) {
+                this.isDragging = false;
+            }
+            onKeyDown(event) {
+                if (this.isFallback && this.isActive && event.code === 'Escape') {
+                    this.isActive = false;
+                    this.dispatchEvent( _unlockEvent );
+                }
             }
             onMouseMove( event ) {
-                if ( this.isLocked === false ) return;
+                if ( this.isLocked === false && !(this.isFallback && this.isActive && this.isDragging) ) return;
 
                 // FIX: Clamp movement values to prevent "spinning" or "freaking out" due to browser bugs or large jumps
                 const maxDelta = 100;
@@ -357,18 +425,6 @@
                 _euler.x = Math.max( _PI_2 - this.maxPolarAngle, Math.min( _PI_2 - this.minPolarAngle, _euler.x ) );
                 camera.quaternion.setFromEuler( _euler );
                 this.dispatchEvent( _changeEvent );
-            }
-            onPointerlockChange() {
-                if ( this.domElement.ownerDocument.pointerLockElement === this.domElement ) {
-                    this.dispatchEvent( _lockEvent );
-                    this.isLocked = true;
-                } else {
-                    this.dispatchEvent( _unlockEvent );
-                    this.isLocked = false;
-                }
-            }
-            onPointerlockError() {
-                console.error( 'THREE.PointerLockControls: Unable to use Pointer Lock API' );
             }
         }
 
@@ -1302,7 +1358,7 @@
         }
 
         document.addEventListener('mousedown', () => {
-            if (controls.isLocked && !isInteracting) {
+            if (controls.isActive && !isInteracting) {
                 const obj = checkIntersection(); if (obj) showModal(obj.name);
             }
         });
@@ -1331,7 +1387,7 @@
             const time = performance.now();
             const delta = (time - prevTime) / 1000;
             updateTimer(delta);
-            if (controls.isLocked) {
+            if (controls.isActive) {
                 checkIntersection();
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
