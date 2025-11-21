@@ -445,12 +445,17 @@
         const timerTexture = new THREE.CanvasTexture(timerCanvas);
         const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.25), new THREE.MeshBasicMaterial({ map: timerTexture }));
         displayMesh.position.z = 0.06; timerGroup.add(displayMesh);
-        function updateTimer() {
-            const now = new Date(); const ms = now.getMilliseconds();
+        let timeLeft = 600;
+        function updateTimer(dt) {
+            timeLeft = Math.max(0, timeLeft - dt);
+            const m = Math.floor(timeLeft / 60);
+            const s = Math.floor(timeLeft % 60);
+            const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
             tCtx.fillStyle = '#000000'; tCtx.fillRect(0, 0, 256, 128);
             tCtx.shadowColor = "red"; tCtx.shadowBlur = 20; tCtx.fillStyle = '#d50000'; 
             tCtx.font = 'bold 80px monospace'; tCtx.textAlign = 'center'; tCtx.textBaseline = 'middle';
-            tCtx.fillText((ms < 500) ? "59:59" : "59 59", 128, 64);
+            tCtx.fillText(timeStr, 128, 64);
             timerTexture.needsUpdate = true;
         }
 
@@ -621,7 +626,7 @@
             requestAnimationFrame(animate);
             const time = performance.now();
             const delta = (time - prevTime) / 1000;
-            updateTimer();
+            updateTimer(delta);
             if (controls.isLocked) {
                 checkIntersection();
                 velocity.x -= velocity.x * 10.0 * delta;
