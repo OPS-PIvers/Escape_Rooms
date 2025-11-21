@@ -734,6 +734,62 @@
         clockBody.rotation.x = Math.PI/2;
         clockBody.name = "clock"; interactables.push(clockBody);
         clockGroup.add(clockBody);
+
+        // Clock Face
+        const clockCanvas = document.createElement('canvas');
+        clockCanvas.width = 256; clockCanvas.height = 256;
+        const clCtx = clockCanvas.getContext('2d');
+
+        // White background circle
+        clCtx.beginPath();
+        clCtx.arc(128, 128, 120, 0, Math.PI*2);
+        clCtx.fillStyle = '#ffffff';
+        clCtx.fill();
+
+        // Ticks
+        clCtx.strokeStyle = '#000000';
+        clCtx.lineWidth = 4;
+        for(let i=0; i<12; i++) {
+            clCtx.save();
+            clCtx.translate(128, 128);
+            clCtx.rotate(i * Math.PI/6);
+            clCtx.beginPath();
+            clCtx.moveTo(0, -100);
+            clCtx.lineTo(0, -115);
+            clCtx.stroke();
+            clCtx.restore();
+        }
+
+        // Hands (Time ~ 1:05)
+        // Hour Hand
+        clCtx.save();
+        clCtx.translate(128, 128);
+        clCtx.rotate(Math.PI/6 + 0.1); // Roughly 1 o'clock
+        clCtx.lineWidth = 8;
+        clCtx.beginPath(); clCtx.moveTo(0, 10); clCtx.lineTo(0, -70); clCtx.stroke();
+        clCtx.restore();
+
+        // Minute Hand
+        clCtx.save();
+        clCtx.translate(128, 128);
+        clCtx.rotate(Math.PI/6); // 5 minutes -> 30 degrees? No, 5 mins is 30 degrees (360/12). 1:05 means min hand at 1 (30 deg).
+        // Wait 1:05: Hour hand at 30deg + little bit. Minute hand at 30deg (1).
+        clCtx.rotate(Math.PI/6);
+        clCtx.lineWidth = 5;
+        clCtx.beginPath(); clCtx.moveTo(0, 10); clCtx.lineTo(0, -90); clCtx.stroke();
+        clCtx.restore();
+
+        // Center dot
+        clCtx.beginPath(); clCtx.arc(128, 128, 8, 0, Math.PI*2); clCtx.fillStyle = '#000000'; clCtx.fill();
+
+        const clockTex = new THREE.CanvasTexture(clockCanvas);
+        const clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.28, 32), new THREE.MeshBasicMaterial({map: clockTex, transparent: true}));
+        // Position slightly in front of cylinder.
+        // Cylinder (rot X 90) extends from z=-0.025 to z=0.025.
+        // So place at z=0.03
+        clockFace.position.z = 0.03;
+        clockGroup.add(clockFace);
+
         scene.add(clockGroup);
 
         // 7. Trash Can (Under desk)
