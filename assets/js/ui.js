@@ -12,9 +12,9 @@ import {
     currentStep,
     advanceStep
 } from './gameLogic.js';
-let isInteracting = false;
+export let isInteracting = false;
 let currentCode = "";
-let gameWon = false;
+export let gameWon = false;
 const modal = document.getElementById('clueModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalContent = document.getElementById('modalContent');
@@ -23,7 +23,7 @@ const modalFeedback = document.getElementById('modalFeedback');
 const closeBtn = document.getElementById('closeModalBtn');
 closeBtn.addEventListener('click', closeModal);
 
-function closeModal() {
+export function closeModal() {
     isInteracting = false;
     modal.style.display = 'none';
 }
@@ -163,7 +163,7 @@ function getFlavorText(objName) {
     return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function showModal(objName, {
+export function showModal(objName, {
     doorPivot,
     finalTimeStr
 }) {
@@ -511,10 +511,4 @@ function handleKeypad(num) {
         if (displayEl) displayEl.textContent = currentCode.padEnd(4, '_');
     }
 }
-export {
-    showModal,
-    closeModal,
-    isInteracting,
-    gameWon
-};
 // Logic updated
