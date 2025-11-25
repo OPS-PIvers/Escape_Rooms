@@ -128,7 +128,7 @@ const flavorTextPool = {
     "hat": ["A fancy fedora.", "Not my size.", "M'lady.", "Hides a bad hair day.", "A detective's essential tool."],
     "briefcase": ["Locked. Probably full of papers.", "Smells like leather and business.", "Top secret documents? Nope, just a sandwich.", "Heavy.", "It's definitely not empty, but I can't open it."],
     "globe": ["I can see my house from here!", "Flat earthers beware.", "Spinning around the world.", "Where in the world is Carmen Sandiego?", "The world is your oyster."],
-    "typewriter": ["All work and no play...", "Clickety-clack.", "The ribbon is dry.", "It's writing a novel by itself.", "A relic of the past."],
+    "laptop": ["It's password locked.", "Sticky keys...", "Battery is dead.", "Just a reflection of a tired escapee.", "Clickety-clack."],
     "book_cluster": ["'History of Lint'. Fascinating.", "Just boring encyclopedias.", "A hollowed out book! ...Wait, no, just a book.", "Pages and pages of words.", "Dusty old tomes."],
     "picture": ["A lovely landscape.", "The eyes follow you.", "Is that a hidden safe behind it? No.", "Just art.", "A picture is worth a thousand words."],
     "fire_extinguisher": ["In case of emergency, break glass.", "Safety first!", "Heavy and red.", "Not a toy.", "Hope I don't need this."],

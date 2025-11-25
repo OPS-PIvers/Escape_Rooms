@@ -216,6 +216,21 @@ loadModel('assets/models/computerMouse.glb', {
 }).then(model => { model.name = "mouse"; interactables.push(model); });
 
 createClock(scene);
+
+// Books on Shelf
+const shelfPos = [-4.5, 0, -1];
+const bookHeights = [0.8, 1.6, 2.3];
+bookHeights.forEach(h => {
+    loadModel('assets/models/books.glb', {
+        pos: [shelfPos[0], h, shelfPos[2]],
+        rot: [0, Math.PI / 2, 0],
+        scale: [2.5, 2.5, 2.5],
+        parent: scene
+    }).then(model => {
+         model.name = "book_cluster"; 
+         interactables.push(model);
+    });
+});
 // Filing Cabinets (Back Wall)
 const cabinetPos = [
     { x: -1.0, z: 4.6 },
