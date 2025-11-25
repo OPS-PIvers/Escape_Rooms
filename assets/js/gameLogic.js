@@ -1,4 +1,4 @@
-const questionPool = [{
+let questionPool = [{
     t: "Flour Power",
     q: "Which city was the 'Flour Milling Capital of the World'?",
     o: ["Duluth", "Minneapolis", "St. Paul", "Rochester"],
@@ -74,6 +74,32 @@ const questionPool = [{
     o: ["1849", "1858", "1800", "1890"],
     c: 0
 }];
+
+// Check for custom data
+try {
+    // 1. Check for globally injected data (from "Download HTML" option)
+    if (window.CUSTOM_GAME_DATA && Array.isArray(window.CUSTOM_GAME_DATA)) {
+        questionPool = window.CUSTOM_GAME_DATA;
+        console.log("Loaded custom questions from global variable.");
+    } 
+    // 2. Check for URL parameters (from "Share Link" option)
+    else {
+        const params = new URLSearchParams(window.location.search);
+        const customData = params.get('data');
+        if (customData) {
+            const decoded = atob(customData);
+            const parsed = JSON.parse(decoded);
+            if (Array.isArray(parsed) && parsed.length >= 4) {
+                questionPool = parsed;
+                console.log("Loaded custom questions from URL.");
+            } else {
+                console.warn("Custom data found but invalid (must be array of at least 4 items).");
+            }
+        }
+    }
+} catch (e) {
+    console.error("Failed to load custom data:", e);
+}
 
 let activeClues = [{
     digit: 1,

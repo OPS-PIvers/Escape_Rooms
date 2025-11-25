@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room Mission Builder</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #f0f0f0; }
+        h1 { color: #333; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .question-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .question-item:last-child { border-bottom: none; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-danger { background: #F44336; color: white; }
+        .btn-secondary { background: #9e9e9e; color: white; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        .hidden { display: none; }
+        #outputLink { word-break: break-all; background: #e8f5e9; padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; }
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <h1>Mission Builder</h1>
+    <p>Create your own questions for the Escape Room. You need at least 4 questions.</p>
+
+    <!-- Question Form -->
+    <div class="card">
+        <h2 id="formTitle">Add New Question</h2>
+        <label>Topic / Title (Short)</label>
+        <input type="text" id="qTitle" placeholder="e.g., Algebra Basics">
+        
+        <label>Question Text</label>
+        <input type="text" id="qText" placeholder="e.g., What is 2 + 2?">
+        
+        <div class="row">
+            <div class="col">
+                <label>Option 1</label>
+                <input type="text" class="qOpt" placeholder="Answer A">
+            </div>
+            <div class="col">
+                <label>Option 2</label>
+                <input type="text" class="qOpt" placeholder="Answer B">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Option 3</label>
+                <input type="text" class="qOpt" placeholder="Answer C">
+            </div>
+            <div class="col">
+                <label>Option 4</label>
+                <input type="text" class="qOpt" placeholder="Answer D">
+            </div>
+        </div>
+
+        <label>Correct Option</label>
+        <select id="qCorrect">
+            <option value="0">Option 1</option>
+            <option value="1">Option 2</option>
+            <option value="2">Option 3</option>
+            <option value="3">Option 4</option>
+        </select>
+
+        <div style="margin-top: 10px;">
+            <button class="btn btn-primary" onclick="addQuestion()">Add Question</button>
+            <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+        </div>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+        <h2>Your Questions (<span id="qCount">0</span>)</h2>
+        <div id="qList">
+            <p style="color: #777;">No questions added yet.</p>
+        </div>
+    </div>
+
+    <!-- Export -->
+    <div class="card">
+        <h2>Share Your Mission</h2>
+
+        <!-- HOSTED MODE: Link Sharing -->
+        <div id="shareLinkSection">
+            <p><strong>Option 1 (Recommended):</strong> Generate a web link. Send this link to your students.</p>
+            <button class="btn btn-success" onclick="generateLink()">Generate Share Link</button>
+            <div id="linkContainer" class="hidden">
+                <p>Copy this link and share it with your students:</p>
+                <div id="outputLink"></div>
+            </div>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        </div>
+
+        <!-- LOCAL MODE WARNING -->
+        <div id="localWarning" class="hidden" style="background: #fff3cd; padding: 15px; border-left: 5px solid #ffc107; margin-bottom: 20px;">
+            <strong>⚠️ You are running this file locally (Offline).</strong>
+            <p style="margin: 5px 0 0 0;">"Share Links" only work if this game is hosted on a website. Since you are running this from a folder, <strong>you must use the Download option below.</strong></p>
+        </div>
+
+        <p><strong><span id="downloadLabel">Option 2 (Backup):</span></strong> Download a playable HTML file. Email this new file to your students.</p>
+        <button class="btn btn-primary" onclick="downloadHTML()">Download Playable HTML File</button>
+    </div>
+
+    <script>
+        // Detect if running locally via file:// protocol
+        if (window.location.protocol === 'file:') {
+            document.getElementById('shareLinkSection').style.display = 'none';
+            document.getElementById('localWarning').classList.remove('hidden');
+            document.getElementById('downloadLabel').textContent = "Step 3: Save & Share"; // Rename "Option 2" to be the primary step
+        }
+
+        let questions = [];
+        let editingIndex = -1;
+
+        function renderList() {
+            const list = document.getElementById('qList');
+            document.getElementById('qCount').textContent = questions.length;
+            if (questions.length === 0) {
+                list.innerHTML = "<p style='color: #777;'>No questions added yet.</p>";
+                return;
+            }
+            list.innerHTML = "";
+            questions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'question-item';
+                div.innerHTML = "`
+                    <div>
+                        <strong>${idx + 1}. ${q.t}</strong><br>
+                        <small>${q.q}</small>
+                    </div>
+                    <div>
+                        <button class=\"btn btn-danger\" style=\"padding: 4px 8px; font-size: 12px;\" onclick=\"deleteQuestion(${idx})">Delete</button>
+                        <button class=\"btn btn-secondary\" style=\"padding: 4px 8px; font-size: 12px;\" onclick=\"editQuestion(${idx})">Edit</button>
+                    </div>
+                `";
+                list.appendChild(div);
+            });
+        }
+
+        function addQuestion() {
+            const title = document.getElementById('qTitle').value.trim();
+            const text = document.getElementById('qText').value.trim();
+            const opts = Array.from(document.getElementsByClassName('qOpt')).map(i => i.value.trim());
+            const correct = parseInt(document.getElementById('qCorrect').value);
+
+            if (!title || !text || opts.some(o => !o)) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const newQ = { t: title, q: text, o: opts, c: correct };
+
+            if (editingIndex >= 0) {
+                questions[editingIndex] = newQ;
+                editingIndex = -1;
+                document.getElementById('formTitle').textContent = "Add New Question";
+                document.querySelector('.btn-primary').textContent = "Add Question";
+            } else {
+                questions.push(newQ);
+            }
+
+            clearForm();
+            renderList();
+        }
+
+        function deleteQuestion(idx) {
+            if(confirm("Remove this question?")) {
+                questions.splice(idx, 1);
+                renderList();
+            }
+        }
+
+        function editQuestion(idx) {
+            const q = questions[idx];
+            document.getElementById('qTitle').value = q.t;
+            document.getElementById('qText').value = q.q;
+            const inputs = document.getElementsByClassName('qOpt');
+            q.o.forEach((opt, i) => inputs[i].value = opt);
+            document.getElementById('qCorrect').value = q.c;
+            
+            editingIndex = idx;
+            document.getElementById('formTitle').textContent = "Edit Question " + (idx + 1);
+            document.querySelector('.btn-primary').textContent = "Update Question";
+        }
+
+        function clearForm() {
+            document.getElementById('qTitle').value = "";
+            document.getElementById('qText').value = "";
+            Array.from(document.getElementsByClassName('qOpt')).forEach(i => i.value = "");
+            document.getElementById('qCorrect').value = 0;
+            editingIndex = -1;
+            document.getElementById('formTitle').textContent = "Add New Question";
+            document.querySelector('.btn-primary').textContent = "Add Question";
+        }
+
+        function generateLink() {
+            if (questions.length < 4) {
+                alert("You need at least 4 questions for the game to work!");
+                return;
+            }
+            const json = JSON.stringify(questions);
+            const encoded = btoa(json);
+            // Assume builder.html is in the same dir as office.html
+            const baseUrl = window.location.href.replace('builder.html', 'office.html');
+            const fullUrl = baseUrl + "?data=" + encoded;
+            
+            document.getElementById('linkContainer').classList.remove('hidden');
+            document.getElementById('outputLink').textContent = fullUrl;
+        }
+
+        async function downloadHTML() {
+            if (questions.length < 4) {
+                alert("You need at least 4 questions!");
+                return;
+            }
+            
+            try {
+                // Fetch the original game file
+                const response = await fetch('office.html');
+                if (!response.ok) throw new Error("Could not find office.html");
+                let htmlContent = await response.text();
+
+                // Inject the data
+                const json = JSON.stringify(questions);
+                const scriptInjection = `
+    <script>
+        // INJECTED CUSTOM QUESTIONS
+        (function() {
+            window.CUSTOM_GAME_DATA = ${json};
+        })();
+    <\/script>`;
+                
+                // Insert before the main script
+                const insertPoint = htmlContent.indexOf('<script type="module" src="assets/js/main.js">');
+                if (insertPoint === -1) throw new Error("Could not find insertion point in office.html");
+                
+                let newHtml = htmlContent.slice(0, insertPoint) + scriptInjection + "\n    " + htmlContent.slice(insertPoint);
+
+                // REWRITE ASSET PATHS TO ABSOLUTE URLS
+                // This ensures the downloaded file can still find the .css and .js files on the server
+                // even if the teacher saves it to their Desktop.
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                
+                // Replace relative assets/ paths with absolute ones
+                // Regex matches src="assets/... or href="assets/...
+                newHtml = newHtml.replace(/(src|href)="assets\//g, `$1="${baseUrl}assets/`);
+
+                // Trigger download
+                const blob = new Blob([newHtml], {type: 'text/html'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'MyEscapeRoom.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (e) {
+                alert("Error generating file: " + e.message);
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>
