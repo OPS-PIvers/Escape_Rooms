@@ -7,7 +7,8 @@ import {
     questionPool,
     safeAttempts,
     setHasSkeletonKey,
-    gameMode
+    gameMode,
+    winningObject
 } from './gameLogic.js';
 let isInteracting = false;
 let currentCode = "";
@@ -164,6 +165,7 @@ function showModal(objName, {
     doorPivot,
     finalTimeStr
 }) {
+    // --- DOOR INTERACTION ---
     if (objName === "door") {
         if (gameMode === "code_door") {
             currentCode = "";
@@ -172,9 +174,36 @@ function showModal(objName, {
             isInteracting = true;
             return;
         }
-        // Classic Mode
+        if (gameMode === "access_cards") {
+            const solvedCount = activeClues.filter(c => c.solved).length;
+            if (solvedCount >= 4) {
+                triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
+            } else {
+                modalTitle.textContent = "ACCESS DENIED";
+                modalContent.innerHTML = `<p>Security Door.</p><p>Requires 4 Access Cards.</p><p>Cards Found: ${solvedCount} / 4</p>`;
+                optionsContainer.innerHTML = "";
+                modalFeedback.textContent = "";
+                modal.style.display = 'block';
+                isInteracting = true;
+            }
+            return;
+        }
+        if (gameMode === "hidden_key") {
+            if (hasSkeletonKey) { // Set by finding the object
+                triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
+            } else {
+                modalTitle.textContent = "LOCKED";
+                modalContent.innerHTML = "<p>Locked. The key is hidden somewhere in this room.</p>";
+                optionsContainer.innerHTML = "";
+                modalFeedback.textContent = "";
+                modal.style.display = 'block';
+                isInteracting = true;
+            }
+            return;
+        }
+        // Classic
         if (hasSkeletonKey) {
-            triggerVictory(finalTimeStr);
+            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
         } else {
             modalTitle.textContent = "LOCKED";
             modalContent.innerHTML = "<p>The door is locked tight.</p><p>It requires a specific key.</p>";
@@ -186,37 +215,64 @@ function showModal(objName, {
         return;
     }
 
+    // --- SAFE INTERACTION ---
     if (objName === "safe") {
-        if (gameMode === "code_door") {
+        if (gameMode === "classic") {
+            currentCode = "";
+            renderKeypad("SAFE LOCK");
+            modal.style.display = 'block';
+            isInteracting = true;
+        } else {
             modalTitle.textContent = "SAFE";
-            modalContent.innerHTML = "<p>It's locked. The keypad seems broken or disabled.</p><p>Maybe the code is for the door?</p>";
+            modalContent.innerHTML = "<p>It seems inactive or empty in this mission.</p>";
             optionsContainer.innerHTML = "";
             modalFeedback.textContent = "";
             modal.style.display = 'block';
             isInteracting = true;
-            return;
         }
-        currentCode = "";
-        renderKeypad("SAFE LOCK");
-        modal.style.display = 'block';
-        isInteracting = true;
         return;
     }
 
-    const slotIndex = locationMap[objName];
+    // --- OBJECT INTERACTION ---
     modalFeedback.textContent = "";
     optionsContainer.innerHTML = "";
-    if (slotIndex === null || slotIndex === undefined) {
+    
+    let qIndex = -1;
+    let slotIndex = -1; // Only for tracking solved state in activeClues
+    
+    if (gameMode === "hidden_key") {
+        qIndex = locationMap[objName];
+    } else {
+        slotIndex = locationMap[objName];
+        if (slotIndex !== null && slotIndex !== undefined) {
+            const clue = activeClues[slotIndex];
+            qIndex = clue.qIndex;
+            if (clue.solved) {
+                modalTitle.textContent = "SOLVED";
+                let msg = "";
+                if (gameMode === "access_cards") msg = "You already found the Access Card here.";
+                else msg = `You found a number: ${clue.digit}`;
+                modalContent.innerHTML = `<p>${msg}</p>`;
+                modal.style.display = 'block';
+                isInteracting = true;
+                return;
+            }
+        }
+    }
+
+    if (qIndex === -1 || qIndex === null || qIndex === undefined) {
+        // Flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
         modalTitle.textContent = displayName;
         const flavor = getFlavorText(objName);
         modalContent.innerHTML = `<p>${flavor}</p>`;
+        modal.style.display = 'block';
+        isInteracting = true;
     } else {
-        const clueData = activeClues[slotIndex];
-        const qData = questionPool[clueData.qIndex];
-        if (clueData.solved) {
-            modalTitle.textContent = "SOLVED";
-            modalContent.innerHTML = `<p>${qData.q}</p><p style='color: #4caf50;'><strong>You found a number: ${clueData.digit}</strong></p>`;
+        // Show Question
+        const qData = questionPool[qIndex];
+        if (!qData) {
+             modalContent.innerHTML = "<p>Error: Missing Question Data</p>"; // Safety
         } else {
             modalTitle.textContent = qData.t;
             modalContent.innerHTML = `<div class='question-box'><strong>${qData.q}</strong></div>`;
@@ -235,9 +291,9 @@ function showModal(objName, {
                 optionsContainer.appendChild(btn);
             });
         }
+        modal.style.display = 'block';
+        isInteracting = true;
     }
-    modal.style.display = 'block';
-    isInteracting = true; // controls.unlock() removed
 }
 
 function resetGameLogic() {
@@ -258,7 +314,7 @@ function resetGameLogic() {
 function checkKeypadCode() {
     if (currentCode === "1858") {
         if (gameMode === "code_door") {
-            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00"); // Fix time pass
+            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00"); 
         } else {
             modalTitle.textContent = "SAFE UNLOCKED";
             modalContent.innerHTML = "<h2 style='color:#4caf50'>SUCCESS</h2><p>The safe opens.</p><p>Inside, you find an old <strong>SKELETON KEY</strong>.</p>";
@@ -293,13 +349,38 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
     if (isCorrect) {
         btnElement.classList.add('correct');
         modalFeedback.style.color = "#4caf50";
-        modalFeedback.innerHTML = `CORRECT! <br>You found a number: <strong>${activeClues[slotIndex].digit}</strong>`;
-        activeClues[slotIndex].solved = true;
+        
+        if (gameMode === "hidden_key") {
+            if (objName === winningObject) {
+                modalFeedback.innerHTML = `CORRECT! <br><strong>YOU FOUND THE HIDDEN KEY!</strong>`;
+                setHasSkeletonKey(true); 
+                // Add "Exit" button
+                const exitBtn = document.createElement('button');
+                exitBtn.className = 'option-btn';
+                exitBtn.style.backgroundColor = "#4caf50";
+                exitBtn.style.marginTop = "10px";
+                exitBtn.textContent = "GO TO DOOR";
+                exitBtn.onclick = () => { closeModal(); };
+                optionsContainer.appendChild(exitBtn);
+            } else {
+                modalFeedback.innerHTML = `CORRECT! <br>But the key is not here. Keep looking!`;
+            }
+        } else if (gameMode === "access_cards") {
+            modalFeedback.innerHTML = `CORRECT! <br>You found an <strong>ACCESS CARD</strong>.`;
+            activeClues[slotIndex].solved = true;
+        } else {
+            modalFeedback.innerHTML = `CORRECT! <br>You found a number: <strong>${activeClues[slotIndex].digit}</strong>`;
+            activeClues[slotIndex].solved = true;
+        }
     } else {
         btnElement.classList.add('wrong');
         modalFeedback.style.color = "#e57373";
-        moveClue(slotIndex, objName);
-        modalFeedback.innerHTML = `WRONG! The clue has vanished.<br>You must find it again elsewhere.`;
+        if (gameMode !== "hidden_key") {
+            moveClue(slotIndex, objName);
+            modalFeedback.innerHTML = `WRONG! The clue has vanished.<br>You must find it again elsewhere.`;
+        } else {
+            modalFeedback.innerHTML = `WRONG!`;
+        }
     }
 }
 

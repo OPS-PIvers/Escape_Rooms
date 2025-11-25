@@ -75,7 +75,8 @@ let questionPool = [{
     c: 0
 }];
 
-let gameMode = "classic"; // "classic" (Safe->Key), "code_door" (Code unlocks Door directly)
+let gameMode = "classic"; // "classic", "code_door", "access_cards", "hidden_key"
+let winningObject = null;
 
 // Check for custom data
 try {
@@ -146,13 +147,23 @@ let locationMap = {};
 function initGame() {
     locations.forEach(loc => locationMap[loc] = null);
     questionPool.sort(() => 0.5 - Math.random());
-    for (let i = 0; i < 4; i++) {
-        activeClues[i].qIndex = i;
-        activeClues[i].solved = false;
-    }
-    const shuffledLocs = [...locations].sort(() => 0.5 - Math.random());
-    for (let i = 0; i < 4; i++) {
-        locationMap[shuffledLocs[i]] = i;
+    
+    if (gameMode === "hidden_key") {
+        winningObject = locations[Math.floor(Math.random() * locations.length)];
+        // Map every location to a question index
+        locations.forEach((loc, i) => {
+            locationMap[loc] = i % questionPool.length;
+        });
+    } else {
+        // Classic / Code / Cards
+        for (let i = 0; i < 4; i++) {
+            activeClues[i].qIndex = i % questionPool.length;
+            activeClues[i].solved = false;
+        }
+        const shuffledLocs = [...locations].sort(() => 0.5 - Math.random());
+        for (let i = 0; i < 4; i++) {
+            locationMap[shuffledLocs[i]] = i;
+        }
     }
     safeAttempts = 3;
 }
@@ -192,5 +203,6 @@ export {
     locationMap,
     initGame,
     moveClue,
-    gameMode
+    gameMode,
+    winningObject
 };
