@@ -406,8 +406,8 @@ loadModel('assets/models/coatRackStanding.glb', {
 // --- NEW INTERACTIVE OBJECTS ---
 // 1. Globe (On cabinet)
 const globeGroup = new THREE.Group();
-globeGroup.position.set(0, 1.5, 0);
-cabinetGroup.add(globeGroup);
+globeGroup.position.set(0, 1.5, 4.6); // On top of middle filing cabinet
+scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
 globeGroup.add(gBase);
 
@@ -488,10 +488,10 @@ loadModel('assets/models/pottedPlant.glb', {
 
 // 5. Trophy (Shelf)
 const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
-trophy.position.set(1.0, 2.8, 0); // On high shelf
+trophy.position.set(-4.5, 2.8, 1.0); // On bookcase shelf
 trophy.name = "trophy";
 interactables.push(trophy);
-shelfGroup.add(trophy);
+scene.add(trophy);
 
 // 7. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
@@ -514,21 +514,7 @@ loadModel('assets/models/trashcan.glb', {
     }
 });
 
-// 8. Lunchbox (Coffee Table) (Detailed)
-const lunchGroup = new THREE.Group();
-lunchGroup.position.set(-0.2, 0.55, 0.1);
-coffeeTable.add(lunchGroup);
-const lunchBody = createBox(0.3, 0.2, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
-lunchBody.name = "lunchbox";
-interactables.push(lunchBody);
-const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 12), new THREE.MeshBasicMaterial({
-    color: 0x333333
-}));
-lHandle.position.set(0, 0.1, 0);
-lHandle.rotation.x = Math.PI / 2;
-lunchGroup.add(lHandle);
-createBox(0.04, 0.05, 0.01, 0xcccccc, -0.08, 0.05, 0.1, lunchGroup); // Latch
-createBox(0.04, 0.05, 0.01, 0xcccccc, 0.08, 0.05, 0.1, lunchGroup); // Latch
+// 8. Lunchbox is already created in the coffee table model callback above (lines 352-363)
 
 // 9. Framed Picture (Right Wall)
 const pictureGroup = new THREE.Group();
