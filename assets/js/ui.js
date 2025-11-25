@@ -8,7 +8,9 @@ import {
     safeAttempts,
     setHasSkeletonKey,
     gameMode,
-    winningObject
+    winningObject,
+    currentStep,
+    advanceStep
 } from './gameLogic.js';
 let isInteracting = false;
 let currentCode = "";
@@ -186,6 +188,18 @@ function showModal(objName, {
                 modal.style.display = 'block';
                 isInteracting = true;
             }
+        if (gameMode === "trail") {
+            if (currentStep >= 4) {
+                triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
+            } else {
+                const nextObj = Object.keys(locationMap).find(key => locationMap[key] === currentStep);
+                const niceName = nextObj ? nextObj.replace(/_/g, ' ').toUpperCase() : "FIRST CLUE";
+                modalTitle.textContent = "LOCKED";
+                modalContent.innerHTML = `<p>The door is sealed.</p><p>Hint: Look for the <strong>${niceName}</strong>.</p>`;
+                optionsContainer.innerHTML = "";
+                modal.style.display = 'block';
+                isInteracting = true;
+            }
             return;
         }
         if (gameMode === "hidden_key") {
@@ -239,6 +253,28 @@ function showModal(objName, {
     
     let qIndex = -1;
     let slotIndex = -1; // Only for tracking solved state in activeClues
+    
+    if (gameMode === "trail") {
+        slotIndex = locationMap[objName];
+        if (slotIndex !== null && slotIndex !== undefined) {
+            if (slotIndex > currentStep) {
+                modalTitle.textContent = "LOCKED";
+                modalContent.innerHTML = "<p>You need a clue to open this.</p><p>Solve previous puzzles first.</p>";
+                optionsContainer.innerHTML = "";
+                modal.style.display = 'block';
+                isInteracting = true;
+                return;
+            }
+            if (slotIndex < currentStep) {
+                modalTitle.textContent = "COMPLETED";
+                modalContent.innerHTML = "<p>You already solved this puzzle.</p>";
+                optionsContainer.innerHTML = "";
+                modal.style.display = 'block';
+                isInteracting = true;
+                return;
+            }
+        }
+    }
     
     if (gameMode === "hidden_key") {
         qIndex = locationMap[objName];
@@ -368,6 +404,22 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
         } else if (gameMode === "access_cards") {
             modalFeedback.innerHTML = `CORRECT! <br>You found an <strong>ACCESS CARD</strong>.`;
             activeClues[slotIndex].solved = true;
+        } else if (gameMode === "trail") {
+            const nextStep = advanceStep();
+            if (nextStep >= 4) {
+                 modalFeedback.innerHTML = `CORRECT! <br><strong>CHAIN COMPLETE! ESCAPE UNLOCKED!</strong>`;
+                 const exitBtn = document.createElement('button');
+                 exitBtn.className = 'option-btn';
+                 exitBtn.textContent = "ESCAPE";
+                 exitBtn.style.backgroundColor = "#4caf50";
+                 exitBtn.style.marginTop = "10px";
+                 exitBtn.onclick = () => { triggerVictory("00:00"); };
+                 optionsContainer.appendChild(exitBtn);
+            } else {
+                 const nextObj = Object.keys(locationMap).find(key => locationMap[key] === nextStep);
+                 const niceName = nextObj ? nextObj.replace(/_/g, ' ').toUpperCase() : "NEXT CLUE";
+                 modalFeedback.innerHTML = `CORRECT! <br>New Clue: <strong>Check the ${niceName}</strong>`;
+            }
         } else {
             modalFeedback.innerHTML = `CORRECT! <br>You found a number: <strong>${activeClues[slotIndex].digit}</strong>`;
             activeClues[slotIndex].solved = true;

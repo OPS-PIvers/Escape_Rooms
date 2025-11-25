@@ -131,6 +131,7 @@ let activeClues = [{
 }];
 let hasSkeletonKey = false;
 let safeAttempts = 3;
+let currentStep = 0; // For "trail" mode
 
 // Expanded locations list
 const locations = [
@@ -145,6 +146,7 @@ const locations = [
 let locationMap = {};
 
 function initGame() {
+    currentStep = 0;
     locations.forEach(loc => locationMap[loc] = null);
     questionPool.sort(() => 0.5 - Math.random());
     
@@ -166,6 +168,11 @@ function initGame() {
         }
     }
     safeAttempts = 3;
+}
+
+function advanceStep() {
+    currentStep++;
+    return currentStep;
 }
 
 function moveClue(slotIndex, fromObjName) {
@@ -204,5 +211,7 @@ export {
     initGame,
     moveClue,
     gameMode,
-    winningObject
+    winningObject,
+    currentStep,
+    advanceStep
 };
