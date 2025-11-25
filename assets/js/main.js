@@ -163,7 +163,7 @@ for (let i = 0; i < roomSize; i++) {
 
 // --- PROPS ---
 // Physics constants for object placement
-const DESK_SURFACE_Y = 0.75;  // Desk surface height for 2.5x scaled desk
+const TABLE_SURFACE_Y = 0.75;  // Table/desk surface height for 2.5x scaled furniture
 const CABINET_TOP_Y = 1.0;     // Filing cabinet top height for 2.5x scaled cabinet
 const BOOKSHELF_HEIGHTS = [0.75, 1.5, 2.25];  // Bookcase shelf heights for 2.5x scaled bookcase
 
@@ -197,21 +197,21 @@ loadModel('assets/models/bookcaseClosed.glb', {
 
 // Computer (On Desk)
 loadModel('assets/models/computerScreen.glb', {
-    pos: [0, DESK_SURFACE_Y, -0.3],
+    pos: [0, TABLE_SURFACE_Y, -0.3],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "computer"; interactables.push(model); });
 
 loadModel('assets/models/computerKeyboard.glb', {
-    pos: [0, DESK_SURFACE_Y, 0.2],
+    pos: [0, TABLE_SURFACE_Y, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "keyboard"; interactables.push(model); });
 
 loadModel('assets/models/computerMouse.glb', {
-    pos: [0.5, DESK_SURFACE_Y, 0.2],
+    pos: [0.5, TABLE_SURFACE_Y, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -242,8 +242,8 @@ loadModel('assets/models/books.glb', {
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
-     model.name = 'book_cluster_4';  // 4th book cluster for gameLogic.js
-     interactables.push(model);
+    model.name = 'book_cluster_4';  // 4th book cluster for gameLogic.js
+    interactables.push(model);
 });
 // Filing Cabinets (Back Wall)
 const cabinetPos = [
@@ -429,7 +429,8 @@ loadModel('assets/models/coatRackStanding.glb', {
 // --- NEW INTERACTIVE OBJECTS ---
 // 1. Globe (On cabinet)
 const globeGroup = new THREE.Group();
-globeGroup.position.set(0, CABINET_TOP_Y, 4.6); // On top of middle filing cabinet
+// Position at cabinet top + half of base height (0.05/2 = 0.025) so base sits on surface
+globeGroup.position.set(0, CABINET_TOP_Y + 0.025, 4.6);
 scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
 globeGroup.add(gBase);
@@ -490,7 +491,7 @@ loadModel('assets/models/radio.glb', {
 
 // 3. Laptop (On side table)
 loadModel('assets/models/laptop.glb', {
-    pos: [-1.2, DESK_SURFACE_Y, 1.6],
+    pos: [-1.2, TABLE_SURFACE_Y, 1.6],
     rot: [0, 0.5, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -511,7 +512,8 @@ loadModel('assets/models/pottedPlant.glb', {
 
 // 5. Trophy (On top bookcase shelf)
 const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
-trophy.position.set(-4.5, BOOKSHELF_HEIGHTS[2], 1.0); // On bookcase top shelf
+// Position at shelf height + half of trophy height (0.3/2 = 0.15) so base sits on shelf
+trophy.position.set(-4.5, BOOKSHELF_HEIGHTS[2] + 0.15, 1.0);
 trophy.name = "trophy";
 interactables.push(trophy);
 scene.add(trophy);
@@ -567,7 +569,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, DESK_SURFACE_Y, -0.8],
+    pos: [0.8, TABLE_SURFACE_Y, -0.8],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
