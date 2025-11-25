@@ -115,18 +115,53 @@ createBox(20, 0.2, 20, mat.trim, 0, 4.1, 0, scene);
 // Desk
 loadModel('assets/models/desk.glb', {
     pos: [0, 0, 0],
-    scale: [2.5, 2.5, 2.5], // Kenney models are small
+    scale: [2.5, 2.5, 2.5], 
     parent: scene
 });
 // Chair
 loadModel('assets/models/chairDesk.glb', {
     pos: [0, 0, 1.5],
-    rot: [0, Math.PI, 0], // Facing desk
+    rot: [0, Math.PI, 0], 
     scale: [2.5, 2.5, 2.5],
     parent: scene
 });
 
-createShelves(scene);
+// Shelves (Replacing createShelves)
+loadModel('assets/models/bookcaseOpen.glb', {
+    pos: [-4.5, 0, -1],
+    rot: [0, Math.PI / 2, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+});
+loadModel('assets/models/bookcaseClosed.glb', {
+    pos: [-4.5, 0, 1],
+    rot: [0, Math.PI / 2, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+});
+
+// Computer (On Desk)
+loadModel('assets/models/computerScreen.glb', {
+    pos: [0, 0.8, -0.3],
+    rot: [0, Math.PI, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => { model.name = "computer"; interactables.push(model); });
+
+loadModel('assets/models/computerKeyboard.glb', {
+    pos: [0, 0.8, 0.2],
+    rot: [0, Math.PI, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => { model.name = "keyboard"; interactables.push(model); });
+
+loadModel('assets/models/computerMouse.glb', {
+    pos: [0.5, 0.8, 0.2],
+    rot: [0, Math.PI, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => { model.name = "mouse"; interactables.push(model); });
+
 createClock(scene);
 // Filing Cabinets (Back Wall)
 const cabinetGroup = new THREE.Group();
@@ -195,82 +230,81 @@ function createPaperStack(x, z, parent) {
 createPaperStack(0, 0, tableGroup);
 createPaperStack(-0.8, 0.2, tableGroup);
 
-// Lounge
+// Lounge Area (Replaced with Models)
 const loungeGroup = new THREE.Group();
 loungeGroup.position.set(2.5, 0, 2.5);
 loungeGroup.rotation.y = -Math.PI / 4;
 scene.add(loungeGroup);
-const armChair = new THREE.Group();
-createBox(0.8, 0.4, 0.8, mat.leather, 0, 0.2, 0, armChair);
-createBox(0.8, 0.8, 0.2, mat.leather, 0, 0.6, 0.3, armChair);
-createBox(0.2, 0.6, 0.8, mat.leather, -0.3, 0.3, 0, armChair);
-createBox(0.2, 0.6, 0.8, mat.leather, 0.3, 0.3, 0, armChair);
-loungeGroup.add(armChair);
 
-const coffeeTable = new THREE.Group();
-coffeeTable.position.set(0, 0, -1.2);
-createBox(1.0, 0.05, 0.6, mat.woodDark, 0, 0.4, 0, coffeeTable);
-createBox(0.05, 0.4, 0.05, mat.chrome, -0.45, 0.2, -0.25, coffeeTable);
-createBox(0.05, 0.4, 0.05, mat.chrome, 0.45, 0.2, -0.25, coffeeTable);
-createBox(0.05, 0.4, 0.05, mat.chrome, -0.45, 0.2, 0.25, coffeeTable);
-createBox(0.05, 0.4, 0.05, mat.chrome, 0.45, 0.2, 0.25, coffeeTable);
-loungeGroup.add(coffeeTable);
+// Sofa
+loadModel('assets/models/loungeSofa.glb', {
+    pos: [0, 0, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: loungeGroup
+});
 
-// Mug (Detailed)
-const mugGroup = new THREE.Group();
-mugGroup.position.set(0.2, 0.47, -0.1);
-const mugBody = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16), new THREE.MeshLambertMaterial({
-    color: 0xffffff
-}));
-mugBody.name = "mug";
-interactables.push(mugBody);
-mugGroup.add(mugBody);
-const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), new THREE.MeshLambertMaterial({
-    color: 0xffffff
-}));
-mugHandle.position.set(0.05, 0, 0);
-mugHandle.rotation.z = 0;
-mugGroup.add(mugHandle);
-coffeeTable.add(mugGroup);
+// Coffee Table
+loadModel('assets/models/tableCoffee.glb', {
+    pos: [0, 0, -1.2],
+    scale: [2.5, 2.5, 2.5],
+    parent: loungeGroup
+}).then(model => {
+    // Re-attach props to the new table
+    // Mug
+    const mugGroup = new THREE.Group();
+    mugGroup.position.set(0.2, 0.55, -0.1);
+    const mugBody = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16), new THREE.MeshLambertMaterial({
+        color: 0xffffff
+    }));
+    mugBody.name = "mug";
+    interactables.push(mugBody);
+    mugGroup.add(mugBody);
+    const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), new THREE.MeshLambertMaterial({
+        color: 0xffffff
+    }));
+    mugHandle.position.set(0.05, 0, 0);
+    mugGroup.add(mugHandle);
+    model.add(mugGroup);
 
-// Magazines
-const magazineGroup = new THREE.Group();
-magazineGroup.position.set(-0.2, 0.42, 0.1);
-magazineGroup.rotation.y = -0.3;
-for (let i = 0; i < 3; i++) {
-    const color = i === 0 ? 0xcc0000 : (i === 1 ? 0x0066cc : 0xffcc00);
-    const mag = createBox(0.2, 0.01, 0.28, color, (Math.random() - 0.5) * 0.02, i * 0.01, (Math.random() - 0.5) * 0.02, magazineGroup);
-    mag.rotation.y = (Math.random() - 0.5) * 0.1;
-}
-coffeeTable.add(magazineGroup);
+    // Magazines
+    const magazineGroup = new THREE.Group();
+    magazineGroup.position.set(-0.2, 0.45, 0.1);
+    magazineGroup.rotation.y = -0.3;
+    for (let i = 0; i < 3; i++) {
+        const color = i === 0 ? 0xcc0000 : (i === 1 ? 0x0066cc : 0xffcc00);
+        const mag = createBox(0.2, 0.01, 0.28, color, (Math.random() - 0.5) * 0.02, i * 0.01, (Math.random() - 0.5) * 0.02, magazineGroup);
+        mag.rotation.y = (Math.random() - 0.5) * 0.1;
+    }
+    model.add(magazineGroup);
 
-// Remote Control
-createBox(0.05, 0.02, 0.15, 0x111111, 0.3, 0.41, 0, coffeeTable, 0, 0.5, 0);
+    // Lunchbox
+    const lunchGroup = new THREE.Group();
+    lunchGroup.position.set(-0.2, 0.55, 0.1);
+    model.add(lunchGroup);
+    const lunchBody = createBox(0.3, 0.2, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
+    lunchBody.name = "lunchbox";
+    interactables.push(lunchBody);
+    const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 12), new THREE.MeshBasicMaterial({
+        color: 0x333333
+    }));
+    lHandle.position.set(0, 0.1, 0);
+    lHandle.rotation.x = Math.PI / 2;
+    lunchGroup.add(lHandle);
+});
 
-// Floor Lamp (Detailed)
-const floorLamp = new THREE.Group();
-floorLamp.position.set(1.0, 0, 0.5);
-createBox(0.3, 0.05, 0.3, mat.chrome, 0, 0.025, 0, floorLamp); // Base
-createBox(0.04, 1.8, 0.04, mat.chrome, 0, 0.9, 0, floorLamp); // Pole
-const lampshade = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, 0.4, 16, 1, true), new THREE.MeshLambertMaterial({
-    color: 0xffeebb,
-    side: THREE.DoubleSide
-}));
-lampshade.position.set(0, 1.9, 0);
-const lampHit = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.5), new THREE.MeshBasicMaterial({
-    visible: false
-}));
-lampHit.position.set(0, 1.9, 0);
-lampHit.name = "lamp";
-interactables.push(lampHit);
-floorLamp.add(lampHit);
-floorLamp.add(lampshade);
-const lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshBasicMaterial({
-    color: 0xffffcc
-}));
-lampBulb.position.set(0, 1.8, 0);
-floorLamp.add(lampBulb);
-loungeGroup.add(floorLamp);
+// Floor Lamp
+loadModel('assets/models/lampRoundFloor.glb', {
+    pos: [1.0, 0, 0.5],
+    scale: [2.5, 2.5, 2.5],
+    parent: loungeGroup
+}).then(model => {
+    model.name = "lamp";
+    interactables.push(model);
+    // Add actual light
+    const light = new THREE.PointLight(0xffeebb, 0.5, 5);
+    light.position.set(0, 1.5, 0);
+    model.add(light);
+});
 
 const bagGroup = new THREE.Group();
 bagGroup.position.set(2.5, 0, 4.0);
@@ -281,18 +315,22 @@ interactables.push(bagBody);
 createBox(0.02, 0.1, 0.1, mat.chrome, 0, 0.4, 0, bagGroup);
 scene.add(bagGroup);
 
-const rackGroup = new THREE.Group();
-rackGroup.position.set(4.5, 0, -2.5);
-createBox(0.05, 1.8, 0.05, mat.woodDark, 0, 0.9, 0, rackGroup);
-const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1), new THREE.MeshStandardMaterial({
-    color: 0x333333
-}));
-hat.position.set(0.1, 1.82, 0);
-hat.rotation.z = 0.2;
-hat.name = "hat";
-interactables.push(hat);
-rackGroup.add(hat);
-scene.add(rackGroup);
+// Coat Rack
+loadModel('assets/models/coatRackStanding.glb', {
+    pos: [4.5, 0, -2.0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    // Add Hat
+    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1), new THREE.MeshStandardMaterial({
+        color: 0x333333
+    }));
+    hat.position.set(0.1, 1.7, 0);
+    hat.rotation.z = 0.2;
+    hat.name = "hat";
+    interactables.push(hat);
+    model.add(hat);
+});
 
 // --- NEW INTERACTIVE OBJECTS ---
 // 1. Globe (On cabinet)
@@ -346,27 +384,29 @@ interactables.push(gSphere);
 globeGroup.add(gSphere);
 
 // 2. Radio (Window Seat)
-const radio = createBox(0.4, 0.25, 0.2, 0x5d4037, -3.5, 0.35, -4.2, scene, 0, 0.2, 0, "radio");
-createBox(0.1, 0.1, 0.02, 0xdddddd, 0.1, 0, 0.1, radio); // Speaker mesh area
+loadModel('assets/models/radio.glb', {
+    pos: [-3.5, 0.5, -4.2], 
+    rot: [0, 0.5, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "radio";
+    interactables.push(model);
+});
 
 // 3. Typewriter (Table)
 const typewriter = createBox(0.4, 0.15, 0.35, 0x222222, 0.5, 0.85, -0.2, tableGroup, 0, -0.2, 0, "typewriter");
 createBox(0.3, 0.1, 0.1, 0xdddddd, 0, 0.1, -0.1, typewriter); // Paper roller
 
 // 4. Plant (Corner)
-const plantGroup = new THREE.Group();
-plantGroup.position.set(-4.5, 0, -4.5);
-const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.4), new THREE.MeshLambertMaterial({
-    color: 0x8d6e63
-}));
-pot.position.y = 0.2;
-plantGroup.add(pot);
-const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4), mat.plantGreen);
-foliage.position.y = 0.6;
-foliage.name = "plant";
-interactables.push(foliage);
-plantGroup.add(foliage);
-scene.add(plantGroup);
+loadModel('assets/models/pottedPlant.glb', {
+    pos: [-4.5, 0, -4.5],
+    scale: [3.0, 3.0, 3.0],
+    parent: scene
+}).then(model => {
+    model.name = "plant";
+    interactables.push(model);
+});
 
 // 5. Trophy (Shelf)
 const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
@@ -376,31 +416,25 @@ interactables.push(trophy);
 shelfGroup.add(trophy);
 
 // 7. Trash Can (Under desk)
-const trashCan = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.5), mat.trashCan);
-trashCan.position.set(2.5, 0.25, -2.0);
-trashCan.name = "trash";
-interactables.push(trashCan);
-scene.add(trashCan);
-
-// Crumpled Paper
-for (let i = 0; i < 5; i++) {
-    const paperBall = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat.paper);
-    // Inside can
-    if (i < 3) {
+loadModel('assets/models/trashcan.glb', {
+    pos: [2.5, 0, -2.0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "trash";
+    interactables.push(model);
+    
+    // Crumpled Paper (Add to trash model)
+    for (let i = 0; i < 3; i++) {
+        const paperBall = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat.paper);
         paperBall.position.set(
-            trashCan.position.x + (Math.random() - 0.5) * 0.1,
-            0.1 + Math.random() * 0.2,
-            trashCan.position.z + (Math.random() - 0.5) * 0.1
+            (Math.random() - 0.5) * 0.1,
+            0.2 + Math.random() * 0.2,
+            (Math.random() - 0.5) * 0.1
         );
-    } else { // Outside can
-        paperBall.position.set(
-            trashCan.position.x + (Math.random() - 0.5) * 0.5,
-            0.025,
-            trashCan.position.z + (Math.random() - 0.5) * 0.5
-        );
+        model.add(paperBall);
     }
-    scene.add(paperBall);
-}
+});
 
 // 8. Lunchbox (Coffee Table) (Detailed)
 const lunchGroup = new THREE.Group();
@@ -470,13 +504,15 @@ deskLamp.add(dlHead);
 scene.add(deskLamp);
 
 // 11. Cardboard Box (Corner)
-const boxGroup = new THREE.Group();
-boxGroup.position.set(-4.2, 0.3, 4.2);
-boxGroup.rotation.y = 0.4;
-    createBox(0.6, 0.6, 0.6, 0xcdb38b, 0, 0, 0, boxGroup, 0, 0, 0, "cardboard_box");
-createBox(0.58, 0.01, 0.28, 0xbe9e6d, 0, 0.305, -0.15, boxGroup); // Flap
-createBox(0.58, 0.01, 0.28, 0xbe9e6d, 0, 0.305, 0.15, boxGroup); // Flap
-scene.add(boxGroup);
+loadModel('assets/models/cardboardBoxOpen.glb', {
+    pos: [-4.2, 0, 4.2],
+    rot: [0, 0.4, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "cardboard_box";
+    interactables.push(model);
+});
 
 // 12. Fire Extinguisher (Near Door)
 const feGroup = new THREE.Group();
