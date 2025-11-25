@@ -162,10 +162,15 @@ for (let i = 0; i < roomSize; i++) {
 }
 
 // --- PROPS ---
+// Physics constants for object placement
+const DESK_SURFACE_Y = 0.75;  // Desk surface height for 2.5x scaled desk
+const CABINET_TOP_Y = 1.0;     // Filing cabinet top height for 2.5x scaled cabinet
+const BOOKSHELF_HEIGHTS = [0.75, 1.5, 2.25];  // Bookcase shelf heights for 2.5x scaled bookcase
+
 // Desk
 loadModel('assets/models/desk.glb', {
     pos: [0, 0, 0],
-    scale: [2.5, 2.5, 2.5], 
+    scale: [2.5, 2.5, 2.5],
     parent: scene
 });
 // Chair
@@ -190,23 +195,23 @@ loadModel('assets/models/bookcaseClosed.glb', {
     parent: scene
 });
 
-// Computer (On Desk - desk surface at y=0.75 for 2.5x scaled desk)
+// Computer (On Desk)
 loadModel('assets/models/computerScreen.glb', {
-    pos: [0, 0.75, -0.3],
+    pos: [0, DESK_SURFACE_Y, -0.3],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "computer"; interactables.push(model); });
 
 loadModel('assets/models/computerKeyboard.glb', {
-    pos: [0, 0.75, 0.2],
+    pos: [0, DESK_SURFACE_Y, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "keyboard"; interactables.push(model); });
 
 loadModel('assets/models/computerMouse.glb', {
-    pos: [0.5, 0.75, 0.2],
+    pos: [0.5, DESK_SURFACE_Y, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -214,20 +219,31 @@ loadModel('assets/models/computerMouse.glb', {
 
 createClock(scene);
 
-// Books on Shelf (properly aligned to bookcase shelf heights)
-const shelfPos = [-4.5, 0, -1];
-// Standard bookcase has shelves at these heights when scaled 2.5x
-const bookHeights = [0.75, 1.5, 2.25];
-bookHeights.forEach((h, index) => {
+// Books on Shelves (properly aligned to bookcase shelf heights)
+// Place books on first bookcase (open)
+const bookcase1Pos = [-4.5, 0, -1];
+BOOKSHELF_HEIGHTS.forEach((h, index) => {
     loadModel('assets/models/books.glb', {
-        pos: [shelfPos[0], h, shelfPos[2]],
+        pos: [bookcase1Pos[0], h, bookcase1Pos[2]],
         rot: [0, Math.PI / 2, 0],
         scale: [2.5, 2.5, 2.5],
         parent: scene
     }).then(model => {
-         model.name = `book_cluster_${index}`;
+         model.name = `book_cluster_${index + 1}`;  // 1-based naming to match gameLogic.js
          interactables.push(model);
     });
+});
+
+// Place 4th book cluster on second bookcase (closed)
+const bookcase2Pos = [-4.5, 0, 1];
+loadModel('assets/models/books.glb', {
+    pos: [bookcase2Pos[0], BOOKSHELF_HEIGHTS[0], bookcase2Pos[2]],
+    rot: [0, Math.PI / 2, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+     model.name = 'book_cluster_4';  // 4th book cluster for gameLogic.js
+     interactables.push(model);
 });
 // Filing Cabinets (Back Wall)
 const cabinetPos = [
@@ -264,16 +280,16 @@ createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox); // Door seam
 scene.add(safeGroup);
 
 // Side Table
-function createPaperStack(x, z, parent, paperIndex = 0) {
+function createPaperStack(x, z, parent, stackOffset = 0) {
     const group = new THREE.Group();
     group.position.set(x, 0, z); // Y is relative to parent
-    // Use fixed slight rotations for realistic appearance instead of random
-    const rotationStep = 0.05;
+    // Create realistic paper stack with slight rotation variations
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
         paper.rotation.x = -Math.PI / 2;
-        // Alternate slight rotations for realistic stack
-        paper.rotation.z = (i % 2 === 0 ? 1 : -1) * rotationStep * (i % 3) + paperIndex * 0.1;
+        // Simple alternating rotation pattern with slight variation per stack
+        const direction = (i % 2 === 0) ? 1 : -1;
+        paper.rotation.z = direction * 0.05 * (i % 3) + stackOffset * 0.1;
         paper.position.y = i * 0.005;
         group.add(paper);
     }
@@ -342,15 +358,15 @@ loadModel('assets/models/tableCoffee.glb', {
     magazineGroup.position.set(-0.2, 0.45, 0.1);
     magazineGroup.rotation.y = -0.3;
     // Create a neat stack with slight offsets
+    const magazineColors = [0xcc0000, 0x0066cc, 0xffcc00];
     const magazineOffsets = [
         { x: 0, z: 0, rot: 0 },
         { x: 0.01, z: 0.01, rot: 0.05 },
         { x: -0.01, z: 0.01, rot: -0.03 }
     ];
     for (let i = 0; i < 3; i++) {
-        const color = i === 0 ? 0xcc0000 : (i === 1 ? 0x0066cc : 0xffcc00);
         const offset = magazineOffsets[i];
-        const mag = createBox(0.2, 0.01, 0.28, color, offset.x, i * 0.01, offset.z, magazineGroup);
+        const mag = createBox(0.2, 0.01, 0.28, magazineColors[i], offset.x, i * 0.01, offset.z, magazineGroup);
         mag.rotation.y = offset.rot;
     }
     model.add(magazineGroup);
@@ -413,7 +429,7 @@ loadModel('assets/models/coatRackStanding.glb', {
 // --- NEW INTERACTIVE OBJECTS ---
 // 1. Globe (On cabinet)
 const globeGroup = new THREE.Group();
-globeGroup.position.set(0, 1.0, 4.6); // On top of middle filing cabinet (proper height)
+globeGroup.position.set(0, CABINET_TOP_Y, 4.6); // On top of middle filing cabinet
 scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
 globeGroup.add(gBase);
@@ -472,9 +488,9 @@ loadModel('assets/models/radio.glb', {
     interactables.push(model);
 });
 
-// 3. Laptop
+// 3. Laptop (On side table)
 loadModel('assets/models/laptop.glb', {
-    pos: [-1.2, 0.75, 1.6],
+    pos: [-1.2, DESK_SURFACE_Y, 1.6],
     rot: [0, 0.5, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -493,9 +509,9 @@ loadModel('assets/models/pottedPlant.glb', {
     interactables.push(model);
 });
 
-// 5. Trophy (On top bookcase shelf at proper height)
+// 5. Trophy (On top bookcase shelf)
 const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
-trophy.position.set(-4.5, 2.25, 1.0); // On bookcase top shelf (aligned with shelf height)
+trophy.position.set(-4.5, BOOKSHELF_HEIGHTS[2], 1.0); // On bookcase top shelf
 trophy.name = "trophy";
 interactables.push(trophy);
 scene.add(trophy);
@@ -551,7 +567,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, 0.75, -0.8], // Adjusted for desk surface at y=0.75
+    pos: [0.8, DESK_SURFACE_Y, -0.8],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
