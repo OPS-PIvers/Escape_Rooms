@@ -1263,13 +1263,31 @@
             isInteracting = false;
         });
 
-        // --- MOUSE INTERACTION ---
-        const mouse = new THREE.Vector2();
+        // --- MOUSE & TOUCH INTERACTION ---
+        const mouse = new THREE.Vector2(); // for raycasting
+        const mouseDelta = new THREE.Vector2(); // for look controls
+        let lastMousePos = null;
+        let isMouseDown = false;
         
+        // Mouse Events
+        document.addEventListener('mousedown', () => { isMouseDown = true; });
+        document.addEventListener('mouseup', () => { isMouseDown = false; });
+
         document.addEventListener('mousemove', (event) => {
-            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            // Calculate mouse position in normalized device coordinates (-1 to +1) for raycasting
             mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
             mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+            if (lastMousePos !== null && isMouseDown && !isInteracting) {
+                const deltaX = event.clientX - lastMousePos.x;
+                const deltaY = event.clientY - lastMousePos.y;
+                mouseDelta.x += deltaX;
+                mouseDelta.y += deltaY;
+            }
+            if (lastMousePos === null) {
+                lastMousePos = new THREE.Vector2();
+            }
+            lastMousePos.set(event.clientX, event.clientY);
             
             // Move Custom Cursor (Crosshair)
             if (!isInteracting) {
@@ -1277,6 +1295,33 @@
                 crosshair.style.top = event.clientY + 'px';
             }
         });
+
+        // Touch Events
+        document.addEventListener('touchstart', (event) => {
+            isMouseDown = true;
+            if (lastMousePos === null) {
+                lastMousePos = new THREE.Vector2();
+            }
+            lastMousePos.set(event.touches[0].clientX, event.touches[0].clientY);
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            isMouseDown = false;
+        });
+
+        document.addEventListener('touchmove', (event) => {
+            event.preventDefault(); // Prevent scrolling
+            if (isMouseDown && !isInteracting) {
+                if (lastMousePos === null) {
+                    lastMousePos = new THREE.Vector2();
+                }
+                const deltaX = event.touches[0].clientX - lastMousePos.x;
+                const deltaY = event.touches[0].clientY - lastMousePos.y;
+                mouseDelta.x += deltaX;
+                mouseDelta.y += deltaY;
+                lastMousePos.set(event.touches[0].clientX, event.touches[0].clientY);
+            }
+        }, { passive: false });
 
         document.addEventListener('click', (event) => {
             if (isInteracting) return; 
@@ -1342,14 +1387,13 @@
                 // --- LOOK (ARROWS & MOUSE) ---
                 _euler.setFromQuaternion( camera.quaternion );
 
-                // MOUSE LOOK
-                const deadzone = 0.1;
-                if (Math.abs(mouse.x) > deadzone) {
-                    _euler.y -= (mouse.x - Math.sign(mouse.x) * deadzone) * lookSpeed * delta * 0.5;
+                // MOUSE LOOK (Delta-based)
+                if (isMouseDown) {
+                    const mouseLookSpeed = 0.002;
+                    _euler.y -= mouseDelta.x * mouseLookSpeed;
+                    _euler.x -= mouseDelta.y * mouseLookSpeed;
                 }
-                if (Math.abs(mouse.y) > deadzone) {
-                    _euler.x -= (mouse.y - Math.sign(mouse.y) * deadzone) * lookSpeed * delta * 0.5;
-                }
+                mouseDelta.set(0, 0); // Reset after applying
                 
                 // Yaw (Left/Right Arrows)
                 if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
@@ -1359,8 +1403,9 @@
                 if (keys.ArrowUp) _euler.x += lookSpeed * delta;
                 if (keys.ArrowDown) _euler.x -= lookSpeed * delta;
                 
-                // Clamp Pitch
+                // Clamp Pitch to prevent camera flipping
                 _euler.x = Math.max( _PI_2 - maxPolarAngle, Math.min( _PI_2 - minPolarAngle, _euler.x ) );
+
                 camera.quaternion.setFromEuler( _euler );
 
                 // --- MOVE (WASD) ---
