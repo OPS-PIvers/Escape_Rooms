@@ -248,6 +248,38 @@ body.game-active {
     touch-action: none;
 }
 
+/* Show touch controls on mobile devices using feature detection */
+@media (pointer: coarse) {
+    #mobile-joystick,
+    #mobile-interact-btn {
+        display: block !important;
+    }
+}
+
+.joystick-base {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.2);
+    border: 2px solid rgba(0, 255, 204, 0.5);
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+}
+
+.joystick-stick {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.6);
+    border: 2px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.8);
+    top: 35px;
+    left: 35px;
+    transition: none;
+    pointer-events: none;
+}
+
 #mobile-interact-btn {
     position: fixed;
     bottom: 20px;
@@ -269,6 +301,10 @@ body.game-active {
     padding: 10px;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+#mobile-interact-btn .interact-label {
+    font-size: 12px;
 }
 
 #mobile-interact-btn:active {

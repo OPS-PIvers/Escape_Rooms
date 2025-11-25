@@ -4,6 +4,16 @@
  */
 
 export class TouchControls {
+    // Configuration constants
+    static JOYSTICK_SIZE = 120;
+    static JOYSTICK_STICK_SIZE = 50;
+    static JOYSTICK_STICK_CENTER_OFFSET = (TouchControls.JOYSTICK_SIZE - TouchControls.JOYSTICK_STICK_SIZE) / 2;
+    static JOYSTICK_MAX_DISTANCE = 50;
+    static JOYSTICK_DEADZONE = 15;
+    static INTERACT_BUTTON_SIZE = 80;
+    static LOOK_SENSITIVITY = 0.003;
+    static TAP_THRESHOLD = 10;
+
     constructor(camera, raycaster, interactables, onInteract) {
         this.camera = camera;
         this.raycaster = raycaster;
@@ -18,9 +28,8 @@ export class TouchControls {
             right: false
         };
 
-        // Camera look state
+        // Camera look state - accumulates deltas
         this.lookDelta = { x: 0, y: 0 };
-        this.lookSensitivity = 0.003; // Adjust for desired sensitivity
 
         // Touch tracking
         this.touches = new Map(); // Track multiple touches
@@ -31,132 +40,97 @@ export class TouchControls {
         this.joystickActive = false;
         this.joystickCenter = { x: 0, y: 0 };
         this.joystickCurrent = { x: 0, y: 0 };
-        this.joystickMaxDistance = 50; // pixels
 
         // UI Elements
         this.joystickBase = null;
         this.joystickStick = null;
         this.interactButton = null;
 
+        // Store bound event handlers for cleanup
+        this.boundHandlers = {
+            touchStart: this.onTouchStart.bind(this),
+            touchMove: this.onTouchMove.bind(this),
+            touchEnd: this.onTouchEnd.bind(this),
+            interactTouch: this.handleInteractTouch.bind(this),
+            resize: this.onResize.bind(this)
+        };
+
         this.createUI();
         this.setupEventListeners();
     }
 
     createUI() {
-        // Create joystick container
+        // Create joystick container (styling in CSS)
         const joystickContainer = document.createElement('div');
         joystickContainer.id = 'mobile-joystick';
-        joystickContainer.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 120px;
-            height: 120px;
-            z-index: 1000;
-            display: none;
-        `;
 
         // Joystick base (outer circle)
         this.joystickBase = document.createElement('div');
-        this.joystickBase.style.cssText = `
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(0, 255, 204, 0.2);
-            border: 2px solid rgba(0, 255, 204, 0.5);
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-        `;
+        this.joystickBase.className = 'joystick-base';
 
         // Joystick stick (inner circle)
         this.joystickStick = document.createElement('div');
-        this.joystickStick.style.cssText = `
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(0, 255, 204, 0.6);
-            border: 2px solid #00ffcc;
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.8);
-            top: 35px;
-            left: 35px;
-            transition: none;
-        `;
+        this.joystickStick.className = 'joystick-stick';
 
         joystickContainer.appendChild(this.joystickBase);
         joystickContainer.appendChild(this.joystickStick);
         document.body.appendChild(joystickContainer);
 
-        // Create interact button
+        // Create interact button (styling in CSS)
         this.interactButton = document.createElement('button');
         this.interactButton.id = 'mobile-interact-btn';
-        this.interactButton.innerHTML = '⊕<br><span style="font-size: 12px;">INTERACT</span>';
-        this.interactButton.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(0, 255, 204, 0.3);
-            border: 2px solid #00ffcc;
-            color: #00ffcc;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
-            z-index: 1000;
-            display: none;
-            cursor: pointer;
-            font-family: 'Orbitron', monospace;
-            line-height: 1.2;
-            padding: 10px;
-        `;
+        this.interactButton.innerHTML = '⊕<br><span class="interact-label">INTERACT</span>';
+        this.interactButton.setAttribute('aria-label', 'Interact with object');
         document.body.appendChild(this.interactButton);
-
-        // Show controls on mobile
-        this.updateUIVisibility();
-    }
-
-    updateUIVisibility() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                         || window.innerWidth < 768;
-
-        const joystick = document.getElementById('mobile-joystick');
-        const interactBtn = document.getElementById('mobile-interact-btn');
-
-        if (joystick) joystick.style.display = isMobile ? 'block' : 'none';
-        if (interactBtn) interactBtn.style.display = isMobile ? 'block' : 'none';
     }
 
     setupEventListeners() {
         // Touch events for joystick and camera look
-        document.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
-        document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
-        document.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
-        document.addEventListener('touchcancel', this.onTouchEnd.bind(this), { passive: false });
+        // Use canvas element if available to avoid interfering with UI modals
+        const touchTarget = document.querySelector('canvas') || document;
 
-        // Interact button
+        touchTarget.addEventListener('touchstart', this.boundHandlers.touchStart, { passive: false });
+        touchTarget.addEventListener('touchmove', this.boundHandlers.touchMove, { passive: false });
+        touchTarget.addEventListener('touchend', this.boundHandlers.touchEnd, { passive: false });
+        touchTarget.addEventListener('touchcancel', this.boundHandlers.touchEnd, { passive: false });
+
+        // Interact button - only touchstart to avoid double-fire with click
         if (this.interactButton) {
-            this.interactButton.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleCenterScreenInteract();
-            });
-
-            this.interactButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleCenterScreenInteract();
-            });
+            this.interactButton.addEventListener('touchstart', this.boundHandlers.interactTouch, { passive: false });
         }
 
         // Window resize
-        window.addEventListener('resize', () => this.updateUIVisibility());
+        window.addEventListener('resize', this.boundHandlers.resize);
+    }
+
+    handleInteractTouch(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleCenterScreenInteract();
+    }
+
+    onResize() {
+        // Resize handling if needed
+        // Currently visibility is handled by CSS media queries
     }
 
     onTouchStart(event) {
+        // Don't interfere if modal is open
+        const modal = document.getElementById('clueModal');
+        if (modal && modal.style.display === 'block') {
+            return;
+        }
+
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
             const x = touch.clientX;
             const y = touch.clientY;
+
+            // Check if touch is on UI element
+            const target = touch.target;
+            if (target.closest('#mobile-joystick') || target.closest('#mobile-interact-btn')) {
+                continue; // Let UI handle it
+            }
 
             // Check if touch is on left side (joystick area) or right side (look area)
             const isLeftSide = x < window.innerWidth / 2;
@@ -179,6 +153,12 @@ export class TouchControls {
     }
 
     onTouchMove(event) {
+        // Don't interfere if modal is open
+        const modal = document.getElementById('clueModal');
+        if (modal && modal.style.display === 'block') {
+            return;
+        }
+
         event.preventDefault();
 
         for (let i = 0; i < event.changedTouches.length; i++) {
@@ -188,14 +168,15 @@ export class TouchControls {
                 // Update joystick
                 this.updateJoystickPosition(touch.clientX, touch.clientY);
             } else if (touch.identifier === this.lookTouch) {
-                // Update camera look
+                // Update camera look - accumulate deltas instead of overwriting
                 const lastTouch = this.touches.get(touch.identifier);
                 if (lastTouch) {
                     const deltaX = touch.clientX - lastTouch.x;
                     const deltaY = touch.clientY - lastTouch.y;
 
-                    this.lookDelta.x = deltaX * this.lookSensitivity;
-                    this.lookDelta.y = deltaY * this.lookSensitivity;
+                    // Accumulate deltas to prevent lost movements
+                    this.lookDelta.x += deltaX * TouchControls.LOOK_SENSITIVITY;
+                    this.lookDelta.y += deltaY * TouchControls.LOOK_SENSITIVITY;
 
                     this.touches.set(touch.identifier, {
                         x: touch.clientX,
@@ -233,7 +214,7 @@ export class TouchControls {
                     const dy = Math.abs(touch.clientY - touchData.startY);
                     const distance = Math.sqrt(dx * dx + dy * dy);
 
-                    if (distance < 10) { // Tap threshold
+                    if (distance < TouchControls.TAP_THRESHOLD) {
                         this.handleTapInteract(touch.clientX, touch.clientY);
                     }
                 }
@@ -253,30 +234,30 @@ export class TouchControls {
         // Limit to max distance
         let finalX = dx;
         let finalY = dy;
-        if (distance > this.joystickMaxDistance) {
-            finalX = (dx / distance) * this.joystickMaxDistance;
-            finalY = (dy / distance) * this.joystickMaxDistance;
+        if (distance > TouchControls.JOYSTICK_MAX_DISTANCE) {
+            finalX = (dx / distance) * TouchControls.JOYSTICK_MAX_DISTANCE;
+            finalY = (dy / distance) * TouchControls.JOYSTICK_MAX_DISTANCE;
         }
 
         // Update visual position
-        const stickX = 35 + finalX; // 35 is half of (120-50)
-        const stickY = 35 + finalY;
+        const stickX = TouchControls.JOYSTICK_STICK_CENTER_OFFSET + finalX;
+        const stickY = TouchControls.JOYSTICK_STICK_CENTER_OFFSET + finalY;
         this.joystickStick.style.left = stickX + 'px';
         this.joystickStick.style.top = stickY + 'px';
 
         // Update movement state based on direction
-        const threshold = 15; // Deadzone threshold
-        this.moveState.forward = finalY < -threshold;
-        this.moveState.backward = finalY > threshold;
-        this.moveState.left = finalX < -threshold;
-        this.moveState.right = finalX > threshold;
+        this.moveState.forward = finalY < -TouchControls.JOYSTICK_DEADZONE;
+        this.moveState.backward = finalY > TouchControls.JOYSTICK_DEADZONE;
+        this.moveState.left = finalX < -TouchControls.JOYSTICK_DEADZONE;
+        this.moveState.right = finalX > TouchControls.JOYSTICK_DEADZONE;
 
         this.joystickCurrent = { x: finalX, y: finalY };
     }
 
     resetJoystick() {
-        this.joystickStick.style.left = '35px';
-        this.joystickStick.style.top = '35px';
+        const centerOffset = TouchControls.JOYSTICK_STICK_CENTER_OFFSET;
+        this.joystickStick.style.left = centerOffset + 'px';
+        this.joystickStick.style.top = centerOffset + 'px';
         this.joystickCurrent = { x: 0, y: 0 };
     }
 
@@ -322,9 +303,29 @@ export class TouchControls {
         return delta;
     }
 
-    // Cleanup
+    // Cleanup - properly remove all event listeners
     dispose() {
+        // Remove event listeners
+        const touchTarget = document.querySelector('canvas') || document;
+        touchTarget.removeEventListener('touchstart', this.boundHandlers.touchStart);
+        touchTarget.removeEventListener('touchmove', this.boundHandlers.touchMove);
+        touchTarget.removeEventListener('touchend', this.boundHandlers.touchEnd);
+        touchTarget.removeEventListener('touchcancel', this.boundHandlers.touchEnd);
+
+        if (this.interactButton) {
+            this.interactButton.removeEventListener('touchstart', this.boundHandlers.interactTouch);
+        }
+
+        window.removeEventListener('resize', this.boundHandlers.resize);
+
+        // Remove DOM elements
         document.getElementById('mobile-joystick')?.remove();
         document.getElementById('mobile-interact-btn')?.remove();
+
+        // Clear references
+        this.joystickBase = null;
+        this.joystickStick = null;
+        this.interactButton = null;
+        this.touches.clear();
     }
 }
