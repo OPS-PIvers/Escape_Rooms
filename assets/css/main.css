@@ -1,4 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+:root {
+    /* Mobile touch control dimensions */
+    --joystick-size: 120px;
+    --joystick-stick-size: 50px;
+    --interact-button-size: 80px;
+}
 
 body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Share Tech Mono', monospace; }
 
@@ -234,4 +242,169 @@ body.game-active {
     border-radius: 5px;
     box-shadow: inset 0 0 10px rgba(0,255,204,0.2);
     text-shadow: 0 0 5px #00ffcc;
+}
+
+/* MOBILE TOUCH CONTROLS */
+#mobile-joystick {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: var(--joystick-size);
+    height: var(--joystick-size);
+    z-index: 1000;
+    display: none;
+    touch-action: none;
+}
+
+/* Show touch controls on mobile devices using feature detection */
+@media (pointer: coarse), (hover: none) {
+    #mobile-joystick,
+    #mobile-interact-btn {
+        display: block !important;
+    }
+}
+
+.joystick-base {
+    position: absolute;
+    width: var(--joystick-size);
+    height: var(--joystick-size);
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.2);
+    border: 2px solid rgba(0, 255, 204, 0.5);
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+}
+
+.joystick-stick {
+    position: absolute;
+    width: var(--joystick-stick-size);
+    height: var(--joystick-stick-size);
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.6);
+    border: 2px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.8);
+    top: calc((var(--joystick-size) - var(--joystick-stick-size)) / 2);
+    left: calc((var(--joystick-size) - var(--joystick-stick-size)) / 2);
+    transition: none;
+    pointer-events: none;
+}
+
+#mobile-interact-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: var(--interact-button-size);
+    height: var(--interact-button-size);
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.3);
+    border: 2px solid #00ffcc;
+    color: #00ffcc;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+    z-index: 1000;
+    display: none;
+    cursor: pointer;
+    font-family: 'Orbitron', 'Share Tech Mono', monospace;
+    line-height: 1.2;
+    padding: 10px;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#mobile-interact-btn .interact-label {
+    font-size: 12px;
+}
+
+#mobile-interact-btn:active {
+    background: rgba(0, 255, 204, 0.5);
+    box-shadow: 0 0 30px rgba(0, 255, 204, 0.8);
+}
+
+/* MOBILE RESPONSIVE STYLES */
+@media (max-width: 768px) {
+    /* Hide crosshair on mobile (touch instead) */
+    #crosshair {
+        display: none;
+    }
+
+    /* Make instructions more readable on small screens */
+    #instructions {
+        padding: 20px;
+        max-width: 90%;
+    }
+
+    #instructions h1 {
+        font-size: 24px;
+    }
+
+    #instructions p {
+        font-size: 16px;
+    }
+
+    /* Make modal more mobile-friendly */
+    #clueModal {
+        width: 90%;
+        max-width: 90%;
+        padding: 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #clueModal h2 {
+        font-size: 20px;
+    }
+
+    #clueModal p {
+        font-size: 16px;
+    }
+
+    /* Larger touch targets for option buttons */
+    .option-btn {
+        padding: 18px;
+        font-size: 15px;
+        min-height: 50px;
+    }
+
+    .option-btn:hover {
+        padding-left: 18px; /* Override desktop hover effect */
+    }
+
+    /* Make keypad buttons larger for touch */
+    .key-btn {
+        padding: 20px;
+        font-size: 24px;
+        min-height: 60px;
+    }
+
+    #keypad {
+        gap: 15px;
+        max-width: 280px;
+    }
+
+    /* Victory modal adjustments */
+    #victoryModal h1 {
+        font-size: 48px;
+    }
+
+    #victoryModal p {
+        font-size: 20px;
+    }
+
+    #victoryTime {
+        font-size: 40px;
+    }
+
+    /* Close button larger on mobile */
+    #closeModalBtn {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+}
+
+/* Prevent pull-to-refresh and other touch gestures on game canvas */
+canvas {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
