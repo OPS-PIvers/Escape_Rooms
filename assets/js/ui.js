@@ -12,6 +12,7 @@ import {
     currentStep,
     advanceStep
 } from './gameLogic.js';
+
 export let isInteracting = false;
 let currentCode = "";
 export let gameWon = false;
@@ -27,6 +28,7 @@ export function closeModal() {
     isInteracting = false;
     modal.style.display = 'none';
 }
+
 // Flavor Text Pool
 const flavorTextPool = {
     "lunchbox": [
@@ -513,4 +515,3 @@ function handleKeypad(num) {
         if (displayEl) displayEl.textContent = currentCode.padEnd(4, '_');
     }
 }
-// Logic updated
