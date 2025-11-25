@@ -5,7 +5,8 @@ import {
     locationMap,
     moveClue,
     questionPool,
-    safeAttempts
+    safeAttempts,
+    setHasSkeletonKey
 } from './gameLogic.js';
 let isInteracting = false;
 let currentCode = "";
@@ -164,7 +165,7 @@ function showModal(objName, {
 }) {
     if (objName === "door") {
         if (hasSkeletonKey) {
-            triggerVictory(doorPivot, finalTimeStr);
+            triggerVictory(finalTimeStr);
         } else {
             modalTitle.textContent = "LOCKED";
             modalContent.innerHTML = "<p>The door is locked tight.</p><p>It requires a specific key.</p>";
@@ -240,7 +241,7 @@ function checkSafeCode() {
     if (currentCode === "1858") {
         modalTitle.textContent = "SAFE UNLOCKED";
         modalContent.innerHTML = "<h2 style='color:#4caf50'>SUCCESS</h2><p>The safe opens.</p><p>Inside, you find an old <strong>SKELETON KEY</strong>.</p>";
-        hasSkeletonKey = true;
+        setHasSkeletonKey(true);
         optionsContainer.innerHTML = "";
         const takeBtn = document.createElement('button');
         takeBtn.className = 'option-btn';
@@ -276,7 +277,7 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
     } else {
         btnElement.classList.add('wrong');
         modalFeedback.style.color = "#e57373";
-        const newLoc = moveClue(slotIndex, objName);
+        moveClue(slotIndex, objName);
         modalFeedback.innerHTML = `WRONG! The clue has vanished.<br>You must find it again elsewhere.`;
     }
 }

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {
-    createBox,
     interactables
 } from '../utils.js';
 

@@ -435,7 +435,7 @@ scene.add(pictureGroup);
 // 10. Desk Lamp (On Desk) (Detailed)
 const deskLamp = new THREE.Group();
 deskLamp.position.set(3.0, 0.8, -3.2);
-const dlBase = createBox(0.15, 0.02, 0.15, 0x222222, 0, 0, 0, deskLamp);
+    createBox(0.15, 0.02, 0.15, 0x222222, 0, 0, 0, deskLamp);
 const dlPole1 = createBox(0.02, 0.2, 0.02, 0x222222, 0, 0.1, 0, deskLamp);
 dlPole1.rotation.x = 0.3;
 const dlPole2 = createBox(0.02, 0.2, 0.02, 0x222222, 0, 0.25, 0.08, deskLamp);
@@ -460,7 +460,7 @@ scene.add(deskLamp);
 const boxGroup = new THREE.Group();
 boxGroup.position.set(-4.2, 0.3, 4.2);
 boxGroup.rotation.y = 0.4;
-const boxMesh = createBox(0.6, 0.6, 0.6, 0xcdb38b, 0, 0, 0, boxGroup, 0, 0, 0, "cardboard_box");
+    createBox(0.6, 0.6, 0.6, 0xcdb38b, 0, 0, 0, boxGroup, 0, 0, 0, "cardboard_box");
 createBox(0.58, 0.01, 0.28, 0xbe9e6d, 0, 0.305, -0.15, boxGroup); // Flap
 createBox(0.58, 0.01, 0.28, 0xbe9e6d, 0, 0.305, 0.15, boxGroup); // Flap
 scene.add(boxGroup);
@@ -510,7 +510,7 @@ doorGroup.add(doorPivot);
 
 // Door Mesh (relative to pivot)
 // Door is 1.5 wide. Center is at +0.75 relative to pivot.
-const theDoor = createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0, 0, 0, "door");
+    createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0, 0, 0, "door");
 
 // Knob (relative to pivot)
 // Old knob pos in doorGroup: 0.6, 1.1, 0.08
@@ -576,7 +576,6 @@ function updateTimer(dt) {
 // --- LOGIC ---
 const crosshair = document.getElementById('crosshair');
 const raycaster = new THREE.Raycaster();
-const center = new THREE.Vector2(0, 0);
 
 // --- RENDERER ---
 const renderer = new THREE.WebGLRenderer({
@@ -674,7 +673,6 @@ function setGameCursor(active) {
 }
 
 // --- ANIMATION LOOP ---
-const velocity = new THREE.Vector3();
 let prevTime = performance.now();
 
 // Rotation Parameters

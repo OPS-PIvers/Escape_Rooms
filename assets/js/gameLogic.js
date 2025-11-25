@@ -142,11 +142,15 @@ function moveClue(slotIndex, fromObjName) {
     return null;
 }
 
+function setHasSkeletonKey(value) {
+    hasSkeletonKey = value;
+}
 // We need to export the variables themselves so other modules can mutate them
 export {
     questionPool,
     activeClues,
     hasSkeletonKey,
+    setHasSkeletonKey,
     safeAttempts,
     locations,
     locationMap,

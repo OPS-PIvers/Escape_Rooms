@@ -38,7 +38,7 @@ function createDesk(scene) {
     }
 
     // Mouse
-    const mouseMesh = createBox(0.12, 0.04, 0.08, 0x333333, -0.4, 0.76, 0.6, deskGroup, 0, 0, 0, "mouse");
+    createBox(0.12, 0.04, 0.08, 0x333333, -0.4, 0.76, 0.6, deskGroup, 0, 0, 0, "mouse");
 
     // Open Book
     const openBook = new THREE.Group();
