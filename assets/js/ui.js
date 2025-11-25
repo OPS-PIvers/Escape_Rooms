@@ -188,6 +188,8 @@ export function showModal(objName, {
                 modal.style.display = 'block';
                 isInteracting = true;
             }
+            return;
+        }
         if (gameMode === "trail") {
             if (currentStep >= 4) {
                 triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
