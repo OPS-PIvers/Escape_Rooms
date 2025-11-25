@@ -1293,9 +1293,10 @@
         function setGameCursor(active) {
             if (active) {
                 document.body.classList.add('game-active');
-                // Ensure crosshair tracks mouse immediately if possible, or stays at last known pos
+                crosshair.style.display = 'block';
             } else {
                 document.body.classList.remove('game-active');
+                crosshair.style.display = 'none';
             }
         }
 
@@ -1338,8 +1339,17 @@
                     // document.body.style.cursor = 'none'; 
                 }
 
-                // --- LOOK (ARROWS) ---
+                // --- LOOK (ARROWS & MOUSE) ---
                 _euler.setFromQuaternion( camera.quaternion );
+
+                // MOUSE LOOK
+                const deadzone = 0.1;
+                if (Math.abs(mouse.x) > deadzone) {
+                    _euler.y -= (mouse.x - Math.sign(mouse.x) * deadzone) * lookSpeed * delta * 0.5;
+                }
+                if (Math.abs(mouse.y) > deadzone) {
+                    _euler.x -= (mouse.y - Math.sign(mouse.y) * deadzone) * lookSpeed * delta * 0.5;
+                }
                 
                 // Yaw (Left/Right Arrows)
                 if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
