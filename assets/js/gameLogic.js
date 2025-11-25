@@ -75,25 +75,35 @@ let questionPool = [{
     c: 0
 }];
 
+let gameMode = "classic"; // "classic" (Safe->Key), "code_door" (Code unlocks Door directly)
+
 // Check for custom data
 try {
-    // 1. Check for globally injected data (from "Download HTML" option)
-    if (window.CUSTOM_GAME_DATA && Array.isArray(window.CUSTOM_GAME_DATA)) {
-        questionPool = window.CUSTOM_GAME_DATA;
-        console.log("Loaded custom questions from global variable.");
+    let rawData = null;
+    // 1. Check for globally injected data
+    if (window.CUSTOM_GAME_DATA) {
+        rawData = window.CUSTOM_GAME_DATA;
+        console.log("Loaded custom data from global variable.");
     } 
-    // 2. Check for URL parameters (from "Share Link" option)
+    // 2. Check for URL parameters
     else {
         const params = new URLSearchParams(window.location.search);
         const customData = params.get('data');
         if (customData) {
             const decoded = atob(customData);
-            const parsed = JSON.parse(decoded);
-            if (Array.isArray(parsed) && parsed.length >= 4) {
-                questionPool = parsed;
-                console.log("Loaded custom questions from URL.");
-            } else {
-                console.warn("Custom data found but invalid (must be array of at least 4 items).");
+            rawData = JSON.parse(decoded);
+            console.log("Loaded custom data from URL.");
+        }
+    }
+
+    if (rawData) {
+        if (Array.isArray(rawData)) {
+            questionPool = rawData; // Legacy format
+            gameMode = "classic";
+        } else if (rawData.questions && Array.isArray(rawData.questions)) {
+            questionPool = rawData.questions;
+            if (rawData.config && rawData.config.mode) {
+                gameMode = rawData.config.mode;
             }
         }
     }
@@ -181,5 +191,6 @@ export {
     locations,
     locationMap,
     initGame,
-    moveClue
+    moveClue,
+    gameMode
 };

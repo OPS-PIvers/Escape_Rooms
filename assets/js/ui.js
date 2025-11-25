@@ -6,7 +6,8 @@ import {
     moveClue,
     questionPool,
     safeAttempts,
-    setHasSkeletonKey
+    setHasSkeletonKey,
+    gameMode
 } from './gameLogic.js';
 let isInteracting = false;
 let currentCode = "";
@@ -164,6 +165,14 @@ function showModal(objName, {
     finalTimeStr
 }) {
     if (objName === "door") {
+        if (gameMode === "code_door") {
+            currentCode = "";
+            renderKeypad("DOOR LOCK");
+            modal.style.display = 'block';
+            isInteracting = true;
+            return;
+        }
+        // Classic Mode
         if (hasSkeletonKey) {
             triggerVictory(finalTimeStr);
         } else {
@@ -172,16 +181,25 @@ function showModal(objName, {
             optionsContainer.innerHTML = "";
             modalFeedback.textContent = "";
             modal.style.display = 'block';
-            isInteracting = true; // controls.unlock() removed
+            isInteracting = true;
         }
         return;
     }
 
     if (objName === "safe") {
+        if (gameMode === "code_door") {
+            modalTitle.textContent = "SAFE";
+            modalContent.innerHTML = "<p>It's locked. The keypad seems broken or disabled.</p><p>Maybe the code is for the door?</p>";
+            optionsContainer.innerHTML = "";
+            modalFeedback.textContent = "";
+            modal.style.display = 'block';
+            isInteracting = true;
+            return;
+        }
         currentCode = "";
-        renderSafeKeypad();
+        renderKeypad("SAFE LOCK");
         modal.style.display = 'block';
-        isInteracting = true; // controls.unlock() removed
+        isInteracting = true;
         return;
     }
 
@@ -237,21 +255,24 @@ function resetGameLogic() {
     }, 3000);
 }
 
-function checkSafeCode() {
+function checkKeypadCode() {
     if (currentCode === "1858") {
-        modalTitle.textContent = "SAFE UNLOCKED";
-        modalContent.innerHTML = "<h2 style='color:#4caf50'>SUCCESS</h2><p>The safe opens.</p><p>Inside, you find an old <strong>SKELETON KEY</strong>.</p>";
-        setHasSkeletonKey(true);
-        optionsContainer.innerHTML = "";
-        const takeBtn = document.createElement('button');
-        takeBtn.className = 'option-btn';
-        takeBtn.textContent = "TAKE KEY";
-        takeBtn.onclick = () => {
-            modal.style.display = 'none';
-            // controls.lock();
-            isInteracting = false; // Fix: Reset interaction state
-        };
-        optionsContainer.appendChild(takeBtn);
+        if (gameMode === "code_door") {
+            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00"); // Fix time pass
+        } else {
+            modalTitle.textContent = "SAFE UNLOCKED";
+            modalContent.innerHTML = "<h2 style='color:#4caf50'>SUCCESS</h2><p>The safe opens.</p><p>Inside, you find an old <strong>SKELETON KEY</strong>.</p>";
+            setHasSkeletonKey(true);
+            optionsContainer.innerHTML = "";
+            const takeBtn = document.createElement('button');
+            takeBtn.className = 'option-btn';
+            takeBtn.textContent = "TAKE KEY";
+            takeBtn.onclick = () => {
+                modal.style.display = 'none';
+                isInteracting = false;
+            };
+            optionsContainer.appendChild(takeBtn);
+        }
     } else {
         safeAttempts--;
         if (safeAttempts <= 0) {
@@ -260,7 +281,7 @@ function checkSafeCode() {
             modalFeedback.style.color = 'red';
             modalFeedback.textContent = "INVALID CODE";
             currentCode = "";
-            renderSafeKeypad(); // Re-render to update attempts
+            renderKeypad(gameMode === "code_door" ? "DOOR LOCK" : "SAFE LOCK");
         }
     }
 }
@@ -282,8 +303,8 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
     }
 }
 
-function renderSafeKeypad() {
-    modalTitle.textContent = "SAFE LOCK";
+function renderKeypad(title = "SAFE LOCK") {
+    modalTitle.textContent = title;
 
     const solvedCount = activeClues.filter(c => c.solved).length;
     const allSolved = solvedCount === 4;
@@ -328,7 +349,7 @@ function renderSafeKeypad() {
     clearBtn.textContent = "C";
     clearBtn.onclick = () => {
         currentCode = "";
-        renderSafeKeypad();
+        renderKeypad(title);
     };
     kpDiv.appendChild(clearBtn);
     const zeroBtn = document.createElement('div');
@@ -340,7 +361,7 @@ function renderSafeKeypad() {
     enterBtn.className = 'key-btn';
     enterBtn.textContent = "E";
     enterBtn.style.color = '#4caf50';
-    enterBtn.onclick = () => checkSafeCode();
+    enterBtn.onclick = () => checkKeypadCode();
     kpDiv.appendChild(enterBtn);
     modalContent.appendChild(kpDiv);
     optionsContainer.innerHTML = "";
