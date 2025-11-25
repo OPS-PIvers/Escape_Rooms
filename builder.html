@@ -28,6 +28,28 @@
     <h1>Mission Builder</h1>
     <p>Create your own questions for the Escape Room. You need at least 4 questions.</p>
 
+    <!-- Bulk Import -->
+    <div class="card">
+        <h2>Bulk Import (CSV)</h2>
+        <p>Fastest way to add questions. <a href="#" onclick="downloadTemplate()" style="color: #2196F3;">Download CSV Template</a></p>
+        
+        <div style="margin-bottom: 15px; border: 2px dashed #ddd; padding: 20px; background: #fafafa; border-radius: 8px; text-align: center;">
+            <label style="cursor: pointer; display: block;">
+                <strong>Click to Upload CSV</strong> or Drag & Drop here
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload()" style="display: none;">
+            </label>
+            <small style="color: #888;">(or paste text below)</small>
+        </div>
+        
+        <label>Paste Data:</label>
+        <textarea id="csvInput" rows="5" placeholder="Topic, Question, Option 1, Option 2, Option 3, Option 4, Correct Answer Number (1-4)&#10;Math, What is 2+2?, 3, 4, 5, 6, 2" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9em;"></textarea>
+        
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn btn-success" onclick="importCSV()">Import Questions</button>
+            <span id="importStatus" style="font-size: 0.9em; font-weight: bold;"></span>
+        </div>
+    </div>
+
     <!-- Question Form -->
     <div class="card">
         <h2 id="formTitle">Add New Question</h2>
@@ -106,6 +128,101 @@
     </div>
 
     <script>
+        // --- BULK IMPORT FUNCTIONS ---
+        function downloadTemplate() {
+            const csvContent = "Topic,Question,Option 1,Option 2,Option 3,Option 4,Correct Answer (1-4)\n" +
+                "Math,What is 2+2?,3,4,5,6,2\n" +
+                "History,First President?,Washington,Lincoln,Jefferson,Adams,1";
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "escape_room_template.csv";
+            link.click();
+        }
+
+        function handleFileUpload() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('csvInput').value = e.target.result;
+                    document.getElementById('importStatus').textContent = "File loaded. Click 'Import Questions' to finish.";
+                    document.getElementById('importStatus').style.color = "#2196F3";
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function importCSV() {
+            const text = document.getElementById('csvInput').value.trim();
+            if (!text) {
+                alert("Please paste CSV data or upload a file first.");
+                return;
+            }
+            
+            const lines = text.split(/\r?\n/);
+            let addedCount = 0;
+            
+            lines.forEach((line, index) => {
+                // Skip empty lines or header (heuristic: header usually has 'Topic' or 'Question')
+                if (!line.trim()) return;
+                if (index === 0 && line.toLowerCase().startsWith("topic")) return;
+
+                // Parse CSV line (respecting quotes)
+                const parts = [];
+                let current = '';
+                let inQuote = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        inQuote = !inQuote;
+                        current += char; // Keep the quote for accurate parsing/unescaping
+                    } else if (char === ',' && !inQuote) {
+                        parts.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                parts.push(current.trim());
+
+                // Cleanup quotes
+                const cleanParts = parts.map(p => {
+                    // Remove surrounding quotes if they exist
+                    if (p.startsWith('"') && p.endsWith('"')) {
+                        p = p.substring(1, p.length - 1);
+                    }
+                    // Unescape double quotes (Excel CSV style: "" -> ")
+                    return p.replace(/""/g, '"');
+                });
+
+                if (cleanParts.length >= 7) {
+                    const t = cleanParts[0];
+                    const q = cleanParts[1];
+                    const o = [cleanParts[2], cleanParts[3], cleanParts[4], cleanParts[5]];
+                    let c = parseInt(cleanParts[6]);
+                    
+                    // Handle 1-based index from user input
+                    if (!isNaN(c) && c >= 1 && c <= 4) {
+                        c = c - 1; 
+                    } else {
+                        c = 0; // Default to A if invalid
+                    }
+                    
+                    questions.push({ t, q, o, c });
+                    addedCount++;
+                }
+            });
+            
+            renderList();
+            document.getElementById('importStatus').textContent = `Successfully imported ${addedCount} questions!`;
+            document.getElementById('importStatus').style.color = "green";
+            document.getElementById('csvInput').value = ""; // Clear input
+        }
+
+        // --- EXISTING LOGIC ---
+
         // Detect if running locally via file:// protocol
         if (window.location.protocol === 'file:') {
             document.getElementById('shareLinkSection').style.display = 'none';
