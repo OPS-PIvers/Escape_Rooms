@@ -7,9 +7,6 @@ import {
     createClock
 } from './prefabs/clock.js';
 import {
-    createShelves
-} from './prefabs/shelves.js';
-import {
     mat
 } from './materials.js';
 import {
@@ -179,7 +176,7 @@ loadModel('assets/models/chairDesk.glb', {
     parent: scene
 });
 
-// Shelves (Replacing createShelves)
+// Shelves
 loadModel('assets/models/bookcaseOpen.glb', {
     pos: [-4.5, 0, -1],
     rot: [0, Math.PI / 2, 0],
@@ -295,7 +292,7 @@ loadModel('assets/models/sideTable.glb', {
     createPaperStack(-0.2, 0.7, model);
 });
 
-// Lounge Area (Replaced with Models)
+// Lounge Area
 const loungeGroup = new THREE.Group();
 loungeGroup.position.set(2.5, 0, 2.5);
 loungeGroup.rotation.y = -Math.PI / 4;
@@ -320,7 +317,6 @@ loadModel('assets/models/tableCoffee.glb', {
     scale: [2.5, 2.5, 2.5],
     parent: loungeGroup
 }).then(model => {
-    // Re-attach props to the new table
     // Mug
     const mugGroup = new THREE.Group();
     mugGroup.position.set(0.2, 0.55, -0.1);
@@ -465,7 +461,7 @@ loadModel('assets/models/radio.glb', {
     interactables.push(model);
 });
 
-// 3. Laptop (Replacing Typewriter)
+// 3. Laptop
 loadModel('assets/models/laptop.glb', {
     pos: [-1.2, 0.75, 1.6],
     rot: [0, 0.5, 0],
@@ -493,7 +489,7 @@ trophy.name = "trophy";
 interactables.push(trophy);
 scene.add(trophy);
 
-// 7. Trash Can (Under desk)
+// 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
     pos: [2.5, 0, -2.0],
     scale: [2.5, 2.5, 2.5],
@@ -514,9 +510,7 @@ loadModel('assets/models/trashcan.glb', {
     }
 });
 
-// 8. Lunchbox is already created in the coffee table model callback above (lines 352-363)
-
-// 9. Framed Picture (Right Wall)
+// 7. Framed Picture (Right Wall)
 const pictureGroup = new THREE.Group();
 pictureGroup.position.set(4.9, 2.5, 2.5);
 pictureGroup.rotation.y = -Math.PI / 2;
@@ -543,7 +537,7 @@ interactables.push(picMesh);
 pictureGroup.add(picMesh);
 scene.add(pictureGroup);
 
-// 10. Desk Lamp (On Desk)
+// 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
     pos: [0.8, 0.8, -0.8], // Adjusted for desk surface
     scale: [2.5, 2.5, 2.5],
@@ -556,7 +550,7 @@ loadModel('assets/models/lampRoundTable.glb', {
     model.add(light);
 });
 
-// 11. Cardboard Box (Corner)
+// 9. Cardboard Box (Corner)
 loadModel('assets/models/cardboardBoxOpen.glb', {
     pos: [-4.2, 0, 4.2],
     rot: [0, 0.4, 0],
@@ -567,7 +561,7 @@ loadModel('assets/models/cardboardBoxOpen.glb', {
     interactables.push(model);
 });
 
-// 12. Fire Extinguisher (Near Door)
+// 10. Fire Extinguisher (Near Door)
 const feGroup = new THREE.Group();
 feGroup.position.set(4.5, 0.0, -1.5); // On floor near wall
 const feTank = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6), new THREE.MeshPhongMaterial({
@@ -580,46 +574,21 @@ feGroup.add(feTank);
 createBox(0.05, 0.1, 0.05, 0x111111, 0, 0.65, 0, feGroup); // Nozzle top
 scene.add(feGroup);
 
-// Coat Rack
-const coatRack = new THREE.Group();
-coatRack.position.set(4.5, 0, -2.0);
-scene.add(coatRack);
-createBox(0.4, 0.05, 0.4, mat.woodDark, 0, 0.025, 0, coatRack); // Base
-createBox(0.05, 1.8, 0.05, mat.woodDark, 0, 0.9, 0, coatRack); // Pole
-// Hooks
-createBox(0.05, 0.05, 0.15, mat.woodDark, 0, 1.6, 0.05, coatRack);
-createBox(0.15, 0.05, 0.05, mat.woodDark, 0.05, 1.4, 0, coatRack);
-
-// Jacket
-const jacket = new THREE.Group();
-jacket.position.set(0, 1.2, 0.1);
-coatRack.add(jacket);
-createBox(0.3, 0.6, 0.15, 0x5d4037, 0, 0, 0, jacket); // Body
-createBox(0.1, 0.5, 0.1, 0x5d4037, 0.15, 0.05, 0, jacket); // Sleeve
-
-
 // --- DOOR & TIMER ---
 const doorGroup = new THREE.Group();
 doorGroup.position.set(5, 0, -1.25); // Aligned with doorway.glb
 doorGroup.rotation.y = -Math.PI / 2;
 scene.add(doorGroup);
-// Frame replaced by doorway.glb model
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
 doorPivot.position.set(-0.75, 1.1, 0.02); // Hinge location (left side of door)
 doorGroup.add(doorPivot);
 
-// Door Mesh (relative to pivot)
-// Door is 1.5 wide. Center is at +0.75 relative to pivot.
-    createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0, 0, 0, "door");
+// Door Mesh (1.5 wide, centered at +0.75 relative to pivot)
+createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0, 0, 0, "door");
 
-// Knob (relative to pivot)
-// Old knob pos in doorGroup: 0.6, 1.1, 0.08
-// Pivot pos in doorGroup: -0.75, 1.1, 0.02
-// Relative x: 0.6 - (-0.75) = 1.35
-// Relative y: 1.1 - 1.1 = 0
-// Relative z: 0.08 - 0.02 = 0.06
+// Knob
 const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome);
 knob.position.set(1.35, 0, 0.06);
 doorPivot.add(knob);
