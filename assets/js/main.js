@@ -96,20 +96,73 @@ lights.forEach(l => {
 });
 
 // --- ROOM ---
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), mat.floor);
-floor.rotation.x = -Math.PI / 2;
-floor.receiveShadow = true;
-scene.add(floor);
-createBox(20, 4, 0.2, mat.wall, 0, 2, -5, scene);
-createBox(20, 4, 0.2, mat.wall, 0, 2, 5, scene);
-createBox(0.2, 1.0, 20, mat.wall, -5, 0.5, 0, scene);
-createBox(0.2, 1.0, 20, mat.wall, -5, 3.5, 0, scene);
-createBox(0.2, 2.0, 8, mat.wall, -5, 2.0, -6, scene);
-createBox(0.2, 2.0, 8, mat.wall, -5, 2.0, 6, scene);
-createBox(0.2, 4, 9.25, mat.wall, 5, 2, -5.375, scene);
-createBox(0.2, 4, 9.25, mat.wall, 5, 2, 5.375, scene);
-createBox(0.2, 1.8, 1.5, mat.wall, 5, 3.1, 0, scene);
-createBox(20, 0.2, 20, mat.trim, 0, 4.1, 0, scene);
+const roomGroup = new THREE.Group();
+scene.add(roomGroup);
+
+const tileScale = 2.5;
+const roomSize = 4;
+const start = -3.75;
+const step = 2.5;
+
+// Floor
+for (let x = 0; x < roomSize; x++) {
+    for (let z = 0; z < roomSize; z++) {
+        const px = start + x * step;
+        const pz = start + z * step;
+        loadModel('assets/models/floorFull.glb', {
+            pos: [px, 0, pz],
+            scale: [tileScale, tileScale, tileScale],
+            parent: roomGroup
+        });
+    }
+}
+
+// Walls
+for (let i = 0; i < roomSize; i++) {
+    const p = start + i * step;
+
+    // Back Wall (Z=-5)
+    loadModel('assets/models/wall.glb', {
+        pos: [p, 0, -5],
+        rot: [0, 0, 0],
+        scale: [tileScale, tileScale, tileScale],
+        parent: roomGroup
+    });
+
+    // Front Wall (Z=5)
+    loadModel('assets/models/wall.glb', {
+        pos: [p, 0, 5],
+        rot: [0, Math.PI, 0],
+        scale: [tileScale, tileScale, tileScale],
+        parent: roomGroup
+    });
+
+    // Left Wall (X=-5) - Windows
+    loadModel('assets/models/wallWindow.glb', {
+        pos: [-5, 0, p],
+        rot: [0, Math.PI / 2, 0],
+        scale: [tileScale, tileScale, tileScale],
+        parent: roomGroup
+    });
+
+    // Right Wall (X=5) - Door & Walls
+    // We place the door at the second slot (index 1, Z = -1.25)
+    if (i === 1) {
+        loadModel('assets/models/doorway.glb', {
+            pos: [5, 0, p],
+            rot: [0, -Math.PI / 2, 0],
+            scale: [tileScale, tileScale, tileScale],
+            parent: roomGroup
+        });
+    } else {
+        loadModel('assets/models/wall.glb', {
+            pos: [5, 0, p],
+            rot: [0, -Math.PI / 2, 0],
+            scale: [tileScale, tileScale, tileScale],
+            parent: roomGroup
+        });
+    }
+}
 
 // --- PROPS ---
 // Desk
@@ -546,10 +599,10 @@ createBox(0.1, 0.5, 0.1, 0x5d4037, 0.15, 0.05, 0, jacket); // Sleeve
 
 // --- DOOR & TIMER ---
 const doorGroup = new THREE.Group();
-doorGroup.position.set(5, 0, 0);
+doorGroup.position.set(5, 0, -1.25); // Aligned with doorway.glb
 doorGroup.rotation.y = -Math.PI / 2;
 scene.add(doorGroup);
-createBox(1.7, 2.3, 0.15, mat.trim, 0, 1.15, 0, doorGroup);
+// Frame replaced by doorway.glb model
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
