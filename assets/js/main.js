@@ -169,9 +169,10 @@ for (let i = 0; i < roomSize; i++) {
 
 // --- PROPS ---
 // Physics constants for object placement
-const TABLE_SURFACE_Y = 0.75;  // Table/desk surface height for 2.5x scaled furniture
-const CABINET_TOP_Y = 1.0;     // Filing cabinet top height for 2.5x scaled cabinet
-const BOOKSHELF_HEIGHTS = [0.75, 1.5, 2.25];  // Bookcase shelf heights for 2.5x scaled bookcase
+const TABLE_SURFACE_Y = 0.6;   // Adjusted: Table/desk surface height
+const CABINET_TOP_Y = 0.8;     // Adjusted: Filing cabinet top height
+const BOOKSHELF_HEIGHTS = [0.6, 1.2, 1.8]; // Adjusted: Bookcase shelf heights
+const COFFEE_TABLE_Y = 0.35;   // Added: Coffee table surface height
 
 // Desk
 loadModel('assets/models/desk.glb', {
@@ -345,7 +346,7 @@ loadModel('assets/models/tableCoffee.glb', {
 }).then(model => {
     // Mug
     const mugGroup = new THREE.Group();
-    mugGroup.position.set(0.2, 0.55, -0.1);
+    mugGroup.position.set(0.2, COFFEE_TABLE_Y + 0.05, -0.1); // Use constant
     const mugBody = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16), new THREE.MeshLambertMaterial({
         color: 0xffffff
     }));
@@ -361,27 +362,35 @@ loadModel('assets/models/tableCoffee.glb', {
 
     // Magazines (stacked properly on table)
     const magazineGroup = new THREE.Group();
-    magazineGroup.position.set(-0.2, 0.45, 0.1);
+    magazineGroup.position.set(-0.2, COFFEE_TABLE_Y, 0.1); // Position stack on the table
     magazineGroup.rotation.y = -0.3;
-    // Create a neat stack with slight offsets
+
     const magazineColors = [0xcc0000, 0x0066cc, 0xffcc00];
     const magazineOffsets = [
         { x: 0, z: 0, rot: 0 },
         { x: 0.01, z: 0.01, rot: 0.05 },
         { x: -0.01, z: 0.01, rot: -0.03 }
     ];
-    for (let i = 0; i < 3; i++) {
+    const magHeight = 0.01;
+    const numMagazines = 3;
+    for (let i = 0; i < numMagazines; i++) {
         const offset = magazineOffsets[i];
-        const mag = createBox(0.2, 0.01, 0.28, magazineColors[i], offset.x, i * 0.01, offset.z, magazineGroup);
+        // Stack magazines directly on top of each other. Y is bottom of stack + half height.
+        const magCenterY = (i * magHeight) + (magHeight / 2);
+        const mag = createBox(0.2, magHeight, 0.28, magazineColors[i], offset.x, magCenterY, offset.z, magazineGroup);
         mag.rotation.y = offset.rot;
     }
     model.add(magazineGroup);
 
-    // Lunchbox (properly positioned on table surface)
+    // Lunchbox (on top of magazines)
     const lunchGroup = new THREE.Group();
-    lunchGroup.position.set(-0.2, 0.50, 0.1); // Adjusted to rest on table
+    const lunchBoxHeight = 0.2;
+    const magazineStackHeight = numMagazines * magHeight;
+    // Y is magazine stack height + half lunchbox height (magazineGroup is already at table height)
+    const lunchboxCenterY = magazineStackHeight + (lunchBoxHeight / 2);
+    lunchGroup.position.set(magazineGroup.position.x, lunchboxCenterY, magazineGroup.position.z);
     model.add(lunchGroup);
-    const lunchBody = createBox(0.3, 0.2, 0.2, 0xff0000, 0, 0.1, 0, lunchGroup); // Y offset for box center
+    const lunchBody = createBox(0.3, lunchBoxHeight, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
     lunchBody.name = "lunchbox";
     interactables.push(lunchBody);
     const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 12), new THREE.MeshBasicMaterial({
