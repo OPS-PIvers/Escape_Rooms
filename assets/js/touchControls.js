@@ -4,15 +4,16 @@
  */
 
 export class TouchControls {
-    // Configuration constants
-    static JOYSTICK_SIZE = 120;
-    static JOYSTICK_STICK_SIZE = 50;
-    static JOYSTICK_STICK_CENTER_OFFSET = (TouchControls.JOYSTICK_SIZE - TouchControls.JOYSTICK_STICK_SIZE) / 2;
+    // Configuration constants (non-dimensional)
     static JOYSTICK_MAX_DISTANCE = 50;
     static JOYSTICK_DEADZONE = 15;
-    static INTERACT_BUTTON_SIZE = 80;
     static LOOK_SENSITIVITY = 0.003;
     static TAP_THRESHOLD = 10;
+
+    // Read dimensional values from CSS custom properties
+    static getCSSValue(property) {
+        return parseInt(getComputedStyle(document.documentElement).getPropertyValue(property)) || 0;
+    }
 
     constructor(camera, raycaster, interactables, onInteract) {
         this.camera = camera;
@@ -46,6 +47,11 @@ export class TouchControls {
         this.joystickStick = null;
         this.interactButton = null;
 
+        // Dimensional values from CSS
+        this.joystickSize = 0;
+        this.joystickStickSize = 0;
+        this.centerOffset = 0;
+
         // Store bound event handlers for cleanup
         this.boundHandlers = {
             touchStart: this.onTouchStart.bind(this),
@@ -63,6 +69,9 @@ export class TouchControls {
         // Create joystick container (styling in CSS)
         const joystickContainer = document.createElement('div');
         joystickContainer.id = 'mobile-joystick';
+        joystickContainer.setAttribute('role', 'application');
+        joystickContainer.setAttribute('aria-label', 'Virtual joystick for movement control');
+        joystickContainer.setAttribute('aria-description', 'Touch and drag to move your character');
 
         // Joystick base (outer circle)
         this.joystickBase = document.createElement('div');
@@ -82,6 +91,16 @@ export class TouchControls {
         this.interactButton.innerHTML = '⊕<br><span class="interact-label">INTERACT</span>';
         this.interactButton.setAttribute('aria-label', 'Interact with object');
         document.body.appendChild(this.interactButton);
+
+        // Read dimensional values from CSS after elements are added to DOM
+        this.updateDimensionsFromCSS();
+    }
+
+    updateDimensionsFromCSS() {
+        // Read values from CSS custom properties
+        this.joystickSize = TouchControls.getCSSValue('--joystick-size');
+        this.joystickStickSize = TouchControls.getCSSValue('--joystick-stick-size');
+        this.centerOffset = (this.joystickSize - this.joystickStickSize) / 2;
     }
 
     setupEventListeners() {
@@ -110,8 +129,8 @@ export class TouchControls {
     }
 
     onResize() {
-        // Resize handling if needed
-        // Currently visibility is handled by CSS media queries
+        // Re-read dimensions from CSS in case they changed
+        this.updateDimensionsFromCSS();
     }
 
     onTouchStart(event) {
@@ -239,9 +258,9 @@ export class TouchControls {
             finalY = (dy / distance) * TouchControls.JOYSTICK_MAX_DISTANCE;
         }
 
-        // Update visual position
-        const stickX = TouchControls.JOYSTICK_STICK_CENTER_OFFSET + finalX;
-        const stickY = TouchControls.JOYSTICK_STICK_CENTER_OFFSET + finalY;
+        // Update visual position using CSS-derived center offset
+        const stickX = this.centerOffset + finalX;
+        const stickY = this.centerOffset + finalY;
         this.joystickStick.style.left = stickX + 'px';
         this.joystickStick.style.top = stickY + 'px';
 
@@ -255,9 +274,9 @@ export class TouchControls {
     }
 
     resetJoystick() {
-        const centerOffset = TouchControls.JOYSTICK_STICK_CENTER_OFFSET;
-        this.joystickStick.style.left = centerOffset + 'px';
-        this.joystickStick.style.top = centerOffset + 'px';
+        // Reset to center using CSS-derived offset
+        this.joystickStick.style.left = this.centerOffset + 'px';
+        this.joystickStick.style.top = this.centerOffset + 'px';
         this.joystickCurrent = { x: 0, y: 0 };
     }
 

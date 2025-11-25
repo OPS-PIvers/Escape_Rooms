@@ -1,4 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+:root {
+    /* Mobile touch control dimensions */
+    --joystick-size: 120px;
+    --joystick-stick-size: 50px;
+    --interact-button-size: 80px;
+}
 
 body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Share Tech Mono', monospace; }
 
@@ -241,15 +249,15 @@ body.game-active {
     position: fixed;
     bottom: 20px;
     left: 20px;
-    width: 120px;
-    height: 120px;
+    width: var(--joystick-size);
+    height: var(--joystick-size);
     z-index: 1000;
     display: none;
     touch-action: none;
 }
 
 /* Show touch controls on mobile devices using feature detection */
-@media (pointer: coarse) {
+@media (pointer: coarse), (hover: none) {
     #mobile-joystick,
     #mobile-interact-btn {
         display: block !important;
@@ -258,8 +266,8 @@ body.game-active {
 
 .joystick-base {
     position: absolute;
-    width: 120px;
-    height: 120px;
+    width: var(--joystick-size);
+    height: var(--joystick-size);
     border-radius: 50%;
     background: rgba(0, 255, 204, 0.2);
     border: 2px solid rgba(0, 255, 204, 0.5);
@@ -268,14 +276,14 @@ body.game-active {
 
 .joystick-stick {
     position: absolute;
-    width: 50px;
-    height: 50px;
+    width: var(--joystick-stick-size);
+    height: var(--joystick-stick-size);
     border-radius: 50%;
     background: rgba(0, 255, 204, 0.6);
     border: 2px solid #00ffcc;
     box-shadow: 0 0 15px rgba(0, 255, 204, 0.8);
-    top: 35px;
-    left: 35px;
+    top: calc((var(--joystick-size) - var(--joystick-stick-size)) / 2);
+    left: calc((var(--joystick-size) - var(--joystick-stick-size)) / 2);
     transition: none;
     pointer-events: none;
 }
@@ -284,8 +292,8 @@ body.game-active {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 80px;
-    height: 80px;
+    width: var(--interact-button-size);
+    height: var(--interact-button-size);
     border-radius: 50%;
     background: rgba(0, 255, 204, 0.3);
     border: 2px solid #00ffcc;

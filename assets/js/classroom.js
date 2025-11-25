@@ -28,6 +28,9 @@ import {
 import {
     TouchControls
 } from './touchControls.js';
+import {
+    createTouchInteractionHandler
+} from './touchUtils.js';
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
@@ -379,14 +382,12 @@ document.body.appendChild(renderer.domElement);
 
 // --- TOUCH CONTROLS (MOBILE) ---
 let touchControls;
-function handleTouchInteract(object) {
-    if (!isInteracting) {
-        showModal(object.name, {
-            doorPivot: doorPivot,
-            finalTimeStr: finalTimeStr
-        });
-    }
-}
+// Create touch interaction handler using shared utility
+const handleTouchInteract = createTouchInteractionHandler({
+    showModal,
+    get isInteracting() { return isInteracting; },
+    getContext: () => ({ doorPivot, finalTimeStr })
+});
 // Initialize after DOM is ready and we have doorPivot reference
 // Will be initialized at the end of the script
 
