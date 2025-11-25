@@ -538,6 +538,33 @@
         const hitBook = createBox(0.3, 0.1, 0.4, new THREE.MeshBasicMaterial({visible:false}), 0, 0, 0, openBook, 0,0,0, "open_book");
         interactables.push(hitBook);
 
+        // Desk Organizer
+        const organizer = new THREE.Group();
+        organizer.position.set(0.6, 0.76, -0.8);
+        deskGroup.add(organizer);
+        createBox(0.2, 0.1, 0.15, mat.shelf, 0, 0.05, 0, organizer);
+        // Pens
+        for (let i = 0; i < 3; i++) {
+            const penColor = i === 0 ? 0xcc0000 : (i === 1 ? 0x0000cc : 0x000000);
+            createBox(0.015, 0.12, 0.015, penColor, -0.05 + i * 0.05, 0.06, 0, organizer, 0, 0, 0.2);
+        }
+
+        // Notepad
+        const notepad = new THREE.Group();
+        notepad.position.set(0, 0.76, -1.2);
+        notepad.rotation.y = 0.1;
+        deskGroup.add(notepad);
+        createBox(0.25, 0.02, 0.35, 0xffffff, 0, 0.01, 0, notepad);
+        createBox(0.25, 0.02, 0.35, 0x444444, 0, -0.01, 0, notepad);
+
+        // Scattered Papers
+        const paper1 = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.3), mat.paper);
+        paper1.rotation.x = -Math.PI/2;
+        paper1.rotation.z = -0.5;
+        paper1.position.set(0.5, 0.76, 0);
+        deskGroup.add(paper1);
+
+
         const deskChair = new THREE.Group(); deskChair.position.set(1.2, 0, -3.0); deskChair.rotation.y = -Math.PI / 2; scene.add(deskChair);
         const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 8), mat.chrome); cBase.position.y = 0.1; deskChair.add(cBase);
         createBox(0.05, 0.4, 0.05, mat.chrome, 0, 0.3, 0, deskChair); createBox(0.65, 0.1, 0.65, mat.leather, 0, 0.55, 0, deskChair);
@@ -602,6 +629,35 @@
             });
         });
 
+        // Shelf Decor
+        // Framed Photo on shelf
+        const photoFrame = new THREE.Group();
+        photoFrame.position.set(-3.5, 1.0, 0); // On a lower shelf
+        shelfGroup.add(photoFrame);
+        createBox(0.02, 0.25, 0.2, mat.woodDark, 0, 0.125, 0, photoFrame);
+        // Create a dedicated canvas for the photo frame
+        const photoCanvasElem = document.createElement('canvas');
+        photoCanvasElem.width = 180;
+        photoCanvasElem.height = 230;
+        const photoCtx = photoCanvasElem.getContext('2d');
+        // Draw a simple placeholder photo (replace with actual image if desired)
+        photoCtx.fillStyle = '#fff';
+        photoCtx.fillRect(0, 0, 180, 230);
+        photoCtx.fillStyle = '#222';
+        photoCtx.font = 'bold 32px Share Tech Mono, monospace';
+        photoCtx.textAlign = 'center';
+        photoCtx.textBaseline = 'middle';
+        photoCtx.fillText('Photo', 90, 115);
+        const photoCanvas = new THREE.CanvasTexture(photoCanvasElem);
+        const photoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.23), new THREE.MeshBasicMaterial({ map: photoCanvas }));
+        photoMesh.position.x = 0.015;
+        photoMesh.rotation.y = Math.PI / 2;
+        photoFrame.add(photoMesh);
+
+        // Decorative Box
+        createBox(0.2, 0.15, 0.2, 0x880e4f, 2.5, 1.075, 0, shelfGroup);
+
+
         // Lounge
         const loungeGroup = new THREE.Group(); loungeGroup.position.set(2.5, 0, 2.5); loungeGroup.rotation.y = -Math.PI / 4; scene.add(loungeGroup);
         const armChair = new THREE.Group();
@@ -623,6 +679,20 @@
         const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), new THREE.MeshLambertMaterial({color: 0xffffff}));
         mugHandle.position.set(0.05, 0, 0); mugHandle.rotation.z = 0; mugGroup.add(mugHandle);
         coffeeTable.add(mugGroup);
+
+        // Magazines
+        const magazineGroup = new THREE.Group();
+        magazineGroup.position.set(-0.2, 0.42, 0.1);
+        magazineGroup.rotation.y = -0.3;
+        for (let i = 0; i < 3; i++) {
+            const color = i === 0 ? 0xcc0000 : (i === 1 ? 0x0066cc : 0xffcc00);
+            const mag = createBox(0.2, 0.01, 0.28, color, (Math.random() - 0.5) * 0.02, i * 0.01, (Math.random() - 0.5) * 0.02, magazineGroup);
+            mag.rotation.y = (Math.random() - 0.5) * 0.1;
+        }
+        coffeeTable.add(magazineGroup);
+
+        // Remote Control
+        createBox(0.05, 0.02, 0.15, 0x111111, 0.3, 0.41, 0, coffeeTable, 0, 0.5, 0);
         
         // Floor Lamp (Detailed)
         const floorLamp = new THREE.Group(); floorLamp.position.set(1.0, 0, 0.5);
@@ -749,6 +819,26 @@
         trashCan.name = "trash"; interactables.push(trashCan);
         scene.add(trashCan);
 
+        // Crumpled Paper
+        for (let i = 0; i < 5; i++) {
+            const paperBall = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat.paper);
+            // Inside can
+            if (i < 3) {
+                paperBall.position.set(
+                    trashCan.position.x + (Math.random() - 0.5) * 0.1,
+                    0.1 + Math.random() * 0.2,
+                    trashCan.position.z + (Math.random() - 0.5) * 0.1
+                );
+            } else { // Outside can
+                paperBall.position.set(
+                    trashCan.position.x + (Math.random() - 0.5) * 0.5,
+                    0.025,
+                    trashCan.position.z + (Math.random() - 0.5) * 0.5
+                );
+            }
+            scene.add(paperBall);
+        }
+
         // 8. Lunchbox (Coffee Table) (Detailed)
         const lunchGroup = new THREE.Group(); lunchGroup.position.set(-0.2, 0.55, 0.1); coffeeTable.add(lunchGroup);
         const lunchBody = createBox(0.3, 0.2, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
@@ -809,6 +899,23 @@
         feGroup.add(feTank);
         createBox(0.05, 0.1, 0.05, 0x111111, 0, 0.65, 0, feGroup); // Nozzle top
         scene.add(feGroup);
+
+        // Coat Rack
+        const coatRack = new THREE.Group();
+        coatRack.position.set(4.5, 0, -2.0);
+        scene.add(coatRack);
+        createBox(0.4, 0.05, 0.4, mat.woodDark, 0, 0.025, 0, coatRack); // Base
+        createBox(0.05, 1.8, 0.05, mat.woodDark, 0, 0.9, 0, coatRack); // Pole
+        // Hooks
+        createBox(0.05, 0.05, 0.15, mat.woodDark, 0, 1.6, 0.05, coatRack);
+        createBox(0.15, 0.05, 0.05, mat.woodDark, 0.05, 1.4, 0, coatRack);
+
+        // Jacket
+        const jacket = new THREE.Group();
+        jacket.position.set(0, 1.2, 0.1);
+        coatRack.add(jacket);
+        createBox(0.3, 0.6, 0.15, 0x5d4037, 0, 0, 0, jacket); // Body
+        createBox(0.1, 0.5, 0.1, 0x5d4037, 0.15, 0.05, 0, jacket); // Sleeve
 
 
         // --- DOOR & TIMER ---
