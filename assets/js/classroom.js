@@ -25,6 +25,9 @@ import {
     isInteracting,
     gameWon
 } from './ui.js';
+import {
+    TouchControls
+} from './touchControls.js';
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
@@ -374,6 +377,19 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
+// --- TOUCH CONTROLS (MOBILE) ---
+let touchControls;
+function handleTouchInteract(object) {
+    if (!isInteracting) {
+        showModal(object.name, {
+            doorPivot: doorPivot,
+            finalTimeStr: finalTimeStr
+        });
+    }
+}
+// Initialize after DOM is ready and we have doorPivot reference
+// Will be initialized at the end of the script
+
 // --- INPUT HANDLING ---
 const keys = {
     ArrowUp: false,
@@ -507,27 +523,45 @@ function animate() {
                 // document.body.style.cursor = 'none';
             }
 
-            // --- LOOK (ARROWS) ---
+            // --- LOOK (ARROWS + TOUCH DRAG) ---
             _euler.setFromQuaternion(camera.quaternion);
 
-            // Yaw (Left/Right Arrows)
+            // Keyboard: Yaw (Left/Right Arrows)
             if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
             if (keys.ArrowRight) _euler.y -= lookSpeed * delta;
 
-            // Pitch (Up/Down Arrows)
+            // Keyboard: Pitch (Up/Down Arrows)
             if (keys.ArrowUp) _euler.x += lookSpeed * delta;
             if (keys.ArrowDown) _euler.x -= lookSpeed * delta;
+
+            // Touch: Camera look delta
+            if (touchControls) {
+                const lookDelta = touchControls.getLookDelta();
+                _euler.y -= lookDelta.x * 2; // Horizontal look
+                _euler.x -= lookDelta.y * 2; // Vertical look
+            }
 
             // Clamp Pitch
             _euler.x = Math.max(_PI_2 - maxPolarAngle, Math.min(_PI_2 - minPolarAngle, _euler.x));
             camera.quaternion.setFromEuler(_euler);
 
-            // --- MOVE (WASD) ---
+            // --- MOVE (WASD + TOUCH JOYSTICK) ---
             const actualSpeed = moveSpeed * delta;
+
+            // Keyboard movement
             if (keys.w || keys.KeyW) moveForward(actualSpeed);
             if (keys.s || keys.KeyS) moveForward(-actualSpeed);
             if (keys.a || keys.KeyA) moveRight(-actualSpeed);
             if (keys.d || keys.KeyD) moveRight(actualSpeed);
+
+            // Touch joystick movement
+            if (touchControls) {
+                const moveState = touchControls.getMovement();
+                if (moveState.forward) moveForward(actualSpeed);
+                if (moveState.backward) moveForward(-actualSpeed);
+                if (moveState.left) moveRight(-actualSpeed);
+                if (moveState.right) moveRight(actualSpeed);
+            }
 
             // Bounds
             const pos = camera.position;
@@ -552,5 +586,9 @@ window.addEventListener('resize', () => {
 window.camera = camera;
 window.scene = scene;
 window.renderer = renderer;
+
+// Initialize touch controls after all scene objects are ready
+touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
+
 initGame();
 animate();
