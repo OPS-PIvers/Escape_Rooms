@@ -1,11 +1,11 @@
 console.log("main.js loaded");
 import * as THREE from 'three';
 import {
+    loadModel
+} from './modelLoader.js';
+import {
     createClock
 } from './prefabs/clock.js';
-import {
-    createDesk
-} from './prefabs/desk.js';
 import {
     createShelves
 } from './prefabs/shelves.js';
@@ -112,7 +112,20 @@ createBox(0.2, 1.8, 1.5, mat.wall, 5, 3.1, 0, scene);
 createBox(20, 0.2, 20, mat.trim, 0, 4.1, 0, scene);
 
 // --- PROPS ---
-createDesk(scene);
+// Desk
+loadModel('assets/models/desk.glb', {
+    pos: [0, 0, 0],
+    scale: [2.5, 2.5, 2.5], // Kenney models are small
+    parent: scene
+});
+// Chair
+loadModel('assets/models/chairDesk.glb', {
+    pos: [0, 0, 1.5],
+    rot: [0, Math.PI, 0], // Facing desk
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+});
+
 createShelves(scene);
 createClock(scene);
 // Filing Cabinets (Back Wall)
