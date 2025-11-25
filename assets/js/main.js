@@ -386,8 +386,8 @@ loadModel('assets/models/tableCoffee.glb', {
     const lunchGroup = new THREE.Group();
     const lunchBoxHeight = 0.2;
     const magazineStackHeight = numMagazines * magHeight;
-    // Y is table surface + magazine stack height + half lunchbox height
-    const lunchboxCenterY = COFFEE_TABLE_Y + magazineStackHeight + (lunchBoxHeight / 2);
+    // Y is magazine stack height + half lunchbox height (magazineGroup is already at table height)
+    const lunchboxCenterY = magazineStackHeight + (lunchBoxHeight / 2);
     lunchGroup.position.set(magazineGroup.position.x, lunchboxCenterY, magazineGroup.position.z);
     model.add(lunchGroup);
     const lunchBody = createBox(0.3, lunchBoxHeight, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
