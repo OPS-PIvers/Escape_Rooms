@@ -635,7 +635,20 @@
         photoFrame.position.set(-3.5, 1.0, 0); // On a lower shelf
         shelfGroup.add(photoFrame);
         createBox(0.02, 0.25, 0.2, mat.woodDark, 0, 0.125, 0, photoFrame);
-        const photoCanvas = new THREE.CanvasTexture(pCtx.canvas); // Re-use picture canvas
+        // Create a dedicated canvas for the photo frame
+        const photoCanvasElem = document.createElement('canvas');
+        photoCanvasElem.width = 180;
+        photoCanvasElem.height = 230;
+        const photoCtx = photoCanvasElem.getContext('2d');
+        // Draw a simple placeholder photo (replace with actual image if desired)
+        photoCtx.fillStyle = '#fff';
+        photoCtx.fillRect(0, 0, 180, 230);
+        photoCtx.fillStyle = '#222';
+        photoCtx.font = 'bold 32px Share Tech Mono, monospace';
+        photoCtx.textAlign = 'center';
+        photoCtx.textBaseline = 'middle';
+        photoCtx.fillText('Photo', 90, 115);
+        const photoCanvas = new THREE.CanvasTexture(photoCanvasElem);
         const photoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.23), new THREE.MeshBasicMaterial({ map: photoCanvas }));
         photoMesh.position.x = 0.015;
         photoMesh.rotation.y = Math.PI / 2;
