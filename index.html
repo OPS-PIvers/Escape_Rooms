@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MN History Escape Rooms</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #222; color: #eee; margin: 0; padding: 40px; text-align: center; }
+        h1 { margin-bottom: 40px; font-size: 3em; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; max-width: 1200px; margin: 0 auto; }
+        
+        .card {
+            background: #333;
+            border-radius: 15px;
+            width: 300px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        
+        .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; background: #444; }
+        
+        .card h2 { margin: 0 0 10px 0; color: #fff; }
+        .card p { color: #aaa; font-size: 0.9em; flex-grow: 1; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; font-size: 0.9em; transition: background 0.2s; }
+        
+        .btn-play { background: #4CAF50; color: white; }
+        .btn-play:hover { background: #45a049; }
+        
+        .btn-build { background: #2196F3; color: white; }
+        .btn-build:hover { background: #1e88e5; }
+        
+        .btn-disabled { background: #555; color: #888; cursor: not-allowed; }
+        
+        .tag { position: absolute; top: 15px; right: 15px; background: #ff9800; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; }
+        .tag-new { background: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+
+    <h1>Select Your Mission</h1>
+
+    <div class="container">
+        
+        <!-- Card 1: Office -->
+        <div class="card">
+            <div class="tag tag-new">ACTIVE</div>
+            <!-- Placeholder image logic -->
+            <div style="width: 100%; height: 150px; background: linear-gradient(45deg, #3e2723, #5d4037); border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #8d6e63; font-weight: bold;">OFFICE ARCHIVE</div>
+            
+            <h2>The Archive</h2>
+            <p>Explore a cluttered historical archive office. Find clues hidden in filing cabinets, safes, and old documents to escape.</p>
+            
+            <div class="btn-group">
+                <a href="office.html" class="btn btn-play">Play Now</a>
+                <a href="builder.html?room=office.html" class="btn btn-build">Create Mission</a>
+            </div>
+        </div>
+
+        <!-- Card 2: Classroom (Future) -->
+        <div class="card">
+            <div class="tag">COMING SOON</div>
+            <div style="width: 100%; height: 150px; background: linear-gradient(45deg, #37474f, #546e7a); border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #78909c; font-weight: bold;">CLASSROOM</div>
+            
+            <h2>The Classroom</h2>
+            <p>Trapped after school! Solve problems on the whiteboard and unlock the teacher's desk to find the hall pass.</p>
+            
+            <div class="btn-group">
+                <button class="btn btn-disabled">Play Now</button>
+                <button class="btn btn-disabled">Create Mission</button>
+            </div>
+        </div>
+
+        <!-- Card 3: Lab (Future) -->
+        <div class="card">
+            <div class="tag">COMING SOON</div>
+            <div style="width: 100%; height: 150px; background: linear-gradient(45deg, #1a237e, #303f9f); border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #7986cb; font-weight: bold;">SCIENCE LAB</div>
+            
+            <h2>The Science Lab</h2>
+            <p>Mix chemicals (safely!) and align the telescope to discover the combination for the emergency exit.</p>
+            
+            <div class="btn-group">
+                <button class="btn btn-disabled">Play Now</button>
+                <button class="btn btn-disabled">Create Mission</button>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

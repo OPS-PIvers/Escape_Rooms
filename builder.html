@@ -113,6 +113,15 @@
             document.getElementById('downloadLabel').textContent = "Step 3: Save & Share"; // Rename "Option 2" to be the primary step
         }
 
+        // Determine which room we are building for (default: office.html)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetRoomFile = urlParams.get('room') || 'office.html';
+        
+        // Update Title to reflect the room (Capitalize filename without extension)
+        const roomName = targetRoomFile.replace('.html', '').charAt(0).toUpperCase() + targetRoomFile.replace('.html', '').slice(1);
+        document.querySelector('h1').textContent = `Mission Builder: ${roomName}`;
+        document.title = `Builder - ${roomName}`;
+
         let questions = [];
         let editingIndex = -1;
 
@@ -127,16 +136,16 @@
             questions.forEach((q, idx) => {
                 const div = document.createElement('div');
                 div.className = 'question-item';
-                div.innerHTML = "`
+                div.innerHTML = `
                     <div>
                         <strong>${idx + 1}. ${q.t}</strong><br>
                         <small>${q.q}</small>
                     </div>
                     <div>
-                        <button class=\"btn btn-danger\" style=\"padding: 4px 8px; font-size: 12px;\" onclick=\"deleteQuestion(${idx})">Delete</button>
-                        <button class=\"btn btn-secondary\" style=\"padding: 4px 8px; font-size: 12px;\" onclick=\"editQuestion(${idx})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteQuestion(${idx})">Delete</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="editQuestion(${idx})">Edit</button>
                     </div>
-                `";
+                `;
                 list.appendChild(div);
             });
         }
@@ -204,8 +213,14 @@
             }
             const json = JSON.stringify(questions);
             const encoded = btoa(json);
-            // Assume builder.html is in the same dir as office.html
-            const baseUrl = window.location.href.replace('builder.html', 'office.html');
+            
+            // Use the detected target room file
+            // Remove query params from current URL to get base path
+            const currentPath = window.location.pathname;
+            const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            // Construct full URL manually to avoid replacing wrong parts
+            const baseUrl = window.location.origin + dir + '/' + targetRoomFile;
+            
             const fullUrl = baseUrl + "?data=" + encoded;
             
             document.getElementById('linkContainer').classList.remove('hidden');
@@ -219,9 +234,9 @@
             }
             
             try {
-                // Fetch the original game file
-                const response = await fetch('office.html');
-                if (!response.ok) throw new Error("Could not find office.html");
+                // Fetch the TARGET game file
+                const response = await fetch(targetRoomFile);
+                if (!response.ok) throw new Error("Could not find " + targetRoomFile);
                 let htmlContent = await response.text();
 
                 // Inject the data
@@ -236,17 +251,12 @@
                 
                 // Insert before the main script
                 const insertPoint = htmlContent.indexOf('<script type="module" src="assets/js/main.js">');
-                if (insertPoint === -1) throw new Error("Could not find insertion point in office.html");
+                if (insertPoint === -1) throw new Error("Could not find insertion point in " + targetRoomFile);
                 
                 let newHtml = htmlContent.slice(0, insertPoint) + scriptInjection + "\n    " + htmlContent.slice(insertPoint);
 
                 // REWRITE ASSET PATHS TO ABSOLUTE URLS
-                // This ensures the downloaded file can still find the .css and .js files on the server
-                // even if the teacher saves it to their Desktop.
                 const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                
-                // Replace relative assets/ paths with absolute ones
-                // Regex matches src="assets/... or href="assets/...
                 newHtml = newHtml.replace(/(src|href)="assets\//g, `$1="${baseUrl}assets/`);
 
                 // Trigger download
@@ -254,7 +264,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'MyEscapeRoom.html';
+                a.download = `My${roomName}Mission.html`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
