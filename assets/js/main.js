@@ -164,23 +164,22 @@ loadModel('assets/models/computerMouse.glb', {
 
 createClock(scene);
 // Filing Cabinets (Back Wall)
-const cabinetGroup = new THREE.Group();
-cabinetGroup.position.set(0, 0, 4.6);
-cabinetGroup.rotation.y = Math.PI;
-scene.add(cabinetGroup);
-for (let i = -1; i <= 1; i++) {
-    const cabName = `filing_cabinet_${i+2}`;
-    const cab = createBox(0.8, 1.5, 0.6, mat.cabinet, i * 1.0, 0.75, 0, cabinetGroup, 0, 0, 0, cabName);
-    // Drawers detail
-    createBox(0.7, 0.02, 0.01, 0x333333, 0, 0.5, 0.31, cab); // Top drawer line
-    createBox(0.7, 0.02, 0.01, 0x333333, 0, 0.0, 0.31, cab); // Mid drawer line
-    createBox(0.7, 0.02, 0.01, 0x333333, 0, -0.5, 0.31, cab); // Bottom drawer line
-    // Handles and Labels
-    [0.5, 0.0, -0.5].forEach(y => {
-        createBox(0.1, 0.05, 0.02, 0xdddddd, 0, y + 0.1, 0.31, cab); // Label holder
-        createBox(0.15, 0.03, 0.04, 0x222222, 0, y - 0.1, 0.32, cab); // Handle
+const cabinetPos = [
+    { x: -1.0, z: 4.6 },
+    { x: 0.0, z: 4.6 },
+    { x: 1.0, z: 4.6 }
+];
+cabinetPos.forEach((pos, i) => {
+    loadModel('assets/models/kitchenCabinetDrawer.glb', {
+        pos: [pos.x, 0, pos.z],
+        rot: [0, Math.PI, 0],
+        scale: [2.5, 2.5, 2.5],
+        parent: scene
+    }).then(model => {
+         model.name = `filing_cabinet_${i+1}`;
+         interactables.push(model);
     });
-}
+});
 
 // Safe
 const safeGroup = new THREE.Group();
@@ -198,20 +197,10 @@ createBox(0.05, 0.2, 0.05, 0xcccccc, 0.2, 0, 0.45, safeBox); // Handle
 createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox); // Door seam
 scene.add(safeGroup);
 
-// Table
-const tableGroup = new THREE.Group();
-tableGroup.position.set(-1, 0, 1.5);
-tableGroup.rotation.y = 0.2;
-scene.add(tableGroup);
-createBox(2.5, 0.1, 1.2, mat.woodOld, 0, 0.75, 0, tableGroup);
-createBox(0.1, 0.7, 0.1, mat.woodOld, -1.1, 0.35, -0.5, tableGroup);
-createBox(0.1, 0.7, 0.1, mat.woodOld, 1.1, 0.35, -0.5, tableGroup);
-createBox(0.1, 0.7, 0.1, mat.woodOld, -1.1, 0.35, 0.5, tableGroup);
-createBox(0.1, 0.7, 0.1, mat.woodOld, 1.1, 0.35, 0.5, tableGroup);
-
+// Side Table
 function createPaperStack(x, z, parent) {
     const group = new THREE.Group();
-    group.position.set(x, 0.76, z);
+    group.position.set(x, 0, z); // Y is relative to parent
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
         paper.rotation.x = -Math.PI / 2;
@@ -227,14 +216,28 @@ function createPaperStack(x, z, parent) {
     group.add(hitBox);
     parent.add(group);
 }
-createPaperStack(0, 0, tableGroup);
-createPaperStack(-0.8, 0.2, tableGroup);
+
+loadModel('assets/models/sideTable.glb', {
+   pos: [-1, 0, 1.5],
+   rot: [0, 0.2, 0],
+   scale: [2.5, 2.5, 2.5],
+   parent: scene
+}).then(model => {
+    createPaperStack(0, 0.65, model); 
+    createPaperStack(-0.2, 0.7, model);
+});
 
 // Lounge Area (Replaced with Models)
 const loungeGroup = new THREE.Group();
 loungeGroup.position.set(2.5, 0, 2.5);
 loungeGroup.rotation.y = -Math.PI / 4;
 scene.add(loungeGroup);
+
+loadModel('assets/models/rugRounded.glb', {
+    pos: [0, 0.01, -0.5],
+    scale: [3.5, 1.0, 3.5],
+    parent: loungeGroup
+});
 
 // Sofa
 loadModel('assets/models/loungeSofa.glb', {
@@ -394,9 +397,16 @@ loadModel('assets/models/radio.glb', {
     interactables.push(model);
 });
 
-// 3. Typewriter (Table)
-const typewriter = createBox(0.4, 0.15, 0.35, 0x222222, 0.5, 0.85, -0.2, tableGroup, 0, -0.2, 0, "typewriter");
-createBox(0.3, 0.1, 0.1, 0xdddddd, 0, 0.1, -0.1, typewriter); // Paper roller
+// 3. Laptop (Replacing Typewriter)
+loadModel('assets/models/laptop.glb', {
+    pos: [-1.2, 0.75, 1.6],
+    rot: [0, 0.5, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => {
+    model.name = "laptop";
+    interactables.push(model);
+});
 
 // 4. Plant (Corner)
 loadModel('assets/models/pottedPlant.glb', {
@@ -479,29 +489,18 @@ interactables.push(picMesh);
 pictureGroup.add(picMesh);
 scene.add(pictureGroup);
 
-// 10. Desk Lamp (On Desk) (Detailed)
-const deskLamp = new THREE.Group();
-deskLamp.position.set(3.0, 0.8, -3.2);
-    createBox(0.15, 0.02, 0.15, 0x222222, 0, 0, 0, deskLamp);
-const dlPole1 = createBox(0.02, 0.2, 0.02, 0x222222, 0, 0.1, 0, deskLamp);
-dlPole1.rotation.x = 0.3;
-const dlPole2 = createBox(0.02, 0.2, 0.02, 0x222222, 0, 0.25, 0.08, deskLamp);
-dlPole2.rotation.x = 1.0;
-const dlHead = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.15, 16, 1, true), new THREE.MeshLambertMaterial({
-    color: 0x333333,
-    side: THREE.DoubleSide
-}));
-dlHead.position.set(0, 0.25, 0.25);
-dlHead.rotation.x = 2.0;
-dlHead.name = "desk_lamp";
-interactables.push(dlHead);
-const dlBulb = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshBasicMaterial({
-    color: 0xffffcc
-}));
-dlBulb.position.set(0, -0.05, 0);
-dlHead.add(dlBulb);
-deskLamp.add(dlHead);
-scene.add(deskLamp);
+// 10. Desk Lamp (On Desk)
+loadModel('assets/models/lampRoundTable.glb', {
+    pos: [0.8, 0.8, -0.8], // Adjusted for desk surface
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "desk_lamp";
+    interactables.push(model);
+    const light = new THREE.PointLight(0xffeebb, 0.5, 3);
+    light.position.set(0, 0.5, 0);
+    model.add(light);
+});
 
 // 11. Cardboard Box (Corner)
 loadModel('assets/models/cardboardBoxOpen.glb', {
