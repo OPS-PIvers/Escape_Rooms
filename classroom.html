@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room: MN History</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+    <div id="instructions">
+        <h1>The MN History Escape</h1>
+        <p><b>CLICK TO START</b></p>
+        <p>WASD to Move | ARROWS to Look</p>
+        <p>SPACE to Interact/Close | CLICK to Select</p>
+        <p>Find 4 clues to get 4 digits.</p>
+        <p>Write them down. You will need them to unlock the door.</p>
+    </div>
+
+    <div id="crosshair"></div>
+
+    <!-- Clue Modal -->
+    <div id="clueModal">
+        <h2 id="modalTitle">Evidence Found</h2>
+        <div id="modalContent"></div>
+        <div id="optionsContainer"></div>
+        <div id="modalFeedback"></div>
+        <button id="closeModalBtn">Close</button>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal">
+        <h1>Mission Accomplished</h1>
+        <p>You have escaped the archive.</p>
+        <div id="victoryTime"></div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="assets/js/classroom.js"></script>
+</body>
+</html>
