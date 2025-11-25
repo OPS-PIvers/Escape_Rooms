@@ -4,7 +4,7 @@ import time
 
 def test_ui_elements(page: Page):
     # 1. Go to the page
-    page.goto("http://localhost:8000/MN_History_6.html")
+    page.goto("http://localhost:8000/office.html")
 
     # Wait for fonts to load (approx)
     page.wait_for_timeout(1000)

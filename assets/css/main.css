@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Share Tech Mono', monospace; }
+
+/* UI OVERLAYS */
+#instructions {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00ffcc;
+    text-align: center;
+    background: rgba(10, 20, 30, 0.95);
+    padding: 40px;
+    border: 1px solid #00ffcc;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 10;
+    user-select: none;
+    box-shadow: 0 0 30px rgba(0, 255, 204, 0.2), inset 0 0 50px rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    max-width: 600px;
+}
+#instructions h1 {
+    margin-top: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #00ffcc;
+    font-size: 32px;
+}
+#instructions p { font-size: 18px; color: #ccfffc; }
+#instructions b { color: #ffffff; animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+#crosshair {
+    position: absolute;
+    /* Initial Position Center */
+    top: 50%; left: 50%;
+    width: 20px; height: 20px;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 30; /* Above Modal (20) so we can see it as a cursor */
+    transition: width 0.2s, height 0.2s, border-color 0.2s, box-shadow 0.2s; /* Removed 'all' to prevent laggy movement */
+}
+#crosshair::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 2px; height: 2px;
+    background: white;
+    transform: translate(-50%, -50%);
+}
+#crosshair.active {
+    border-color: #00ffcc;
+    box-shadow: 0 0 10px #00ffcc;
+    width: 30px; height: 30px; /* Scale effect via width/height instead of transform to avoid overwriting translate */
+    background: rgba(0, 255, 204, 0.1);
+}
+
+body.game-active {
+    cursor: none;
+}
+
+/* CLUE MODAL */
+#clueModal {
+    display: none;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 650px;
+    max-width: 90%;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
+    color: #e0e0e0;
+    border: 1px solid #00ffcc;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 255, 204, 0.3);
+    z-index: 20;
+    font-family: 'Share Tech Mono', monospace;
+    text-align: left;
+    overflow: hidden;
+}
+#clueModal::before {
+    content: "SECURE CONNECTION ESTABLISHED";
+    position: absolute;
+    top: 5px; right: 15px;
+    font-size: 10px;
+    color: #00ffcc;
+    opacity: 0.7;
+}
+
+#clueModal h2 {
+    margin-top: 0;
+    color: #00ffcc;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(0,255,204,0.5);
+}
+#clueModal p { line-height: 1.6; font-size: 18px; color: #b0bec5; }
+
+#clueModal .question-box {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-left: 3px solid #ffb74d;
+    margin: 15px 0;
+    border-radius: 0 5px 5px 0;
+    color: #fff;
+    font-size: 1.1em;
+}
+
+/* OPTIONS BUTTONS */
+#optionsContainer { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+.option-btn {
+    background: rgba(255,255,255,0.05);
+    color: #00ffcc;
+    border: 1px solid rgba(0,255,204,0.3);
+    padding: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+}
+.option-btn:hover {
+    background: rgba(0,255,204,0.1);
+    border-color: #00ffcc;
+    padding-left: 20px;
+    box-shadow: 0 0 10px rgba(0,255,204,0.2);
+}
+.option-btn.correct { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; color: #81c784; }
+.option-btn.wrong { background: rgba(229, 57, 53, 0.2); border-color: #e57373; color: #ef9a9a; }
+
+#modalFeedback { margin-top: 15px; font-weight: bold; min-height: 25px; font-size: 18px; text-align: center;}
+
+#closeModalBtn {
+    background: transparent;
+    color: #aaa;
+    border: 1px solid #555;
+    padding: 8px 20px;
+    cursor: pointer;
+    float: right;
+    margin-top: 15px;
+    font-family: inherit;
+    transition: 0.2s;
+    border-radius: 3px;
+}
+#closeModalBtn:hover { background: #333; color: white; border-color: #fff; }
+
+/* VICTORY MODAL */
+#victoryModal {
+    display: none;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 2s ease-in;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+#victoryModal h1 {
+    font-size: 80px;
+    color: #4caf50;
+    text-shadow: 0 0 20px #4caf50;
+    margin-bottom: 20px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
+#victoryModal p {
+    font-size: 32px;
+    color: #fff;
+    margin: 10px 0;
+}
+#victoryTime {
+    font-size: 60px;
+    color: #ff3333;
+    font-family: 'Share Tech Mono', monospace;
+    text-shadow: 0 0 20px #ff0000;
+    margin-top: 20px;
+}
+
+/* DOOR KEYPAD UI */
+#keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    max-width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+.key-btn {
+    background: linear-gradient(to bottom, #333, #222);
+    border: 1px solid #444;
+    color: #eee;
+    padding: 15px;
+    font-size: 20px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 2px 0 #000;
+    transition: 0.1s;
+}
+.key-btn:active { transform: translateY(2px); box-shadow: none; }
+.key-btn:hover { border-color: #00ffcc; color: #00ffcc; }
+#codeDisplay {
+    background: #000;
+    color: #00ffcc;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 32px;
+    padding: 15px;
+    text-align: center;
+    letter-spacing: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    box-shadow: inset 0 0 10px rgba(0,255,204,0.2);
+    text-shadow: 0 0 5px #00ffcc;
+}
