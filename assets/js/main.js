@@ -190,23 +190,23 @@ loadModel('assets/models/bookcaseClosed.glb', {
     parent: scene
 });
 
-// Computer (On Desk)
+// Computer (On Desk - desk surface at y=0.75 for 2.5x scaled desk)
 loadModel('assets/models/computerScreen.glb', {
-    pos: [0, 0.8, -0.3],
+    pos: [0, 0.75, -0.3],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "computer"; interactables.push(model); });
 
 loadModel('assets/models/computerKeyboard.glb', {
-    pos: [0, 0.8, 0.2],
+    pos: [0, 0.75, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "keyboard"; interactables.push(model); });
 
 loadModel('assets/models/computerMouse.glb', {
-    pos: [0.5, 0.8, 0.2],
+    pos: [0.5, 0.75, 0.2],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -551,7 +551,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, 0.8, -0.8], // Adjusted for desk surface
+    pos: [0.8, 0.75, -0.8], // Adjusted for desk surface at y=0.75
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
