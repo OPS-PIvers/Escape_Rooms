@@ -55,6 +55,7 @@ export async function initOffice(scene) {
             const w = wallModel.clone();
             w.position.set(x, 0, z);
             w.rotation.y = ry;
+            w.userData.isWall = true; // Mark for boundary detection
             scene.add(w);
         };
 
@@ -76,6 +77,7 @@ export async function initOffice(scene) {
                 const corner = wallCorner.clone();
                 corner.position.set(x, 0, z);
                 corner.rotation.y = ry;
+                corner.userData.isWall = true; // Mark for boundary detection
                 scene.add(corner);
             });
         }

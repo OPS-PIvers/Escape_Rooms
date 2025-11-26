@@ -13,7 +13,7 @@ const MOVE_SPEED = 3.0;
 const MOUSE_LOOK_SPEED = 0.002;
 const MIN_POLAR_ANGLE = 0.5;
 const MAX_POLAR_ANGLE = 2.5;
-const ROOM_BOUNDS = 4.5; // Will be updated dynamically after scene loads
+const INITIAL_ROOM_BOUNDS = 4.5; // Initial fallback value, updated dynamically after scene loads
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
@@ -60,18 +60,26 @@ let lastMousePos = new THREE.Vector2();
 let isMouseDown = false;
 
 // --- DYNAMIC BOUNDS ---
-let roomBounds = { minX: -ROOM_BOUNDS, maxX: ROOM_BOUNDS, minZ: -ROOM_BOUNDS, maxZ: ROOM_BOUNDS };
+let roomBounds = { minX: -INITIAL_ROOM_BOUNDS, maxX: INITIAL_ROOM_BOUNDS, minZ: -INITIAL_ROOM_BOUNDS, maxZ: INITIAL_ROOM_BOUNDS };
 
+/**
+ * Calculates dynamic room boundaries based on wall positions in the scene.
+ * This prevents the player from walking through walls by detecting wall meshes
+ * that have userData.isWall set to true and computing a bounding box around them.
+ * Falls back to initial bounds if no walls are detected.
+ */
 function calculateRoomBounds() {
-    // Calculate actual room bounds from scene geometry
     const box = new THREE.Box3();
+    let foundWalls = false;
+
     scene.traverse((object) => {
-        if (object.isMesh && object.name.includes('wall')) {
+        if (object.isMesh && object.userData?.isWall === true) {
             box.expandByObject(object);
+            foundWalls = true;
         }
     });
 
-    if (!box.isEmpty()) {
+    if (foundWalls && !box.isEmpty()) {
         const padding = 0.5; // Keep player away from walls
         roomBounds = {
             minX: box.min.x + padding,
@@ -80,6 +88,58 @@ function calculateRoomBounds() {
             maxZ: box.max.z - padding
         };
     }
+}
+
+// --- ERROR SCREEN ---
+/**
+ * Displays a user-facing error screen with recovery options.
+ * @param {string} message - The error message to display
+ * @param {Error} error - The original error object
+ */
+function showErrorScreen(message, error) {
+    // Create error overlay
+    const errorScreen = document.createElement('div');
+    errorScreen.id = 'errorScreen';
+    errorScreen.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        color: #ff3333;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        font-family: monospace;
+        text-align: center;
+        padding: 20px;
+    `;
+
+    errorScreen.innerHTML = `
+        <h1 style="font-size: 3em; margin-bottom: 20px;">⚠️ ERROR</h1>
+        <p style="font-size: 1.5em; margin-bottom: 10px;">${message}</p>
+        <p style="font-size: 1em; color: #999; margin-bottom: 30px;">${error.message}</p>
+        <button id="reloadButton" style="
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: #ff3333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        ">Reload Game</button>
+    `;
+
+    document.body.appendChild(errorScreen);
+
+    document.getElementById('reloadButton')?.addEventListener('click', () => {
+        window.location.reload();
+    });
+
+    console.error('Fatal error:', error);
 }
 
 // --- TOUCH CONTROLS (MOBILE) ---
@@ -115,9 +175,9 @@ document.addEventListener('keydown', (e) => {
     // Space Interaction
     if ((e.code === 'Space' || e.key === ' ')) {
         e.preventDefault(); // Prevent page scrolling
-        if (isInteracting && clueModal && clueModal.style.display === 'block') {
+        if (isInteracting) {
             closeModal();
-        } else if (!isInteracting) {
+        } else {
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(interactables, false);
             if (intersects.length > 0) {
@@ -146,10 +206,13 @@ document.addEventListener('mousedown', () => { isMouseDown = true; });
 document.addEventListener('mouseup', () => { isMouseDown = false; });
 
 document.addEventListener('mousemove', (event) => {
+    // Capture interaction state once to prevent race conditions
+    const currentlyInteracting = isInteracting;
+
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    if (isMouseDown && !isInteracting) {
+    if (isMouseDown && !currentlyInteracting) {
         const deltaX = event.clientX - lastMousePos.x;
         const deltaY = event.clientY - lastMousePos.y;
         mouseDelta.x += deltaX;
@@ -158,7 +221,7 @@ document.addEventListener('mousemove', (event) => {
 
     lastMousePos.set(event.clientX, event.clientY);
 
-    if (!isInteracting && crosshair) {
+    if (!currentlyInteracting && crosshair) {
         crosshair.style.left = event.clientX + 'px';
         crosshair.style.top = event.clientY + 'px';
     }
@@ -183,6 +246,8 @@ function setGameCursor(active) {
 
 // --- ANIMATION LOOP ---
 let prevTime = performance.now();
+let animationErrorCount = 0;
+const MAX_ANIMATION_ERRORS = 10;
 
 function animate() {
     requestAnimationFrame(animate);
@@ -266,8 +331,17 @@ function animate() {
         }
 
         renderer.render(scene, camera);
+
+        // Reset error counter on successful frame
+        animationErrorCount = 0;
     } catch (error) {
         console.error("Animation loop error:", error);
+        animationErrorCount++;
+
+        // If too many consecutive errors, show error screen
+        if (animationErrorCount >= MAX_ANIMATION_ERRORS) {
+            showErrorScreen("Game encountered critical errors", error);
+        }
     }
 }
 
@@ -277,8 +351,8 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Expose for development/debugging only
-if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+// Expose for development/debugging only (browser-compatible check)
+if (window.__DEV__ === true) {
     window.camera = camera;
     window.scene = scene;
     window.renderer = renderer;
@@ -309,8 +383,8 @@ async function initializeGame() {
         animate();
     } catch (err) {
         console.error("Scene initialization error:", err);
-        // Start animation anyway to prevent blank screen
-        animate();
+        // Show error screen instead of attempting to continue
+        showErrorScreen("Failed to load game scene", err);
     }
 }
 

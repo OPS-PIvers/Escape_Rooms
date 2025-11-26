@@ -46,6 +46,7 @@ export async function initClassroom(scene) {
             const wall = model.clone();
             wall.position.set(x, 0, z);
             wall.rotation.y = rotationY;
+            wall.userData.isWall = true; // Mark for boundary detection
             scene.add(wall);
             return wall;
         };
@@ -58,7 +59,7 @@ export async function initClassroom(scene) {
         // Front Wall (Blackboard/Teacher side)
         for (let x = -3; x <= 3; x += 2) {
             // Leave space for door at x=3
-            if (x < 3) placeWall(wallModel, x, ROOM_DEPTH / 2, Math.PI); 
+            if (x < 3) placeWall(wallModel, x, ROOM_DEPTH / 2, Math.PI);
         }
 
         // Left Wall (Windows)
@@ -70,7 +71,7 @@ export async function initClassroom(scene) {
         for (let z = -3; z <= 3; z += 2) {
             placeWall(wallModel, ROOM_WIDTH / 2, z, -Math.PI / 2);
         }
-        
+
         // Corners
         if (wallCorner) {
             placeWall(wallCorner, -ROOM_WIDTH/2, -ROOM_DEPTH/2, 0);
