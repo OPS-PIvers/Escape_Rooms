@@ -96,7 +96,7 @@ scene.add(doorGroup);
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
-doorPivot.position.set(-0.75, 0, 0);
+doorPivot.position.set(-0.75, 1.1, 0.02);
 doorGroup.add(doorPivot);
 
 // Load Door Model
