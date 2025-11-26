@@ -1,12 +1,19 @@
-console.log("main.js loaded");
 import * as THREE from 'three';
 import { initClassroom } from './classroom.js';
 import { initOffice } from './office.js';
 import { interactables } from './utils.js';
 import { initGame } from './gameLogic.js';
-import { showModal, closeModal, isInteracting, gameWon } from './ui.js';
+import { showModal, closeModal, isInteracting } from './ui.js';
 import { TouchControls } from './touchControls.js';
 import { createTouchInteractionHandler } from './touchUtils.js';
+
+// --- PHYSICS CONSTANTS ---
+const LOOK_SPEED = 1.5;
+const MOVE_SPEED = 3.0;
+const MOUSE_LOOK_SPEED = 0.002;
+const MIN_POLAR_ANGLE = 0.5;
+const MAX_POLAR_ANGLE = 2.5;
+const ROOM_BOUNDS = 4.5; // Will be updated dynamically after scene loads
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
@@ -40,20 +47,47 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-// --- LOGIC ---
+// --- CACHED DOM ELEMENTS ---
 const crosshair = document.getElementById('crosshair');
+const instructions = document.getElementById('instructions');
+const clueModal = document.getElementById('clueModal');
+
+// --- LOGIC ---
 const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+const mouse = new THREE.Vector2(0, 0); // Initialize to center
 const mouseDelta = new THREE.Vector2();
-let lastMousePos = null;
+let lastMousePos = new THREE.Vector2();
 let isMouseDown = false;
+
+// --- DYNAMIC BOUNDS ---
+let roomBounds = { minX: -ROOM_BOUNDS, maxX: ROOM_BOUNDS, minZ: -ROOM_BOUNDS, maxZ: ROOM_BOUNDS };
+
+function calculateRoomBounds() {
+    // Calculate actual room bounds from scene geometry
+    const box = new THREE.Box3();
+    scene.traverse((object) => {
+        if (object.isMesh && object.name.includes('wall')) {
+            box.expandByObject(object);
+        }
+    });
+
+    if (!box.isEmpty()) {
+        const padding = 0.5; // Keep player away from walls
+        roomBounds = {
+            minX: box.min.x + padding,
+            maxX: box.max.x - padding,
+            minZ: box.min.z + padding,
+            maxZ: box.max.z - padding
+        };
+    }
+}
 
 // --- TOUCH CONTROLS (MOBILE) ---
 let touchControls;
 const handleTouchInteract = createTouchInteractionHandler({
     showModal,
-    get isInteracting() { return isInteracting; },
-    getContext: () => ({ finalTimeStr: "00:00" })
+    isInteracting: () => isInteracting, // Pass as function, not getter
+    getContext: () => ({})
 });
 
 // --- INPUT HANDLING ---
@@ -66,6 +100,10 @@ const keys = {
     a: false,
     s: false,
     d: false,
+    KeyW: false,
+    KeyA: false,
+    KeyS: false,
+    KeyD: false,
     Space: false
 };
 
@@ -76,14 +114,14 @@ document.addEventListener('keydown', (e) => {
     }
     // Space Interaction
     if ((e.code === 'Space' || e.key === ' ')) {
-        const modal = document.getElementById('clueModal');
-        if (isInteracting && modal.style.display === 'block') {
+        e.preventDefault(); // Prevent page scrolling
+        if (isInteracting && clueModal && clueModal.style.display === 'block') {
             closeModal();
         } else if (!isInteracting) {
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(interactables, false);
             if (intersects.length > 0) {
-                showModal(intersects[0].object.name, { finalTimeStr: "00:00" });
+                showModal(intersects[0].object.name, {});
             }
         }
     }
@@ -97,7 +135,6 @@ document.addEventListener('keyup', (e) => {
 });
 
 // Instructions Handling
-const instructions = document.getElementById('instructions');
 if (instructions) {
     instructions.addEventListener('click', () => {
         instructions.style.display = 'none';
@@ -112,15 +149,13 @@ document.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    if (lastMousePos !== null && isMouseDown && !isInteracting) {
+    if (isMouseDown && !isInteracting) {
         const deltaX = event.clientX - lastMousePos.x;
         const deltaY = event.clientY - lastMousePos.y;
         mouseDelta.x += deltaX;
         mouseDelta.y += deltaY;
     }
-    if (lastMousePos === null) {
-        lastMousePos = new THREE.Vector2();
-    }
+
     lastMousePos.set(event.clientX, event.clientY);
 
     if (!isInteracting && crosshair) {
@@ -134,7 +169,7 @@ document.addEventListener('click', (event) => {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(interactables, false);
     if (intersects.length > 0) {
-        showModal(intersects[0].object.name, { finalTimeStr: "00:00" });
+        showModal(intersects[0].object.name, {});
     }
 });
 
@@ -148,14 +183,11 @@ function setGameCursor(active) {
 
 // --- ANIMATION LOOP ---
 let prevTime = performance.now();
-let lookSpeed = 1.5;
-let moveSpeed = 3.0;
-let minPolarAngle = 0.5;
-let maxPolarAngle = 2.5;
 
 function animate() {
+    requestAnimationFrame(animate);
+
     try {
-        requestAnimationFrame(animate);
         const time = performance.now();
         const delta = (time - prevTime) / 1000;
         prevTime = time;
@@ -185,19 +217,18 @@ function animate() {
 
             // Mouse Look
             if (isMouseDown) {
-                const mouseLookSpeed = 0.002;
-                _euler.y -= mouseDelta.x * mouseLookSpeed;
-                _euler.x -= mouseDelta.y * mouseLookSpeed;
+                _euler.y -= mouseDelta.x * MOUSE_LOOK_SPEED;
+                _euler.x -= mouseDelta.y * MOUSE_LOOK_SPEED;
             }
             mouseDelta.set(0, 0);
 
             // Keyboard: Yaw (Left/Right Arrows)
-            if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
-            if (keys.ArrowRight) _euler.y -= lookSpeed * delta;
+            if (keys.ArrowLeft) _euler.y += LOOK_SPEED * delta;
+            if (keys.ArrowRight) _euler.y -= LOOK_SPEED * delta;
 
             // Keyboard: Pitch (Up/Down Arrows)
-            if (keys.ArrowUp) _euler.x += lookSpeed * delta;
-            if (keys.ArrowDown) _euler.x -= lookSpeed * delta;
+            if (keys.ArrowUp) _euler.x += LOOK_SPEED * delta;
+            if (keys.ArrowDown) _euler.x -= LOOK_SPEED * delta;
 
             // Touch: Camera look delta
             if (touchControls) {
@@ -207,11 +238,11 @@ function animate() {
             }
 
             // Clamp Pitch
-            _euler.x = Math.max(_PI_2 - maxPolarAngle, Math.min(_PI_2 - minPolarAngle, _euler.x));
+            _euler.x = Math.max(_PI_2 - MAX_POLAR_ANGLE, Math.min(_PI_2 - MIN_POLAR_ANGLE, _euler.x));
             camera.quaternion.setFromEuler(_euler);
 
             // --- MOVE (WASD + TOUCH JOYSTICK) ---
-            const actualSpeed = moveSpeed * delta;
+            const actualSpeed = MOVE_SPEED * delta;
 
             // Keyboard movement
             if (keys.w || keys.KeyW) moveForward(actualSpeed);
@@ -228,12 +259,10 @@ function animate() {
                 if (moveState.right) moveRight(actualSpeed);
             }
 
-            // Bounds
+            // Dynamic Bounds
             const pos = camera.position;
-            if (pos.x < -4.5) pos.x = -4.5;
-            if (pos.x > 4.5) pos.x = 4.5;
-            if (pos.z < -4.5) pos.z = -4.5;
-            if (pos.z > 4.5) pos.z = 4.5;
+            pos.x = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, pos.x));
+            pos.z = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, pos.z));
         }
 
         renderer.render(scene, camera);
@@ -248,25 +277,42 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Expose for verification
-window.camera = camera;
-window.scene = scene;
-window.renderer = renderer;
-
-// Initialize based on page
-const path = window.location.pathname;
-console.log("Loading scene for path:", path);
-
-if (path.includes('classroom.html')) {
-    initClassroom(scene).catch(err => console.error("Classroom init error:", err));
-} else if (path.includes('office.html')) {
-    initOffice(scene).catch(err => console.error("Office init error:", err));
-} else {
-    console.log("Loading default scene (Office)");
-    initOffice(scene).catch(err => console.error("Office init error:", err));
+// Expose for development/debugging only
+if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+    window.camera = camera;
+    window.scene = scene;
+    window.renderer = renderer;
 }
 
-// Initialize touch controls and game logic
-touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
-initGame();
-animate();
+// --- SCENE INITIALIZATION ---
+async function initializeGame() {
+    const path = window.location.pathname;
+
+    try {
+        // Wait for scene to fully load before initializing game
+        if (path.includes('classroom.html')) {
+            await initClassroom(scene);
+        } else if (path.includes('office.html')) {
+            await initOffice(scene);
+        } else {
+            await initOffice(scene); // Default scene
+        }
+
+        // Calculate room bounds after scene loads
+        calculateRoomBounds();
+
+        // Initialize touch controls and game logic after scene is ready
+        touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
+        initGame();
+
+        // Start animation loop
+        animate();
+    } catch (err) {
+        console.error("Scene initialization error:", err);
+        // Start animation anyway to prevent blank screen
+        animate();
+    }
+}
+
+// Initialize the game
+initializeGame();
