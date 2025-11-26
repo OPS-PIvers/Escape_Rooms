@@ -169,9 +169,9 @@ for (let i = 0; i < roomSize; i++) {
 
 // --- PROPS ---
 // Physics constants for object placement
-const TABLE_SURFACE_Y = 0.6;   // Adjusted: Table/desk surface height
+const TABLE_SURFACE_Y = 0.85;   // Adjusted: Table/desk surface height
 const CABINET_TOP_Y = 0.8;     // Adjusted: Filing cabinet top height
-const BOOKSHELF_HEIGHTS = [0.6, 1.2, 1.8]; // Adjusted: Bookcase shelf heights
+const BOOKSHELF_HEIGHTS = [0.8, 1.4, 2.0]; // Adjusted: Bookcase shelf heights
 const COFFEE_TABLE_Y = 0.35;   // Added: Coffee table surface height
 
 // Desk
@@ -182,7 +182,7 @@ loadModel('assets/models/desk.glb', {
 });
 // Chair
 loadModel('assets/models/chairDesk.glb', {
-    pos: [0, 0, 1.5],
+    pos: [0, 0, 1.0],
     rot: [0, Math.PI, 0],
     scale: [2.5, 2.5, 2.5],
     parent: scene
@@ -204,34 +204,35 @@ loadModel('assets/models/bookcaseClosed.glb', {
 
 // Computer (On Desk)
 loadModel('assets/models/computerScreen.glb', {
-    pos: [0, TABLE_SURFACE_Y, -0.3],
+    pos: [0, TABLE_SURFACE_Y, -0.4],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "computer"; interactables.push(model); });
 
 loadModel('assets/models/computerKeyboard.glb', {
-    pos: [0, TABLE_SURFACE_Y, 0.2],
+    pos: [0, TABLE_SURFACE_Y, 0.1],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "keyboard"; interactables.push(model); });
 
 loadModel('assets/models/computerMouse.glb', {
-    pos: [0.5, TABLE_SURFACE_Y, 0.2],
+    pos: [0.5, TABLE_SURFACE_Y, 0.1],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "mouse"; interactables.push(model); });
 
-createClock(scene);
+createClock(scene, new THREE.Vector3(0, 3.0, -4.9), new THREE.Euler(0, 0, 0));
 
 // Books on Shelves (properly aligned to bookcase shelf heights)
+const BOOK_OFFSET_Y = 0;
 // Place books on first bookcase (open)
 const bookcase1Pos = [-4.5, 0, -1];
 BOOKSHELF_HEIGHTS.forEach((h, index) => {
     loadModel('assets/models/books.glb', {
-        pos: [bookcase1Pos[0], h, bookcase1Pos[2]],
+        pos: [bookcase1Pos[0], h + BOOK_OFFSET_Y, bookcase1Pos[2]],
         rot: [0, Math.PI / 2, 0],
         scale: [2.5, 2.5, 2.5],
         parent: scene
@@ -244,7 +245,7 @@ BOOKSHELF_HEIGHTS.forEach((h, index) => {
 // Place 4th book cluster on second bookcase (closed)
 const bookcase2Pos = [-4.5, 0, 1];
 loadModel('assets/models/books.glb', {
-    pos: [bookcase2Pos[0], BOOKSHELF_HEIGHTS[0], bookcase2Pos[2]],
+    pos: [bookcase2Pos[0], BOOKSHELF_HEIGHTS[0] + BOOK_OFFSET_Y, bookcase2Pos[2]],
     rot: [0, Math.PI / 2, 0],
     scale: [2.5, 2.5, 2.5],
     parent: scene
@@ -393,6 +394,7 @@ loadModel('assets/models/tableCoffee.glb', {
     const lunchBody = createBox(0.3, lunchBoxHeight, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
     lunchBody.name = "lunchbox";
     interactables.push(lunchBody);
+    lunchGroup.add(lunchBody);
     const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 12), new THREE.MeshBasicMaterial({
         color: 0x333333
     }));
@@ -421,7 +423,6 @@ bagGroup.rotation.y = 0.5;
 const bagBody = createBox(0.6, 0.4, 0.15, mat.leather, 0, 0.2, 0, bagGroup);
 bagBody.name = "briefcase";
 interactables.push(bagBody);
-createBox(0.02, 0.1, 0.1, mat.chrome, 0, 0.4, 0, bagGroup);
 scene.add(bagGroup);
 
 // Coat Rack
@@ -536,7 +537,7 @@ scene.add(trophy);
 
 // 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
-    pos: [0.8, 0, 0.8],
+    pos: [1.2, 0, -0.8],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
@@ -585,7 +586,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, TABLE_SURFACE_Y, -0.4],
+    pos: [-0.8, TABLE_SURFACE_Y, -0.4],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
