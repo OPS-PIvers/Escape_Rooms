@@ -31,6 +31,54 @@ export function closeModal() {
 
 // Flavor Text Pool
 const flavorTextPool = {
+    "couch": [
+        "A comfy-looking couch. Perfect for a nap.",
+        "The cushions are surprisingly firm.",
+        "You find some loose change between the cushions.",
+        "It smells faintly of popcorn.",
+        "This couch has seen better days.",
+        "A good spot to watch a movie.",
+        "You wonder who picked out this color.",
+        "It's a standard, unremarkable sofa.",
+        "The fabric is a bit scratchy.",
+        "You feel a strange lump in one of the cushions... but it's just stuffing."
+    ],
+    "coffeeTable": [
+        "A simple wooden coffee table.",
+        "There are some faint rings on the surface, probably from glasses.",
+        "It's covered in a thin layer of dust.",
+        "You check underneath, but there's nothing there.",
+        "A sturdy, practical piece of furniture.",
+        "You wonder if it's real wood.",
+        "The design is modern and minimalist.",
+        "It's placed perfectly in front of the couch.",
+        "No magazines or books on it. A bit bare.",
+        "You tap on the surface. It makes a solid sound."
+    ],
+    "tv": [
+        "A sleek, modern television. It's turned off.",
+        "The screen is dark and reflective.",
+        "You can't find the remote.",
+        "No signal. Of course.",
+        "It's a high-definition screen, but it's not showing anything.",
+        "You press the power button, but nothing happens.",
+        "Another dead end.",
+        "Just a blank screen staring back at you.",
+        "You wonder what was last watched on this.",
+        "A layer of dust has settled on the top."
+    ],
+    "bookshelf": [
+        "A bookshelf filled with old books.",
+        "The books are mostly about history and art.",
+        "They all seem to be glued in place.",
+        "A faint, musty smell of old paper.",
+        "So many books, so little time.",
+        "You scan the titles, but nothing stands out.",
+        "It's just a regular bookshelf.",
+        "One of the shelves is slightly crooked.",
+        "Dust motes dance in the air around it.",
+        "No hidden switches or secret levers here."
+    ],
     "lunchbox": [
         "Smells like old egg salad...",
         "Just a few crumbs and a wrapper.",
