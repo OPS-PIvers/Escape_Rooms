@@ -5,7 +5,7 @@ import {
 
 function createClock(scene) {
     const clockGroup = new THREE.Group();
-    clockGroup.position.set(-4.9, 3.5, 0);
+    clockGroup.position.set(-4.9, 2.2, 0); // Lowered from 3.5 to 2.2
     clockGroup.rotation.y = Math.PI / 2;
 
     // Clock Face Texture
@@ -13,12 +13,24 @@ function createClock(scene) {
     clockCanvas.width = 128;
     clockCanvas.height = 128;
     const clockCtx = clockCanvas.getContext('2d');
+    
+    // Transparent background
+    clockCtx.clearRect(0, 0, 128, 128);
+    
+    // White Face Circle
     clockCtx.fillStyle = '#ffffff';
-    clockCtx.fillRect(0, 0, 128, 128);
-    clockCtx.fillStyle = '#000000';
+    clockCtx.beginPath();
+    clockCtx.arc(64, 64, 60, 0, Math.PI * 2);
+    clockCtx.fill();
+
+    // Border
+    clockCtx.strokeStyle = '#000000';
+    clockCtx.lineWidth = 4;
     clockCtx.beginPath();
     clockCtx.arc(64, 64, 60, 0, Math.PI * 2);
     clockCtx.stroke();
+    
+    clockCtx.fillStyle = '#000000';
     for (let i = 0; i < 12; i++) {
         const a = (i / 12) * Math.PI * 2;
         const r = (i % 3 === 0) ? 10 : 5;
@@ -47,7 +59,7 @@ function createClock(scene) {
     clockBody.rotation.x = Math.PI / 2;
     clockGroup.add(clockBody);
 
-    const clockFace = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({
+    const clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.3, 32), new THREE.MeshBasicMaterial({
         map: clockTex,
         transparent: true
     }));
