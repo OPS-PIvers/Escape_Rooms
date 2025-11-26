@@ -3,10 +3,10 @@ import {
     interactables
 } from '../utils.js';
 
-function createClock(scene) {
+function createClock(scene, position = new THREE.Vector3(-4.9, 3.5, 0), rotation = new THREE.Euler(0, Math.PI / 2, 0)) {
     const clockGroup = new THREE.Group();
-    clockGroup.position.set(-4.9, 3.5, 0);
-    clockGroup.rotation.y = Math.PI / 2;
+    clockGroup.position.copy(position);
+    clockGroup.rotation.copy(rotation);
 
     // Clock Face Texture
     const clockCanvas = document.createElement('canvas');
@@ -41,13 +41,13 @@ function createClock(scene) {
     clockCtx.stroke();
 
     const clockTex = new THREE.CanvasTexture(clockCanvas);
-    const clockBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05), new THREE.MeshLambertMaterial({
+    const clockBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05), new THREE.MeshLambertMaterial({
         color: 0xffffff
     }));
     clockBody.rotation.x = Math.PI / 2;
     clockGroup.add(clockBody);
 
-    const clockFace = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({
+    const clockFace = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), new THREE.MeshBasicMaterial({
         map: clockTex,
         transparent: true
     }));
