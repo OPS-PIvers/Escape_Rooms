@@ -22,13 +22,13 @@ document.body.appendChild(renderer.domElement);
 const path = window.location.pathname;
 
 if (path.includes('classroom.html')) {
-    initClassroom(scene);
+    initClassroom(scene).catch(err => console.error("Classroom init error:", err));
 } else if (path.includes('office.html')) {
-    initOffice(scene);
+    initOffice(scene).catch(err => console.error("Office init error:", err));
 } else {
     // Default or index
     console.log("Loading default scene (Classroom)");
-    initClassroom(scene);
+    initClassroom(scene).catch(err => console.error("Classroom init error:", err));
 }
 
 // Animation Loop
