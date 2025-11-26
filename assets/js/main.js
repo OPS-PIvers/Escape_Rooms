@@ -151,7 +151,7 @@ for (let i = 0; i < roomSize; i++) {
     // Right Wall (X=5) - Door & Walls
     // We place the door at the second slot (index 1, Z = -1.25)
     if (i === 1) {
-        loadModel('assets/models/wallDoorway.glb', {
+        loadModel('assets/models/doorway.glb', {
             pos: [5, 0, p],
             rot: [0, -Math.PI / 2, 0],
             scale: [tileScale, tileScale, tileScale],
@@ -169,11 +169,10 @@ for (let i = 0; i < roomSize; i++) {
 
 // --- PROPS ---
 // Physics constants for object placement
-const DESK_SURFACE_Y = 0.8;    // Desk surface height (scaled 2.5x)
-const SIDE_TABLE_SURFACE_Y = 0.6;  // Side table surface height
-const CABINET_TOP_Y = 0.8;     // Filing cabinet top height
-const BOOKSHELF_HEIGHTS = [0.6, 1.2, 1.8]; // Bookcase shelf heights
-const COFFEE_TABLE_Y = 0.35;   // Coffee table surface height
+const TABLE_SURFACE_Y = 0.6;   // Adjusted: Table/desk surface height
+const CABINET_TOP_Y = 0.8;     // Adjusted: Filing cabinet top height
+const BOOKSHELF_HEIGHTS = [0.6, 1.2, 1.8]; // Adjusted: Bookcase shelf heights
+const COFFEE_TABLE_Y = 0.35;   // Added: Coffee table surface height
 
 // Desk
 loadModel('assets/models/desk.glb', {
@@ -181,9 +180,9 @@ loadModel('assets/models/desk.glb', {
     scale: [2.5, 2.5, 2.5],
     parent: scene
 });
-// Chair (positioned at the desk, pushed in)
+// Chair
 loadModel('assets/models/chairDesk.glb', {
-    pos: [0, 0, 0.7],
+    pos: [0, 0, 1.5],
     rot: [0, Math.PI, 0],
     scale: [2.5, 2.5, 2.5],
     parent: scene
@@ -205,22 +204,22 @@ loadModel('assets/models/bookcaseClosed.glb', {
 
 // Computer (On Desk)
 loadModel('assets/models/computerScreen.glb', {
-    pos: [0, DESK_SURFACE_Y, -0.3],
-    rot: [0, 0, 0],
+    pos: [0, TABLE_SURFACE_Y, -0.3],
+    rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "computer"; interactables.push(model); });
 
 loadModel('assets/models/computerKeyboard.glb', {
-    pos: [0, DESK_SURFACE_Y, 0.2],
-    rot: [0, 0, 0],
+    pos: [0, TABLE_SURFACE_Y, 0.2],
+    rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "keyboard"; interactables.push(model); });
 
 loadModel('assets/models/computerMouse.glb', {
-    pos: [0.5, DESK_SURFACE_Y, 0.2],
-    rot: [0, 0, 0],
+    pos: [0.5, TABLE_SURFACE_Y, 0.2],
+    rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => { model.name = "mouse"; interactables.push(model); });
@@ -230,10 +229,9 @@ createClock(scene);
 // Books on Shelves (properly aligned to bookcase shelf heights)
 // Place books on first bookcase (open)
 const bookcase1Pos = [-4.5, 0, -1];
-const BOOK_HEIGHT_OFFSET = 0.1; // Offset to place books on top of shelves instead of through them
 BOOKSHELF_HEIGHTS.forEach((h, index) => {
     loadModel('assets/models/books.glb', {
-        pos: [bookcase1Pos[0], h + BOOK_HEIGHT_OFFSET, bookcase1Pos[2]],
+        pos: [bookcase1Pos[0], h, bookcase1Pos[2]],
         rot: [0, Math.PI / 2, 0],
         scale: [2.5, 2.5, 2.5],
         parent: scene
@@ -246,7 +244,7 @@ BOOKSHELF_HEIGHTS.forEach((h, index) => {
 // Place 4th book cluster on second bookcase (closed)
 const bookcase2Pos = [-4.5, 0, 1];
 loadModel('assets/models/books.glb', {
-    pos: [bookcase2Pos[0], BOOKSHELF_HEIGHTS[0] + BOOK_HEIGHT_OFFSET, bookcase2Pos[2]],
+    pos: [bookcase2Pos[0], BOOKSHELF_HEIGHTS[0], bookcase2Pos[2]],
     rot: [0, Math.PI / 2, 0],
     scale: [2.5, 2.5, 2.5],
     parent: scene
@@ -289,9 +287,9 @@ createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox); // Door seam
 scene.add(safeGroup);
 
 // Side Table
-function createPaperStack(x, y, z, parent, stackOffset = 0) {
+function createPaperStack(x, z, parent, stackOffset = 0) {
     const group = new THREE.Group();
-    group.position.set(x, y, z); // Position relative to parent model
+    group.position.set(x, 0, z); // Y is relative to parent
     // Create realistic paper stack with slight rotation variations
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
@@ -317,9 +315,8 @@ loadModel('assets/models/sideTable.glb', {
    scale: [2.5, 2.5, 2.5],
    parent: scene
 }).then(model => {
-    // Position papers on table surface (y=SIDE_TABLE_SURFACE_Y relative to model origin)
-    createPaperStack(0, SIDE_TABLE_SURFACE_Y, 0, model, 0);
-    createPaperStack(-0.2, SIDE_TABLE_SURFACE_Y, 0.05, model, 1);
+    createPaperStack(0, 0.65, model, 0);
+    createPaperStack(-0.2, 0.7, model, 1);
 });
 
 // Lounge Area
@@ -387,21 +384,19 @@ loadModel('assets/models/tableCoffee.glb', {
 
     // Lunchbox (on top of magazines)
     const lunchGroup = new THREE.Group();
-    const lunchBoxWidth = 0.2;
-    const lunchBoxHeight = 0.12;
-    const lunchBoxDepth = 0.15;
+    const lunchBoxHeight = 0.2;
     const magazineStackHeight = numMagazines * magHeight;
     // Y is magazine stack height + half lunchbox height (magazineGroup is already at table height)
     const lunchboxCenterY = COFFEE_TABLE_Y + magazineStackHeight + (lunchBoxHeight / 2);
     lunchGroup.position.set(magazineGroup.position.x, lunchboxCenterY, magazineGroup.position.z);
     model.add(lunchGroup);
-    const lunchBody = createBox(lunchBoxWidth, lunchBoxHeight, lunchBoxDepth, 0xff0000, 0, 0, 0, lunchGroup);
+    const lunchBody = createBox(0.3, lunchBoxHeight, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
     lunchBody.name = "lunchbox";
     interactables.push(lunchBody);
-    const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 4, 12), new THREE.MeshBasicMaterial({
+    const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 12), new THREE.MeshBasicMaterial({
         color: 0x333333
     }));
-    lHandle.position.set(0, lunchBoxHeight / 2, 0); // Handle on top of lunchbox
+    lHandle.position.set(0, 0.2, 0); // Handle on top of lunchbox
     lHandle.rotation.x = Math.PI / 2;
     lunchGroup.add(lHandle);
 });
@@ -450,9 +445,10 @@ loadModel('assets/models/coatRackStanding.glb', {
 // 1. Globe (On cabinet)
 const globeGroup = new THREE.Group();
 // Position at cabinet top + half of base height (0.05/2 = 0.025) so base sits on surface
-globeGroup.position.set(0, CABINET_TOP_Y + 0.025, 4.6);
+globeGroup.position.set(0, CABINET_TOP_Y, 4.6);
 scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
+gBase.position.y = 0.025;
 globeGroup.add(gBase);
 
 // Generate Globe Texture
@@ -511,8 +507,8 @@ loadModel('assets/models/radio.glb', {
 
 // 3. Laptop (On side table)
 loadModel('assets/models/laptop.glb', {
-    pos: [-1.2, SIDE_TABLE_SURFACE_Y, 1.6],
-    rot: [0, 0.5, 0],
+    pos: [-1.05, TABLE_SURFACE_Y, 1.5],
+    rot: [0, 0.2, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => {
@@ -540,7 +536,7 @@ scene.add(trophy);
 
 // 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
-    pos: [2.5, 0, -2.0],
+    pos: [0.8, 0, 0.8],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
@@ -589,7 +585,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, DESK_SURFACE_Y, -0.8],
+    pos: [0.8, TABLE_SURFACE_Y, -0.4],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
@@ -635,35 +631,13 @@ const doorPivot = new THREE.Group();
 doorPivot.position.set(-0.75, 1.1, 0.02); // Hinge location (left side of door)
 doorGroup.add(doorPivot);
 
-// Load Door Model
-loadModel('assets/models/doorway.glb', {
-    pos: [0.75, -1.1, 0], // Center horizontally relative to hinge, move down to floor
-    rot: [0, 0, 0],
-    scale: [2.5, 2.5, 2.5], // Match tileScale
-    parent: doorPivot
-}).then(model => {
-    model.name = "door";
-    // Add collision box for interaction if the model itself isn't sufficient or is complex
-    // But for now, let's assume the model is clickable.
-    // We need to ensure it's in 'interactables'
-    // The model itself will be traversed by raycaster?
-    // No, raycaster intersects objects in 'interactables' array.
-    // We need to find the mesh inside the model and add it, or add the model scene.
-    // Helper function 'loadModel' doesn't auto-add to interactables.
-    
-    // We'll add a simplified hitbox for interaction to be safe and consistent
-    const hitBox = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
-    hitBox.position.set(0, 1.1, 0); // Relative to door model origin? No, relative to pivot?
-    // The model is at (0.75, -1.1, 0) relative to pivot.
-    // If model origin is bottom center: then (0.75, -1.1) puts bottom center at bottom center of doorframe?
-    // Wait, standard doorway.glb might be the door leaf.
-    // If I assume it's the door leaf:
-    // Let's attach the hitbox to the model or the pivot.
-    hitBox.name = "door";
-    interactables.push(hitBox);
-    doorPivot.add(hitBox);
-    hitBox.position.set(0.75, 0, 0); // Centered in the pivot frame (pivot is at center-left, so +0.75 is center)
-});
+// Door Mesh (1.5 wide, centered at +0.75 relative to pivot)
+createBox(1.5, 2.2, 0.05, mat.door, 0.75, 0, 0, doorPivot, 0, 0, 0, "door");
+
+// Knob
+const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04), mat.chrome);
+knob.position.set(1.35, 0, 0.06);
+doorPivot.add(knob);
 
 const timerGroup = new THREE.Group();
 timerGroup.position.set(0, 2.6, 0.1);
