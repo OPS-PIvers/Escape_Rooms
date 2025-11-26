@@ -4,14 +4,18 @@ import time
 
 def test_ui_elements(page: Page):
     # 1. Go to the page
-    page.goto("http://localhost:8000/office.html")
+    page.goto("http://localhost:8000/classroom.html")
 
     # Wait for fonts to load (approx)
     page.wait_for_timeout(1000)
+    
+    # 2. Screenshot the full scene without UI overlays
+    page.screenshot(path="verification_classroom_scene.png", full_page=True)
+    print("Classroom scene screenshot taken.")
 
-    # 2. Screenshot Instructions
-    page.screenshot(path="verification_instructions.png")
-    print("Instructions screenshot taken.")
+    # 3. Screenshot Instructions
+    page.screenshot(path="verification_classroom_instructions.png")
+    print("Classroom Instructions screenshot taken.")
 
     # 3. Click instructions to lock pointer (handled by browser, might be tricky in headless,
     # but clicking hides the instructions div).
@@ -41,8 +45,8 @@ def test_ui_elements(page: Page):
         optC.innerHTML = '<button class="option-btn">Option 1</button><button class="option-btn">Option 2</button>';
     """)
     page.wait_for_timeout(500)
-    page.screenshot(path="verification_modal.png")
-    print("Modal screenshot taken.")
+    page.screenshot(path="verification_classroom_modal.png")
+    print("Classroom Modal screenshot taken.")
 
     # 5. Check if we can see the Timer or Computer?
     # The camera starts at a specific position.

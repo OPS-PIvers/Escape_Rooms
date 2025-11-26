@@ -172,6 +172,12 @@ for (let i = 0; i < roomSize; i++) {
 
 // --- PROPS ---
 
+// Physics constants for object placement
+const TEACHER_DESK_ITEM_Y = 0.75; // Y position for items on the teacher's desk
+const STUDENT_DESK_ITEM_Y = 0.76; // Y position for paper stack on student desks
+const BOOK_SHELF_ITEM_Y = 1.6;    // Y position for books on the bookshelf
+const GLOBE_STAND_TOP_Y = 2.35;   // Y position for the top of the globe stand
+
 // 1. Teacher's Desk (Front Right)
 loadModel('assets/models/desk.glb', {
     pos: [2.5, 0, -3.5],
@@ -187,7 +193,7 @@ loadModel('assets/models/chairDesk.glb', {
 
 // Laptop on Teacher Desk
 loadModel('assets/models/laptop.glb', {
-    pos: [2.5, 0.75, -3.5],
+    pos: [2.5, TEACHER_DESK_ITEM_Y, -3.5],
     rot: [0, Math.PI, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
@@ -211,7 +217,7 @@ const deskCols = [-2.5, 0.5];
 
 function createClassPaperStack(x, z, parent) {
     const group = new THREE.Group();
-    group.position.set(x, 0.76, z); // Relative Y
+    group.position.set(x, STUDENT_DESK_ITEM_Y, z); // Relative Y
     for (let i = 0; i < 5; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
         paper.rotation.x = -Math.PI / 2;
@@ -257,12 +263,12 @@ loadModel('assets/models/bookcaseOpen.glb', {
     scale: [2.5, 2.5, 2.5],
     parent: scene
 });
-loadModel('assets/models/books.glb', { pos: [-4.5, 1.6, 4.5], rot: [0, Math.PI/2, 0], scale: [2.5, 2.5, 2.5], parent: scene })
+loadModel('assets/models/books.glb', { pos: [-4.5, BOOK_SHELF_ITEM_Y, 4.5], rot: [0, Math.PI/2, 0], scale: [2.5, 2.5, 2.5], parent: scene })
     .then(m => { m.name="book_cluster"; interactables.push(m); });
 
 // 5. Globe (Simple)
 const globeGroup = new THREE.Group();
-globeGroup.position.set(-4.5, 2.35, 4.5);
+globeGroup.position.set(-4.5, GLOBE_STAND_TOP_Y, 4.5);
 scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
 globeGroup.add(gBase);

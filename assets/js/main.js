@@ -290,7 +290,7 @@ scene.add(safeGroup);
 // Side Table
 function createPaperStack(x, z, parent, stackOffset = 0) {
     const group = new THREE.Group();
-    group.position.set(x, 0, z); // Y is relative to parent
+    group.position.set(x, TABLE_SURFACE_Y, z); // Y is set to table surface height
     // Create realistic paper stack with slight rotation variations
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
