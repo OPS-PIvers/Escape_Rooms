@@ -289,7 +289,7 @@ scene.add(safeGroup);
 // Side Table
 function createPaperStack(x, z, parent, stackOffset = 0) {
     const group = new THREE.Group();
-    group.position.set(x, 0, z); // Y is relative to parent
+    group.position.set(x, TABLE_SURFACE_Y, z); // Y is relative to parent
     // Create realistic paper stack with slight rotation variations
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
@@ -387,7 +387,7 @@ loadModel('assets/models/tableCoffee.glb', {
     const lunchBoxHeight = 0.2;
     const magazineStackHeight = numMagazines * magHeight;
     // Y is magazine stack height + half lunchbox height (magazineGroup is already at table height)
-    const lunchboxCenterY = magazineStackHeight + (lunchBoxHeight / 2);
+    const lunchboxCenterY = COFFEE_TABLE_Y + magazineStackHeight + (lunchBoxHeight / 2);
     lunchGroup.position.set(magazineGroup.position.x, lunchboxCenterY, magazineGroup.position.z);
     model.add(lunchGroup);
     const lunchBody = createBox(0.3, lunchBoxHeight, 0.2, 0xff0000, 0, 0, 0, lunchGroup);
