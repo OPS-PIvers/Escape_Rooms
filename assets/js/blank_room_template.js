@@ -156,6 +156,24 @@ function updateTimer(dt) {
     tCtx.textAlign = 'center';
     tCtx.textBaseline = 'middle';
     tCtx.fillText(timeStr, 256, 128);
+
+    // --- Border effect ---
+    tCtx.save();
+    tCtx.shadowColor = "rgba(0,0,0,0.7)";
+    tCtx.shadowBlur = 8;
+    tCtx.lineWidth = 8;
+    tCtx.strokeStyle = "#ff3333";
+    tCtx.strokeRect(8, 8, 496, 240);
+    tCtx.restore();
+
+    // --- Scanline effect ---
+    tCtx.save();
+    tCtx.globalAlpha = 0.12;
+    tCtx.fillStyle = "#fff";
+    for (let y = 0; y < 256; y += 4) {
+        tCtx.fillRect(0, y, 512, 2);
+    }
+    tCtx.restore();
     timerTexture.needsUpdate = true;
 }
 
