@@ -133,7 +133,7 @@ timerCanvas.width = 512;
 timerCanvas.height = 256;
 const tCtx = timerCanvas.getContext('2d');
 const timerTexture = new THREE.CanvasTexture(timerCanvas);
-const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.25), new THREE.MeshBasicMaterial({ map: timerTexture }));
+const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshBasicMaterial({ map: timerTexture }));
 displayMesh.position.z = 0.051; // Slightly in front of the box
 timerGroup.add(displayMesh);
 
