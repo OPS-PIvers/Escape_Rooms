@@ -289,7 +289,7 @@ scene.add(safeGroup);
 // Side Table
 function createPaperStack(x, z, parent, stackOffset = 0) {
     const group = new THREE.Group();
-    group.position.set(x, TABLE_SURFACE_Y, z); // Y is relative to parent
+    group.position.set(x, 0, z); // Y is relative to parent
     // Create realistic paper stack with slight rotation variations
     for (let i = 0; i < 10; i++) {
         const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
@@ -445,9 +445,10 @@ loadModel('assets/models/coatRackStanding.glb', {
 // 1. Globe (On cabinet)
 const globeGroup = new THREE.Group();
 // Position at cabinet top + half of base height (0.05/2 = 0.025) so base sits on surface
-globeGroup.position.set(0, CABINET_TOP_Y + 0.025, 4.6);
+globeGroup.position.set(0, CABINET_TOP_Y, 4.6);
 scene.add(globeGroup);
 const gBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.05), mat.woodDark);
+gBase.position.y = 0.025;
 globeGroup.add(gBase);
 
 // Generate Globe Texture
@@ -506,8 +507,8 @@ loadModel('assets/models/radio.glb', {
 
 // 3. Laptop (On side table)
 loadModel('assets/models/laptop.glb', {
-    pos: [-1.2, TABLE_SURFACE_Y, 1.6],
-    rot: [0, 0.5, 0],
+    pos: [-1.05, TABLE_SURFACE_Y, 1.5],
+    rot: [0, 0.2, 0],
     scale: [2.0, 2.0, 2.0],
     parent: scene
 }).then(model => {
@@ -535,7 +536,7 @@ scene.add(trophy);
 
 // 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
-    pos: [2.5, 0, -2.0],
+    pos: [0.8, 0, 0.8],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
@@ -584,7 +585,7 @@ scene.add(pictureGroup);
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
-    pos: [0.8, TABLE_SURFACE_Y, -0.8],
+    pos: [0.8, TABLE_SURFACE_Y, -0.4],
     scale: [2.5, 2.5, 2.5],
     parent: scene
 }).then(model => {
