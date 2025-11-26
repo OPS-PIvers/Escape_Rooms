@@ -789,11 +789,29 @@ instructions.addEventListener('click', () => {
 
 // --- MOUSE INTERACTION ---
 const mouse = new THREE.Vector2();
+const mouseDelta = new THREE.Vector2();
+let lastMousePos = null;
+let isMouseDown = false;
+
+document.addEventListener('mousedown', () => { isMouseDown = true; });
+document.addEventListener('mouseup', () => { isMouseDown = false; });
 
 document.addEventListener('mousemove', (event) => {
     // Calculate mouse position in normalized device coordinates (-1 to +1)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Track Mouse Drag for Look
+    if (lastMousePos !== null && isMouseDown && !isInteracting) {
+        const deltaX = event.clientX - lastMousePos.x;
+        const deltaY = event.clientY - lastMousePos.y;
+        mouseDelta.x += deltaX;
+        mouseDelta.y += deltaY;
+    }
+    if (lastMousePos === null) {
+        lastMousePos = new THREE.Vector2();
+    }
+    lastMousePos.set(event.clientX, event.clientY);
 
     // Move Custom Cursor (Crosshair)
     if (!isInteracting) {
@@ -873,8 +891,16 @@ function animate() {
                 // document.body.style.cursor = 'none';
             }
 
-            // --- LOOK (ARROWS + TOUCH DRAG) ---
+            // --- LOOK (ARROWS + TOUCH DRAG + MOUSE DRAG) ---
             _euler.setFromQuaternion(camera.quaternion);
+
+            // Mouse Look
+            if (isMouseDown) {
+                const mouseLookSpeed = 0.002;
+                _euler.y -= mouseDelta.x * mouseLookSpeed;
+                _euler.x -= mouseDelta.y * mouseLookSpeed;
+            }
+            mouseDelta.set(0, 0); // Reset after applying
 
             // Keyboard: Yaw (Left/Right Arrows)
             if (keys.ArrowLeft) _euler.y += lookSpeed * delta;
