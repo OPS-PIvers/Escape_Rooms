@@ -273,53 +273,33 @@ cabinetPos.forEach((pos, i) => {
 });
 
 // Safe
-const safeGroup = new THREE.Group();
-safeGroup.position.set(4.0, 0, 4.2);
-safeGroup.rotation.y = -Math.PI / 4;
-const safeBox = createBox(0.8, 1.0, 0.8, mat.safe, 0, 0.5, 0, safeGroup, 0, 0, 0, "safe");
-// Safe Details
-const sDial = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16), new THREE.MeshStandardMaterial({
-    color: 0xcccccc
-}));
-sDial.rotation.x = Math.PI / 2;
-sDial.position.set(0, 0.2, 0.41);
-safeBox.add(sDial);
-createBox(0.05, 0.2, 0.05, 0xcccccc, 0.2, 0, 0.45, safeBox); // Handle
-createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox); // Door seam
-scene.add(safeGroup);
+loadModel('assets/models/cabinetBed.glb', {
+    pos: [4.0, 0, 4.2],
+    rot: [0, -Math.PI / 4, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "safe";
+    interactables.push(model);
+});
 
 // Side Table
-function createPaperStack(x, y, z, parent, stackOffset = 0) {
-    const group = new THREE.Group();
-    group.position.set(x, y, z); // Position relative to parent model
-    // Create realistic paper stack with slight rotation variations
-    for (let i = 0; i < 10; i++) {
-        const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.35), mat.paper);
-        paper.rotation.x = -Math.PI / 2;
-        // Simple alternating rotation pattern with slight variation per stack
-        const direction = (i % 2 === 0) ? 1 : -1;
-        paper.rotation.z = direction * 0.05 * (i % 3) + stackOffset * 0.1;
-        paper.position.y = i * 0.005;
-        group.add(paper);
-    }
-    const hitBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.4), new THREE.MeshBasicMaterial({
-        visible: false
-    }));
-    hitBox.name = "papers";
-    interactables.push(hitBox);
-    group.add(hitBox);
-    parent.add(group);
-}
-
 loadModel('assets/models/sideTable.glb', {
-   pos: [-1, 0, 1.5],
-   rot: [0, 0.2, 0],
-   scale: [2.5, 2.5, 2.5],
-   parent: scene
+    pos: [-1, 0, 1.5],
+    rot: [0, 0.2, 0],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
 }).then(model => {
-    // Position papers on table surface (y=SIDE_TABLE_SURFACE_Y relative to model origin)
-    createPaperStack(0, SIDE_TABLE_SURFACE_Y, 0, model, 0);
-    createPaperStack(-0.2, SIDE_TABLE_SURFACE_Y, 0.05, model, 1);
+    // Position papers on table surface
+    loadModel('assets/models/books.glb', {
+        pos: [0, SIDE_TABLE_SURFACE_Y, 0],
+        rot: [0, 0, 0],
+        scale: [2.0, 2.0, 2.0],
+        parent: model
+    }).then(papers => {
+        papers.name = "papers";
+        interactables.push(papers);
+    });
 });
 
 // Lounge Area
@@ -364,46 +344,24 @@ loadModel('assets/models/tableCoffee.glb', {
     model.add(mugGroup);
 
     // Magazines (stacked properly on table)
-    const magazineGroup = new THREE.Group();
-    magazineGroup.position.set(-0.2, COFFEE_TABLE_Y, 0.1); // Position stack on the table
-    magazineGroup.rotation.y = -0.3;
-
-    const magazineColors = [0xcc0000, 0x0066cc, 0xffcc00];
-    const magazineOffsets = [
-        { x: 0, z: 0, rot: 0 },
-        { x: 0.01, z: 0.01, rot: 0.05 },
-        { x: -0.01, z: 0.01, rot: -0.03 }
-    ];
-    const magHeight = 0.01;
-    const numMagazines = 3;
-    for (let i = 0; i < numMagazines; i++) {
-        const offset = magazineOffsets[i];
-        // Stack magazines directly on top of each other. Y is bottom of stack + half height.
-        const magCenterY = (i * magHeight) + (magHeight / 2);
-        const mag = createBox(0.2, magHeight, 0.28, magazineColors[i], offset.x, magCenterY, offset.z, magazineGroup);
-        mag.rotation.y = offset.rot;
-    }
-    model.add(magazineGroup);
+    loadModel('assets/models/books.glb', {
+        pos: [-0.2, COFFEE_TABLE_Y, 0.1],
+        rot: [0, -0.3, 0],
+        scale: [2.0, 2.0, 2.0],
+        parent: model
+    });
 
     // Lunchbox (on top of magazines)
-    const lunchGroup = new THREE.Group();
-    const lunchBoxWidth = 0.2;
-    const lunchBoxHeight = 0.12;
-    const lunchBoxDepth = 0.15;
-    const magazineStackHeight = numMagazines * magHeight;
-    // Y is magazine stack height + half lunchbox height (magazineGroup is already at table height)
-    const lunchboxCenterY = COFFEE_TABLE_Y + magazineStackHeight + (lunchBoxHeight / 2);
-    lunchGroup.position.set(magazineGroup.position.x, lunchboxCenterY, magazineGroup.position.z);
-    model.add(lunchGroup);
-    const lunchBody = createBox(lunchBoxWidth, lunchBoxHeight, lunchBoxDepth, 0xff0000, 0, 0, 0, lunchGroup);
-    lunchBody.name = "lunchbox";
-    interactables.push(lunchBody);
-    const lHandle = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 4, 12), new THREE.MeshBasicMaterial({
-        color: 0x333333
-    }));
-    lHandle.position.set(0, lunchBoxHeight / 2, 0); // Handle on top of lunchbox
-    lHandle.rotation.x = Math.PI / 2;
-    lunchGroup.add(lHandle);
+    const magazineStackHeight = 0.05; // Approximate height of the book model
+    loadModel('assets/models/toaster.glb', {
+        pos: [-0.2, COFFEE_TABLE_Y + magazineStackHeight, 0.1],
+        rot: [0, 0, 0],
+        scale: [2.0, 2.0, 2.0],
+        parent: model
+    }).then(model => {
+        model.name = "lunchbox";
+        interactables.push(model);
+    });
 });
 
 // Floor Lamp
@@ -420,14 +378,15 @@ loadModel('assets/models/lampRoundFloor.glb', {
     model.add(light);
 });
 
-const bagGroup = new THREE.Group();
-bagGroup.position.set(2.5, 0, 4.0);
-bagGroup.rotation.y = 0.5;
-const bagBody = createBox(0.6, 0.4, 0.15, mat.leather, 0, 0.2, 0, bagGroup);
-bagBody.name = "briefcase";
-interactables.push(bagBody);
-createBox(0.02, 0.1, 0.1, mat.chrome, 0, 0.4, 0, bagGroup);
-scene.add(bagGroup);
+loadModel('assets/models/laptop.glb', {
+    pos: [2.5, 0, 4.0],
+    rot: [0, 0.5, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => {
+    model.name = "briefcase";
+    interactables.push(model);
+});
 
 // Coat Rack
 loadModel('assets/models/coatRackStanding.glb', {
@@ -531,12 +490,14 @@ loadModel('assets/models/pottedPlant.glb', {
 });
 
 // 5. Trophy (On top bookcase shelf)
-const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.3), mat.gold);
-// Position at shelf height + half of trophy height (0.3/2 = 0.15) so base sits on shelf
-trophy.position.set(-4.5, BOOKSHELF_HEIGHTS[2] + 0.15, 1.0);
-trophy.name = "trophy";
-interactables.push(trophy);
-scene.add(trophy);
+loadModel('assets/models/bear.glb', {
+    pos: [-4.5, BOOKSHELF_HEIGHTS[2], 1.0],
+    scale: [0.2, 0.2, 0.2],
+    parent: scene
+}).then(model => {
+    model.name = "trophy";
+    interactables.push(model);
+});
 
 // 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
@@ -561,31 +522,15 @@ loadModel('assets/models/trashcan.glb', {
 });
 
 // 7. Framed Picture (Right Wall)
-const pictureGroup = new THREE.Group();
-pictureGroup.position.set(4.9, 2.5, 2.5);
-pictureGroup.rotation.y = -Math.PI / 2;
-createBox(1.5, 1.0, 0.05, 0x333333, 0, 0, 0, pictureGroup); // Frame
-const canvasPic = document.createElement('canvas');
-canvasPic.width = 128;
-canvasPic.height = 128;
-const pCtx = canvasPic.getContext('2d');
-pCtx.fillStyle = '#87CEEB';
-pCtx.fillRect(0, 0, 128, 128);
-pCtx.fillStyle = '#228B22';
-pCtx.beginPath();
-pCtx.moveTo(64, 20);
-pCtx.lineTo(100, 100);
-pCtx.lineTo(28, 100);
-pCtx.fill();
-const picTex = new THREE.CanvasTexture(canvasPic);
-const picMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.8), new THREE.MeshBasicMaterial({
-    map: picTex
-}));
-picMesh.position.z = 0.03;
-picMesh.name = "picture";
-interactables.push(picMesh);
-pictureGroup.add(picMesh);
-scene.add(pictureGroup);
+loadModel('assets/models/televisionModern.glb', {
+    pos: [4.9, 2.5, 2.5],
+    rot: [0, -Math.PI / 2, 0],
+    scale: [2.0, 2.0, 2.0],
+    parent: scene
+}).then(model => {
+    model.name = "picture";
+    interactables.push(model);
+});
 
 // 8. Desk Lamp (On Desk)
 loadModel('assets/models/lampRoundTable.glb', {
@@ -612,17 +557,14 @@ loadModel('assets/models/cardboardBoxOpen.glb', {
 });
 
 // 10. Fire Extinguisher (Near Door)
-const feGroup = new THREE.Group();
-feGroup.position.set(4.5, 0.0, -1.5); // On floor near wall
-const feTank = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6), new THREE.MeshPhongMaterial({
-    color: 0xcc0000
-}));
-feTank.position.y = 0.3;
-feTank.name = "fire_extinguisher";
-interactables.push(feTank);
-feGroup.add(feTank);
-createBox(0.05, 0.1, 0.05, 0x111111, 0, 0.65, 0, feGroup); // Nozzle top
-scene.add(feGroup);
+loadModel('assets/models/stoolBar.glb', {
+    pos: [4.5, 0.0, -1.5],
+    scale: [2.5, 2.5, 2.5],
+    parent: scene
+}).then(model => {
+    model.name = "fire_extinguisher";
+    interactables.push(model);
+});
 
 // --- DOOR & TIMER ---
 const doorGroup = new THREE.Group();
@@ -643,26 +585,7 @@ loadModel('assets/models/doorway.glb', {
     parent: doorPivot
 }).then(model => {
     model.name = "door";
-    // Add collision box for interaction if the model itself isn't sufficient or is complex
-    // But for now, let's assume the model is clickable.
-    // We need to ensure it's in 'interactables'
-    // The model itself will be traversed by raycaster?
-    // No, raycaster intersects objects in 'interactables' array.
-    // We need to find the mesh inside the model and add it, or add the model scene.
-    // Helper function 'loadModel' doesn't auto-add to interactables.
-    
-    // We'll add a simplified hitbox for interaction to be safe and consistent
-    const hitBox = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
-    hitBox.position.set(0, 1.1, 0); // Relative to door model origin? No, relative to pivot?
-    // The model is at (0.75, -1.1, 0) relative to pivot.
-    // If model origin is bottom center: then (0.75, -1.1) puts bottom center at bottom center of doorframe?
-    // Wait, standard doorway.glb might be the door leaf.
-    // If I assume it's the door leaf:
-    // Let's attach the hitbox to the model or the pivot.
-    hitBox.name = "door";
-    interactables.push(hitBox);
-    doorPivot.add(hitBox);
-    hitBox.position.set(0.75, 0, 0); // Centered in the pivot frame (pivot is at center-left, so +0.75 is center)
+    interactables.push(model);
 });
 
 const timerGroup = new THREE.Group();
