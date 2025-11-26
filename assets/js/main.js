@@ -490,14 +490,40 @@ loadModel('assets/models/pottedPlant.glb', {
 });
 
 // 5. Trophy (On top bookcase shelf)
-loadModel('assets/models/bear.glb', {
-    pos: [-4.5, BOOKSHELF_HEIGHTS[2], 1.0],
-    scale: [0.2, 0.2, 0.2],
-    parent: scene
-}).then(model => {
-    model.name = "trophy";
-    interactables.push(model);
-});
+// Create a simple gold trophy using Three.js primitives
+const trophyGroup = new THREE.Group();
+// Trophy base
+const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 0.05, 32),
+    mat.gold
+);
+base.position.y = 0.025;
+trophyGroup.add(base);
+// Trophy stem
+const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 0.18, 24),
+    mat.gold
+);
+stem.position.y = 0.14;
+trophyGroup.add(stem);
+// Trophy cup
+const cup = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.07, 0.13, 32, 1, true),
+    mat.gold
+);
+cup.position.y = 0.27;
+trophyGroup.add(cup);
+// Trophy top (sphere)
+const top = new THREE.Mesh(
+    new THREE.SphereGeometry(0.04, 16, 12),
+    mat.gold
+);
+top.position.y = 0.36;
+trophyGroup.add(top);
+trophyGroup.position.set(-4.5, BOOKSHELF_HEIGHTS[2], 1.0);
+trophyGroup.name = "trophy";
+scene.add(trophyGroup);
+interactables.push(trophyGroup);
 
 // 6. Trash Can (Under desk)
 loadModel('assets/models/trashcan.glb', {
