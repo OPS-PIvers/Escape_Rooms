@@ -3,6 +3,7 @@ import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createShelves } from './prefabs/shelves.js';
 import { createClock } from './prefabs/clock.js'; // Assuming this exists or handled generally
+import { FLOOR_HEIGHT } from './heightConstants.js';
 
 // Room Configuration
 const ROOM_WIDTH = 8;
@@ -28,7 +29,7 @@ export async function initClassroom(scene) {
         for (let x = -ROOM_WIDTH / 2; x < ROOM_WIDTH / 2; x += 2) {
             for (let z = -ROOM_DEPTH / 2; z < ROOM_DEPTH / 2; z += 2) {
                 const tile = floor.clone();
-                tile.position.set(x + 1, 0, z + 1); // Offset to center 2x2 tile
+                tile.position.set(x + 1, FLOOR_HEIGHT, z + 1); // Offset to center 2x2 tile
                 scene.add(tile);
             }
         }
@@ -44,7 +45,7 @@ export async function initClassroom(scene) {
         // Helper to place walls
         const placeWall = (model, x, z, rotationY) => {
             const wall = model.clone();
-            wall.position.set(x, 0, z);
+            wall.position.set(x, FLOOR_HEIGHT, z);
             wall.rotation.y = rotationY;
             wall.userData.isWall = true; // Mark for boundary detection
             scene.add(wall);
@@ -83,7 +84,7 @@ export async function initClassroom(scene) {
 
     // 4. Door (Placed specifically to align with wall)
     if (doorway) {
-        doorway.position.set(3, 0, ROOM_DEPTH / 2); // Front right corner area
+        doorway.position.set(3, FLOOR_HEIGHT, ROOM_DEPTH / 2); // Front right corner area
         doorway.rotation.y = Math.PI;
         scene.add(doorway);
     }
@@ -91,7 +92,7 @@ export async function initClassroom(scene) {
     // 5. Teacher's Area
     const teacherDeskGroup = await createDesk();
     if (teacherDeskGroup) {
-        teacherDeskGroup.position.set(0, 0, 2.5);
+        teacherDeskGroup.position.set(0, FLOOR_HEIGHT, 2.5);
         teacherDeskGroup.rotation.y = Math.PI; // Facing students
         scene.add(teacherDeskGroup);
     }
@@ -106,9 +107,9 @@ export async function initClassroom(scene) {
         for (let col = 0; col < 3; col++) {
             const deskGroup = await createDesk();
             if (deskGroup) {
-                deskGroup.position.set(startX + (col * gapX), 0, startZ + (row * gapZ));
+                deskGroup.position.set(startX + (col * gapX), FLOOR_HEIGHT, startZ + (row * gapZ));
                 // Randomize slight rotation for realism
-                deskGroup.rotation.y = (Math.random() - 0.5) * 0.1; 
+                deskGroup.rotation.y = (Math.random() - 0.5) * 0.1;
                 scene.add(deskGroup);
             }
         }
@@ -117,11 +118,11 @@ export async function initClassroom(scene) {
     // 7. Shelves at the back
     const shelves = await createShelves();
     if (shelves) {
-        shelves.position.set(-2, 0, -ROOM_DEPTH / 2 + 0.5);
+        shelves.position.set(-2, FLOOR_HEIGHT, -ROOM_DEPTH / 2 + 0.5);
         scene.add(shelves);
 
         const shelves2 = await createShelves();
-        shelves2.position.set(2, 0, -ROOM_DEPTH / 2 + 0.5);
+        shelves2.position.set(2, FLOOR_HEIGHT, -ROOM_DEPTH / 2 + 0.5);
         scene.add(shelves2);
     }
 

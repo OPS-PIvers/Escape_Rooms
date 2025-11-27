@@ -4,13 +4,22 @@ import { createDesk } from './prefabs/desk.js';
 import { createClock } from './prefabs/clock.js';
 import { createBox, interactables } from './utils.js';
 import { mat } from './materials.js';
+import {
+    DESK_SURFACE_HEIGHT,
+    CABINET_TOP_HEIGHT,
+    COFFEE_TABLE_HEIGHT,
+    BOOKSHELF_SHELF_HEIGHTS,
+    WALL_MOUNT_HEIGHT,
+    FLOOR_HEIGHT,
+    FLOOR_OFFSET
+} from './heightConstants.js';
 
-// Height Constants
-const DESK_SURFACE_Y = 0.75;
-const CABINET_TOP_Y = 0.8;
-const COFFEE_TABLE_Y = 0.35;
-const BOOKSHELF_HEIGHTS = [0.4, 0.8, 1.2, 1.6];
-const WALL_MOUNT_Y = 2.5;
+// Backward compatibility aliases
+const DESK_SURFACE_Y = DESK_SURFACE_HEIGHT;
+const CABINET_TOP_Y = CABINET_TOP_HEIGHT;
+const COFFEE_TABLE_Y = COFFEE_TABLE_HEIGHT;
+const BOOKSHELF_HEIGHTS = BOOKSHELF_SHELF_HEIGHTS;
+const WALL_MOUNT_Y = WALL_MOUNT_HEIGHT;
 
 // Helper to load models with error handling
 async function loadModelSafe(path) {
@@ -39,7 +48,7 @@ export async function initOffice(scene) {
         for (let x = -2; x <= 2; x+=2) {
             for (let z = -2; z <= 2; z+=2) {
                 const tile = floor.clone();
-                tile.position.set(x, 0, z);
+                tile.position.set(x, FLOOR_HEIGHT, z);
                 scene.add(tile);
             }
         }
@@ -53,7 +62,7 @@ export async function initOffice(scene) {
         const ROOM_SIZE = 6;
         const placeWall = (x, z, ry) => {
             const w = wallModel.clone();
-            w.position.set(x, 0, z);
+            w.position.set(x, FLOOR_HEIGHT, z);
             w.rotation.y = ry;
             w.userData.isWall = true; // Mark for boundary detection
             scene.add(w);
@@ -75,7 +84,7 @@ export async function initOffice(scene) {
             ];
             corners.forEach(([x, z, ry]) => {
                 const corner = wallCorner.clone();
-                corner.position.set(x, 0, z);
+                corner.position.set(x, FLOOR_HEIGHT, z);
                 corner.rotation.y = ry;
                 corner.userData.isWall = true; // Mark for boundary detection
                 scene.add(corner);
@@ -86,13 +95,13 @@ export async function initOffice(scene) {
     // ZONE 1: EXECUTIVE WORK AREA
     const desk = await loadModelSafe('assets/models/desk.glb');
     if (desk) {
-        desk.position.set(-1.5, 0, -1.8);
+        desk.position.set(-1.5, FLOOR_HEIGHT, -1.8);
         scene.add(desk);
     }
 
     const chair = await loadModelSafe('assets/models/chairDesk.glb');
     if (chair) {
-        chair.position.set(-1.5, 0, -0.8);
+        chair.position.set(-1.5, FLOOR_HEIGHT, -0.8);
         chair.rotation.y = Math.PI;
         scene.add(chair);
     }
@@ -137,7 +146,7 @@ export async function initOffice(scene) {
 
     const trash = await loadModelSafe('assets/models/trashcan.glb');
     if (trash) {
-        trash.position.set(-2.3, 0, -1.2);
+        trash.position.set(-2.3, FLOOR_HEIGHT, -1.2);
         trash.name = "trash";
         interactables.push(trash);
         scene.add(trash);
@@ -146,7 +155,7 @@ export async function initOffice(scene) {
     // ZONE 2: STORAGE WALL
     const filingCabinet1 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
     if (filingCabinet1) {
-        filingCabinet1.position.set(-0.5, 0, -2.8);
+        filingCabinet1.position.set(-0.5, FLOOR_HEIGHT, -2.8);
         filingCabinet1.name = "filing_cabinet_1";
         interactables.push(filingCabinet1);
         scene.add(filingCabinet1);
@@ -154,7 +163,7 @@ export async function initOffice(scene) {
 
     const filingCabinet2 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
     if (filingCabinet2) {
-        filingCabinet2.position.set(0.5, 0, -2.8);
+        filingCabinet2.position.set(0.5, FLOOR_HEIGHT, -2.8);
         filingCabinet2.name = "filing_cabinet_2";
         interactables.push(filingCabinet2);
         scene.add(filingCabinet2);
@@ -162,7 +171,7 @@ export async function initOffice(scene) {
 
     const filingCabinet3 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
     if (filingCabinet3) {
-        filingCabinet3.position.set(1.5, 0, -2.8);
+        filingCabinet3.position.set(1.5, FLOOR_HEIGHT, -2.8);
         filingCabinet3.name = "filing_cabinet_3";
         interactables.push(filingCabinet3);
         scene.add(filingCabinet3);
@@ -207,7 +216,7 @@ export async function initOffice(scene) {
     // ZONE 3: BOOKSHELF & LIBRARY AREA
     const bookshelf = await loadModelSafe('assets/models/bookcaseOpen.glb');
     if (bookshelf) {
-        bookshelf.position.set(2.5, 0, -2.0);
+        bookshelf.position.set(2.5, FLOOR_HEIGHT, -2.0);
         bookshelf.rotation.y = -Math.PI / 2;
         scene.add(bookshelf);
     }
@@ -250,25 +259,25 @@ export async function initOffice(scene) {
     // ZONE 4: LOUNGE/MEETING AREA
     const rug = await loadModelSafe('assets/models/rugRounded.glb');
     if (rug) {
-        rug.position.set(-1.5, 0.01, 1.5);
+        rug.position.set(-1.5, FLOOR_OFFSET, 1.5);
         scene.add(rug);
     }
 
     const sofa = await loadModelSafe('assets/models/loungeSofa.glb');
     if (sofa) {
-        sofa.position.set(-1.5, 0, 2.2);
+        sofa.position.set(-1.5, FLOOR_HEIGHT, 2.2);
         scene.add(sofa);
     }
 
     const coffeeTable = await loadModelSafe('assets/models/tableCoffeeGlass.glb');
     if (coffeeTable) {
-        coffeeTable.position.set(-1.5, 0, 0.8);
+        coffeeTable.position.set(-1.5, FLOOR_HEIGHT, 0.8);
         scene.add(coffeeTable);
     }
 
     // Briefcase
     const briefcaseGroup = new THREE.Group();
-    briefcaseGroup.position.set(-1.2, 0, 0.8);
+    briefcaseGroup.position.set(-1.2, FLOOR_HEIGHT, 0.8);
     briefcaseGroup.rotation.y = 0.3;
     createBox(0.6, 0.4, 0.15, mat.leather, 0, COFFEE_TABLE_Y + 0.02, 0, briefcaseGroup, 0, 0, 0, "briefcase");
     createBox(0.02, 0.1, 0.1, mat.chrome, 0, COFFEE_TABLE_Y + 0.22, 0, briefcaseGroup);
@@ -276,14 +285,14 @@ export async function initOffice(scene) {
 
     const floorLamp = await loadModelSafe('assets/models/lampRoundFloor.glb');
     if (floorLamp) {
-        floorLamp.position.set(-2.3, 0, 2.2);
+        floorLamp.position.set(-2.3, FLOOR_HEIGHT, 2.2);
         scene.add(floorLamp);
     }
 
     // ZONE 5: SPECIAL ITEMS & DECORATIONS
     // Safe
     const safeGroup = new THREE.Group();
-    safeGroup.position.set(2.5, 0, 2.5);
+    safeGroup.position.set(2.5, FLOOR_HEIGHT, 2.5);
     safeGroup.rotation.y = -Math.PI / 4;
     const safeBox = createBox(0.8, 1.0, 0.8, mat.safe, 0, 0.5, 0, safeGroup, 0, 0, 0, "safe");
     const safeDial = new THREE.Mesh(
@@ -303,7 +312,7 @@ export async function initOffice(scene) {
     // Plants
     const plant1 = await loadModelSafe('assets/models/pottedPlant.glb');
     if (plant1) {
-        plant1.position.set(-2.7, 0, -2.7);
+        plant1.position.set(-2.7, FLOOR_HEIGHT, -2.7);
         plant1.name = "plant";
         interactables.push(plant1);
         scene.add(plant1);
@@ -311,14 +320,14 @@ export async function initOffice(scene) {
 
     const plant2 = await loadModelSafe('assets/models/plantSmall1.glb');
     if (plant2) {
-        plant2.position.set(2.3, 0, 2.0);
+        plant2.position.set(2.3, FLOOR_HEIGHT, 2.0);
         scene.add(plant2);
     }
 
     // Coat Rack
     const coatRack = await loadModelSafe('assets/models/coatRackStanding.glb');
     if (coatRack) {
-        coatRack.position.set(-2.7, 0, -1.8);
+        coatRack.position.set(-2.7, FLOOR_HEIGHT, -1.8);
         scene.add(coatRack);
     }
 
