@@ -41,9 +41,8 @@ export async function initOffice(scene) {
         // Reduced grid step to 1 for gapless flooring
         for (let x = -ROOM_SIZE / 2; x <= ROOM_SIZE / 2; x += 1) {
             for (let z = -ROOM_SIZE / 2; z <= ROOM_SIZE / 2; z += 1) {
-                // Bounds check? Loop covers [-3, 3].
-                // We want to cover exactly the room.
-                // Original was -2 to 2 step 2.
+                // Loop covers [-ROOM_SIZE/2, ROOM_SIZE/2] to fill the room with tiles.
+                
                 const tile = floor.clone();
                 tile.position.set(x, 0, z); // Assuming tile centers at 0,0 and size is 1x1
                 scene.add(tile);
