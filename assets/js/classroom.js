@@ -24,17 +24,25 @@ export async function initClassroom(scene) {
     // 2. Floor
     const floor = await loadModel('assets/models/floorFull.glb');
     if (floor) {
-        // Tile the floor 4x4
-        for (let x = -ROOM_WIDTH / 2; x < ROOM_WIDTH / 2; x += 2) {
-            for (let z = -ROOM_DEPTH / 2; z < ROOM_DEPTH / 2; z += 2) {
+        // Tile the floor with step 1 to avoid gaps
+        for (let x = -ROOM_WIDTH / 2; x < ROOM_WIDTH / 2; x += 1) {
+            for (let z = -ROOM_DEPTH / 2; z < ROOM_DEPTH / 2; z += 1) {
                 const tile = floor.clone();
-                tile.position.set(x + 1, 0, z + 1); // Offset to center 2x2 tile
+                tile.position.set(x + 0.5, 0, z + 0.5); // Center 0.5, 0.5 for range [0, 1] relative to grid
                 scene.add(tile);
             }
         }
     }
 
-    // 3. Walls
+    // 3. Ceiling
+    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_WIDTH + 2, ROOM_DEPTH + 2); // Larger to avoid gaps
+    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = WALL_HEIGHT;
+    scene.add(ceiling);
+
+    // 4. Walls
     const wallModel = await loadModel('assets/models/wall.glb');
     const wallCorner = await loadModel('assets/models/wallCorner.glb');
     const wallWindow = await loadModel('assets/models/wallWindow.glb');
@@ -51,24 +59,33 @@ export async function initClassroom(scene) {
             return wall;
         };
 
+        // Walls - Step 1 to fill gaps. Range [-ROOM/2, ROOM/2] roughly.
+        // Wall centers at half integers?
+        // Width 8. Range [-4, 4].
+        // Wall centers: -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5.
+        // Loop range [-3.5, 3.5].
+
+        const start = -ROOM_WIDTH/2 + 0.5; // -3.5
+        const end = ROOM_WIDTH/2 - 0.5; // 3.5
+
         // Back Wall (Solid)
-        for (let x = -3; x <= 3; x += 2) {
+        for (let x = start; x <= end; x += 1) {
             placeWall(wallModel, x, -ROOM_DEPTH / 2, 0);
         }
 
         // Front Wall (Blackboard/Teacher side)
-        for (let x = -3; x <= 3; x += 2) {
-            // Leave space for door at x=3
-            if (x < 3) placeWall(wallModel, x, ROOM_DEPTH / 2, Math.PI);
+        for (let x = start; x <= end; x += 1) {
+            // Leave space for door at x=3.5 (far right)
+            if (Math.abs(x - 3.5) > 0.1) placeWall(wallModel, x, ROOM_DEPTH / 2, Math.PI);
         }
 
         // Left Wall (Windows)
-        for (let z = -3; z <= 3; z += 2) {
+        for (let z = start; z <= end; z += 1) {
              placeWall(wallWindow || wallModel, -ROOM_WIDTH / 2, z, Math.PI / 2);
         }
 
         // Right Wall (Solid)
-        for (let z = -3; z <= 3; z += 2) {
+        for (let z = start; z <= end; z += 1) {
             placeWall(wallModel, ROOM_WIDTH / 2, z, -Math.PI / 2);
         }
 
@@ -81,14 +98,14 @@ export async function initClassroom(scene) {
         }
     }
 
-    // 4. Door (Placed specifically to align with wall)
+    // 5. Door (Placed specifically to align with wall)
     if (doorway) {
-        doorway.position.set(3, 0, ROOM_DEPTH / 2); // Front right corner area
+        doorway.position.set(3.5, 0, ROOM_DEPTH / 2); // Front right corner area (align with missing wall at 3.5)
         doorway.rotation.y = Math.PI;
         scene.add(doorway);
     }
 
-    // 5. Teacher's Area
+    // 6. Teacher's Area
     const teacherDeskGroup = await createDesk();
     if (teacherDeskGroup) {
         teacherDeskGroup.position.set(0, 0, 2.5);
@@ -96,7 +113,7 @@ export async function initClassroom(scene) {
         scene.add(teacherDeskGroup);
     }
 
-    // 6. Student Desks (Grid Layout)
+    // 7. Student Desks (Grid Layout)
     const startX = -2;
     const startZ = -2;
     const gapX = 2;
@@ -114,7 +131,7 @@ export async function initClassroom(scene) {
         }
     }
 
-    // 7. Shelves at the back
+    // 8. Shelves at the back
     const shelves = await createShelves();
     if (shelves) {
         shelves.position.set(-2, 0, -ROOM_DEPTH / 2 + 0.5);
@@ -125,7 +142,7 @@ export async function initClassroom(scene) {
         scene.add(shelves2);
     }
 
-    // 8. Clock
+    // 9. Clock
     // If createClock exists, use it, otherwise simple placement
     try {
         if (typeof createClock === 'function') {

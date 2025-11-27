@@ -11,6 +11,8 @@ const CABINET_TOP_Y = 0.8;
 const COFFEE_TABLE_Y = 0.35;
 const BOOKSHELF_HEIGHTS = [0.4, 0.8, 1.2, 1.6];
 const WALL_MOUNT_Y = 2.5;
+const ROOM_SIZE = 6;
+const WALL_HEIGHT = 3;
 
 // Helper to load models with error handling
 async function loadModelSafe(path) {
@@ -36,34 +38,50 @@ export async function initOffice(scene) {
     // 2. Flooring
     const floor = await loadModelSafe('assets/models/floorFull.glb');
     if (floor) {
-        for (let x = -2; x <= 2; x+=2) {
-            for (let z = -2; z <= 2; z+=2) {
+        // Reduced grid step to 1 for gapless flooring
+        for (let x = -ROOM_SIZE / 2; x <= ROOM_SIZE / 2; x += 1) {
+            for (let z = -ROOM_SIZE / 2; z <= ROOM_SIZE / 2; z += 1) {
+                // Bounds check? Loop covers [-3, 3].
+                // We want to cover exactly the room.
+                // Original was -2 to 2 step 2.
                 const tile = floor.clone();
-                tile.position.set(x, 0, z);
+                tile.position.set(x, 0, z); // Assuming tile centers at 0,0 and size is 1x1
                 scene.add(tile);
             }
         }
     }
 
-    // 3. Walls
+    // 3. Ceiling
+    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_SIZE + 2, ROOM_SIZE + 2);
+    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = WALL_HEIGHT;
+    scene.add(ceiling);
+
+    // 4. Walls
     const wallModel = await loadModelSafe('assets/models/wall.glb');
     const wallCorner = await loadModelSafe('assets/models/wallCorner.glb');
 
     if (wallModel) {
-        const ROOM_SIZE = 6;
         const placeWall = (x, z, ry) => {
             const w = wallModel.clone();
             w.position.set(x, 0, z);
             w.rotation.y = ry;
-            w.userData.isWall = true; // Mark for boundary detection
+            w.userData.isWall = true;
             scene.add(w);
         };
 
-        // Walls
-        for (let x = -1; x <= 1; x += 2) placeWall(x, -ROOM_SIZE / 2, 0);
-        for (let x = -1; x <= 1; x += 2) placeWall(x, ROOM_SIZE / 2, Math.PI);
-        for (let z = -1; z <= 1; z += 2) placeWall(-ROOM_SIZE / 2, z, Math.PI / 2);
-        for (let z = -1; z <= 1; z += 2) placeWall(ROOM_SIZE / 2, z, -Math.PI / 2);
+        // Walls - Step 1 to fill gaps
+        // Range [-2.5, 2.5]
+        for (let x = -ROOM_SIZE/2 + 0.5; x <= ROOM_SIZE/2 - 0.5; x += 1) {
+             placeWall(x, -ROOM_SIZE / 2, 0); // Back
+             placeWall(x, ROOM_SIZE / 2, Math.PI); // Front
+        }
+        for (let z = -ROOM_SIZE/2 + 0.5; z <= ROOM_SIZE/2 - 0.5; z += 1) {
+             placeWall(-ROOM_SIZE / 2, z, Math.PI / 2); // Left
+             placeWall(ROOM_SIZE / 2, z, -Math.PI / 2); // Right
+        }
 
         // Corners
         if (wallCorner) {
@@ -77,7 +95,7 @@ export async function initOffice(scene) {
                 const corner = wallCorner.clone();
                 corner.position.set(x, 0, z);
                 corner.rotation.y = ry;
-                corner.userData.isWall = true; // Mark for boundary detection
+                corner.userData.isWall = true;
                 scene.add(corner);
             });
         }
