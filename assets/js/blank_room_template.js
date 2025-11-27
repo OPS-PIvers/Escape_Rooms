@@ -127,14 +127,14 @@ scene.add(doorGroup);
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
-doorPivot.position.set(-0.75, 1.1, 0.02);
+doorPivot.position.set(0, 0, 0.02);
 doorGroup.add(doorPivot);
 
 // Load Door Model
 loadModel('assets/models/doorway.glb', {
-    pos: [0.75, 0, 0],
+    pos: [0, 0, 0],
     rot: [0, 0, 0],
-    scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], // Match room scale
+    scale: [1.75, 1.75, 1.75], // Scale to fit standard door size
     parent: doorPivot
 }).then(model => {
     // Add a simple handle to the door
@@ -146,15 +146,15 @@ loadModel('assets/models/doorway.glb', {
 });
 
 // Add a hitbox for interaction
-const doorHitbox = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 0.2), new THREE.MeshBasicMaterial({ visible: false }));
+const doorHitbox = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.1, 0.2), new THREE.MeshBasicMaterial({ visible: false }));
 doorHitbox.name = "door";
-doorHitbox.position.set(0.75, 1.1, 0);
+doorHitbox.position.set(0.5, 1.05, 0);
 doorPivot.add(doorHitbox);
 interactables.push(doorHitbox);
 
 // Timer
 const timerGroup = new THREE.Group();
-timerGroup.position.set(0, 2.6, 0.1);
+timerGroup.position.set(0.5, 2.6, 0.1);
 doorGroup.add(timerGroup);
 const timerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.1), new THREE.MeshStandardMaterial({ color: 0x111111 }));
 timerGroup.add(timerBox);
