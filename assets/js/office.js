@@ -5,7 +5,6 @@ import { createClock } from './prefabs/clock.js';
 import { createBox, interactables } from './utils.js';
 import { mat } from './materials.js';
 
-// Height Constants
 import { WALL_HEIGHT } from './constants.js';
 
 // Height Constants
