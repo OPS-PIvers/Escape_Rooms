@@ -2,391 +2,423 @@ import * as THREE from 'three';
 import { initClassroom } from './classroom.js';
 import { initOffice } from './office.js';
 import { interactables } from './utils.js';
-import { initGame } from './gameLogic.js';
+import { initGame as initGameLogic } from './gameLogic.js';
 import { showModal, closeModal, isInteracting } from './ui.js';
 import { TouchControls } from './touchControls.js';
 import { createTouchInteractionHandler } from './touchUtils.js';
 
-// --- PHYSICS CONSTANTS ---
-const LOOK_SPEED = 1.5;
-const MOVE_SPEED = 3.0;
-const MOUSE_LOOK_SPEED = 0.002;
-const MIN_POLAR_ANGLE = 0.5;
-const MAX_POLAR_ANGLE = 2.5;
-const INITIAL_ROOM_BOUNDS = 4.5; // Initial fallback value, updated dynamically after scene loads
-
-// --- SCENE SETUP ---
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xebe5ce);
-scene.fog = new THREE.Fog(0xebe5ce, 5, 30);
-
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 3.5); // First-person height
-camera.lookAt(0, 1.4, 0);
-
-// --- CUSTOM KEYBOARD CONTROLS ---
-const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
-const _PI_2 = Math.PI / 2;
-const _vector = new THREE.Vector3();
-
-function moveForward(distance) {
-    _vector.setFromMatrixColumn(camera.matrix, 0);
-    _vector.crossVectors(camera.up, _vector);
-    camera.position.addScaledVector(_vector, distance);
-}
-
-function moveRight(distance) {
-    _vector.setFromMatrixColumn(camera.matrix, 0);
-    camera.position.addScaledVector(_vector, distance);
-}
-
-// --- RENDERER ---
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
-
-// --- CACHED DOM ELEMENTS ---
-const crosshair = document.getElementById('crosshair');
-const instructions = document.getElementById('instructions');
-const clueModal = document.getElementById('clueModal');
-
-// --- LOGIC ---
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2(0, 0); // Initialize to center
-const mouseDelta = new THREE.Vector2();
-let lastMousePos = new THREE.Vector2();
-let isMouseDown = false;
-
-// --- DYNAMIC BOUNDS ---
-let roomBounds = { minX: -INITIAL_ROOM_BOUNDS, maxX: INITIAL_ROOM_BOUNDS, minZ: -INITIAL_ROOM_BOUNDS, maxZ: INITIAL_ROOM_BOUNDS };
-
 /**
- * Calculates dynamic room boundaries based on wall positions in the scene.
- * This prevents the player from walking through walls by detecting wall meshes
- * that have userData.isWall set to true and computing a bounding box around them.
- * Falls back to initial bounds if no walls are detected.
+ * InputManager
+ * Handles keyboard and mouse state to decouple input from game logic.
  */
-function calculateRoomBounds() {
-    const box = new THREE.Box3();
-    let foundWalls = false;
+class InputManager {
+    constructor() {
+        this.keys = {};
+        this.mouse = new THREE.Vector2(0, 0);
+        this.mouseDelta = new THREE.Vector2(0, 0);
+        this.isMouseDown = false;
+        this.lastMousePos = new THREE.Vector2();
 
-    scene.traverse((object) => {
-        if (object.isMesh && object.userData?.isWall === true) {
-            box.expandByObject(object);
-            foundWalls = true;
+        this._setupListeners();
+    }
+
+    _setupListeners() {
+        // Keyboard
+        document.addEventListener('keydown', (e) => this._onKeyDown(e));
+        document.addEventListener('keyup', (e) => this._onKeyUp(e));
+
+        // Mouse
+        document.addEventListener('mousedown', () => { this.isMouseDown = true; });
+        document.addEventListener('mouseup', () => { this.isMouseDown = false; });
+        document.addEventListener('mousemove', (e) => this._onMouseMove(e));
+    }
+
+    _onKeyDown(e) {
+        this.keys[e.key] = true;
+        this.keys[e.code] = true;
+    }
+
+    _onKeyUp(e) {
+        this.keys[e.key] = false;
+        this.keys[e.code] = false;
+    }
+
+    _onMouseMove(event) {
+        // Normalize mouse coordinates for Raycaster
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Calculate delta for look controls if dragging and not interacting
+        if (this.isMouseDown && !isInteracting) {
+            const deltaX = event.clientX - this.lastMousePos.x;
+            const deltaY = event.clientY - this.lastMousePos.y;
+            this.mouseDelta.x += deltaX;
+            this.mouseDelta.y += deltaY;
         }
-    });
 
-    if (foundWalls && !box.isEmpty()) {
-        const padding = 0.5; // Keep player away from walls
-        roomBounds = {
-            minX: box.min.x + padding,
-            maxX: box.max.x - padding,
-            minZ: box.min.z + padding,
-            maxZ: box.max.z - padding
-        };
+        this.lastMousePos.set(event.clientX, event.clientY);
+    }
+
+    getMovementDirection() {
+        const dir = { x: 0, z: 0 };
+        if (this.keys.w || this.keys.KeyW || this.keys.ArrowUp) dir.z += 1; // Forward
+        if (this.keys.s || this.keys.KeyS || this.keys.ArrowDown) dir.z -= 1; // Backward
+        if (this.keys.a || this.keys.KeyA || this.keys.ArrowLeft) dir.x -= 1; // Left
+        if (this.keys.d || this.keys.KeyD || this.keys.ArrowRight) dir.x += 1; // Right
+        return dir;
+    }
+
+    getLookDelta() {
+        const delta = this.mouseDelta.clone();
+        this.mouseDelta.set(0, 0); // Reset after reading
+        return delta;
+    }
+
+    isInteractPressed() {
+        return this.keys.Space || this.keys[' '];
     }
 }
 
-// --- ERROR SCREEN ---
 /**
- * Displays a user-facing error screen with recovery options.
- * @param {string} message - The error message to display
- * @param {Error} error - The original error object
+ * GameManager
+ * Central controller for the Three.js scene, game loop, and logic.
  */
-function showErrorScreen(message, error) {
-    // Create error overlay
-    const errorScreen = document.createElement('div');
-    errorScreen.id = 'errorScreen';
-    errorScreen.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        color: #ff3333;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        font-family: monospace;
-        text-align: center;
-        padding: 20px;
-    `;
+class GameManager {
+    constructor() {
+        // Configuration
+        this.config = {
+            moveSpeed: 3.0,
+            lookSpeed: 1.5,
+            mouseLookSpeed: 0.002,
+            minPolarAngle: 0.5,
+            maxPolarAngle: 2.5,
+            initialBounds: 4.5
+        };
 
-    errorScreen.innerHTML = `
-        <h1 style="font-size: 3em; margin-bottom: 20px;">⚠️ ERROR</h1>
-        <p style="font-size: 1.5em; margin-bottom: 10px;">${message}</p>
-        <p style="font-size: 1em; color: #999; margin-bottom: 30px;">${error.message}</p>
-        <button id="reloadButton" style="
-            padding: 15px 30px;
-            font-size: 1.2em;
-            background: #ff3333;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        ">Reload Game</button>
-    `;
+        // State
+        this.isRunning = false;
+        this.prevTime = performance.now();
+        this.roomBounds = {
+            minX: -this.config.initialBounds, maxX: this.config.initialBounds,
+            minZ: -this.config.initialBounds, maxZ: this.config.initialBounds
+        };
 
-    document.body.appendChild(errorScreen);
+        // Components
+        this.input = new InputManager();
+        this.raycaster = new THREE.Raycaster();
+        this.touchControls = null;
 
-    document.getElementById('reloadButton')?.addEventListener('click', () => {
-        window.location.reload();
-    });
-
-    console.error('Fatal error:', error);
-}
-
-// --- TOUCH CONTROLS (MOBILE) ---
-let touchControls;
-const handleTouchInteract = createTouchInteractionHandler({
-    showModal,
-    isInteracting: () => isInteracting, // Pass as function, not getter
-    getContext: () => ({})
-});
-
-// --- INPUT HANDLING ---
-const keys = {
-    ArrowUp: false,
-    ArrowDown: false,
-    ArrowLeft: false,
-    ArrowRight: false,
-    w: false,
-    a: false,
-    s: false,
-    d: false,
-    KeyW: false,
-    KeyA: false,
-    KeyS: false,
-    KeyD: false,
-    Space: false
-};
-
-document.addEventListener('keydown', (e) => {
-    if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
-        keys[e.key] = true;
-        keys[e.code] = true;
+        // Scene setup
+        this._initThreeJS();
+        this._initUI();
     }
-    // Space Interaction
-    if ((e.code === 'Space' || e.key === ' ')) {
-        e.preventDefault(); // Prevent page scrolling
-        if (isInteracting) {
-            closeModal();
-        } else {
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(interactables, false);
-            if (intersects.length > 0) {
-                showModal(intersects[0].object.name, {});
+
+    _initThreeJS() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0xebe5ce);
+        this.scene.fog = new THREE.Fog(0xebe5ce, 5, 30);
+
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 1.6, 3.5);
+        this.camera.lookAt(0, 1.4, 0);
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(this.renderer.domElement);
+
+        // Helper vectors for math to avoid garbage collection
+        this._euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._vec = new THREE.Vector3();
+        this._PI_2 = Math.PI / 2;
+
+        window.addEventListener('resize', () => this._onResize());
+
+        // Expose for debugging
+        if (window.__DEV__) {
+            window.game = this;
+            window.scene = this.scene;
+            window.camera = this.camera;
+            window.renderer = this.renderer;
+        }
+    }
+
+    _initUI() {
+        this.crosshair = document.getElementById('crosshair');
+        this.instructions = document.getElementById('instructions');
+
+        if (this.instructions) {
+            this.instructions.addEventListener('click', () => {
+                this.instructions.style.display = 'none';
+                // Try to request pointer lock if needed, though this game seems to use drag-to-look
+            });
+        }
+
+        // Global click handler for interaction
+        document.addEventListener('click', (e) => {
+            if (isInteracting || (this.instructions && this.instructions.style.display !== 'none')) return;
+            this._handleInteraction();
+        });
+
+        // Spacebar handler is tricky because input manager catches it,
+        // but we need to trigger 'once'.
+        document.addEventListener('keydown', (e) => {
+            if ((e.code === 'Space' || e.key === ' ') && !isInteracting) {
+                e.preventDefault();
+                this._handleInteraction();
+            } else if ((e.code === 'Space' || e.key === ' ') && isInteracting) {
+                e.preventDefault();
+                closeModal();
+            }
+        });
+    }
+
+    async loadScene() {
+        const path = window.location.pathname;
+        try {
+            if (path.includes('classroom.html')) {
+                await initClassroom(this.scene);
+            } else {
+                await initOffice(this.scene);
+            }
+
+            this._calculateRoomBounds();
+            this._setupTouchControls();
+
+            // Initialize Game Logic (questions, clues)
+            initGameLogic();
+
+            this.isRunning = true;
+            this.animate();
+        } catch (error) {
+            this._showError("Failed to load scene", error);
+        }
+    }
+
+    _calculateRoomBounds() {
+        const box = new THREE.Box3();
+        let foundWalls = false;
+
+        this.scene.traverse((object) => {
+            if (object.isMesh && object.userData?.isWall === true) {
+                box.expandByObject(object);
+                foundWalls = true;
+            }
+        });
+
+        if (foundWalls && !box.isEmpty()) {
+            const padding = 0.5;
+            this.roomBounds = {
+                minX: box.min.x + padding,
+                maxX: box.max.x - padding,
+                minZ: box.min.z + padding,
+                maxZ: box.max.z - padding
+            };
+        }
+    }
+
+    _setupTouchControls() {
+        const handleTouchInteract = createTouchInteractionHandler({
+            showModal,
+            isInteracting: () => isInteracting,
+            getContext: () => ({})
+        });
+
+        this.touchControls = new TouchControls(
+            this.camera,
+            this.raycaster,
+            interactables,
+            handleTouchInteract
+        );
+    }
+
+    _handleInteraction() {
+        this.raycaster.setFromCamera(this.input.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(interactables, false);
+        if (intersects.length > 0) {
+            showModal(intersects[0].object.name, {});
+        }
+    }
+
+    _updateMovement(delta) {
+        // 1. Calculate proposed movement vector
+        const moveDir = this.input.getMovementDirection();
+        let moveVec = new THREE.Vector3(0, 0, 0);
+
+        // Forward/Backward (Z)
+        if (moveDir.z !== 0) {
+            this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+            this._vec.crossVectors(this.camera.up, this._vec);
+            moveVec.addScaledVector(this._vec, moveDir.z);
+        }
+
+        // Left/Right (X)
+        if (moveDir.x !== 0) {
+            this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+            moveVec.addScaledVector(this._vec, moveDir.x);
+        }
+
+        // Touch Joystick
+        if (this.touchControls) {
+            const moveState = this.touchControls.getMovement();
+            if (moveState.forward) {
+                this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+                this._vec.crossVectors(this.camera.up, this._vec);
+                moveVec.addScaledVector(this._vec, 1);
+            }
+            if (moveState.backward) {
+                this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+                this._vec.crossVectors(this.camera.up, this._vec);
+                moveVec.addScaledVector(this._vec, -1);
+            }
+            if (moveState.right) {
+                this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+                moveVec.addScaledVector(this._vec, 1);
+            }
+            if (moveState.left) {
+                this._vec.setFromMatrixColumn(this.camera.matrix, 0);
+                moveVec.addScaledVector(this._vec, -1);
             }
         }
-    }
-});
 
-document.addEventListener('keyup', (e) => {
-    if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
-        keys[e.key] = false;
-        keys[e.code] = false;
-    }
-});
-
-// Instructions Handling
-if (instructions) {
-    instructions.addEventListener('click', () => {
-        instructions.style.display = 'none';
-    });
-}
-
-// --- MOUSE INTERACTION ---
-document.addEventListener('mousedown', () => { isMouseDown = true; });
-document.addEventListener('mouseup', () => { isMouseDown = false; });
-
-document.addEventListener('mousemove', (event) => {
-    // Capture interaction state once to prevent race conditions
-    const currentlyInteracting = isInteracting;
-
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    if (isMouseDown && !currentlyInteracting) {
-        const deltaX = event.clientX - lastMousePos.x;
-        const deltaY = event.clientY - lastMousePos.y;
-        mouseDelta.x += deltaX;
-        mouseDelta.y += deltaY;
-    }
-
-    lastMousePos.set(event.clientX, event.clientY);
-
-    if (!currentlyInteracting && crosshair) {
-        crosshair.style.left = event.clientX + 'px';
-        crosshair.style.top = event.clientY + 'px';
-    }
-});
-
-document.addEventListener('click', (event) => {
-    if (isInteracting) return;
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(interactables, false);
-    if (intersects.length > 0) {
-        showModal(intersects[0].object.name, {});
-    }
-});
-
-function setGameCursor(active) {
-    if (active) {
-        document.body.classList.add('game-active');
-    } else {
-        document.body.classList.remove('game-active');
-    }
-}
-
-// --- ANIMATION LOOP ---
-let prevTime = performance.now();
-let animationErrorCount = 0;
-const MAX_ANIMATION_ERRORS = 10;
-
-function animate() {
-    requestAnimationFrame(animate);
-
-    try {
-        const time = performance.now();
-        const delta = (time - prevTime) / 1000;
-        prevTime = time;
-
-        // Cursor State Management
-        if (!isInteracting && instructions && instructions.style.display === 'none') {
-            setGameCursor(true);
-        } else {
-            setGameCursor(false);
+        // Normalize if moving diagonally to prevent faster speed
+        if (moveVec.lengthSq() > 0) {
+            moveVec.normalize().multiplyScalar(this.config.moveSpeed * delta);
         }
+
+        // 2. Apply movement with collision check (Clamping)
+        const nextPos = this.camera.position.clone().add(moveVec);
+
+        // Simple AABB collision against room bounds
+        nextPos.x = Math.max(this.roomBounds.minX, Math.min(this.roomBounds.maxX, nextPos.x));
+        nextPos.z = Math.max(this.roomBounds.minZ, Math.min(this.roomBounds.maxZ, nextPos.z));
+
+        this.camera.position.copy(nextPos);
+    }
+
+    _updateLook(delta) {
+        this._euler.setFromQuaternion(this.camera.quaternion);
+
+        // Mouse Drag Look
+        const mouseDelta = this.input.getLookDelta();
+        this._euler.y -= mouseDelta.x * this.config.mouseLookSpeed;
+        this._euler.x -= mouseDelta.y * this.config.mouseLookSpeed;
+
+        // Keyboard Look (legacy support, optional but good for accessibility)
+        if (this.input.keys.ArrowLeft) this._euler.y += this.config.lookSpeed * delta;
+        if (this.input.keys.ArrowRight) this._euler.y -= this.config.lookSpeed * delta;
+        if (this.input.keys.ArrowUp) this._euler.x += this.config.lookSpeed * delta;
+        if (this.input.keys.ArrowDown) this._euler.x -= this.config.lookSpeed * delta;
+
+        // Touch Look
+        if (this.touchControls) {
+            const touchDelta = this.touchControls.getLookDelta();
+            this._euler.y -= touchDelta.x * 2; // Sensitivity multiplier
+            this._euler.x -= touchDelta.y * 2;
+        }
+
+        // Clamp Pitch
+        this._euler.x = Math.max(this._PI_2 - this.config.maxPolarAngle, Math.min(this._PI_2 - this.config.minPolarAngle, this._euler.x));
+
+        this.camera.quaternion.setFromEuler(this._euler);
+    }
+
+    _updateCrosshair() {
+        if (!this.crosshair) return;
+
+        // Visual update using transform for performance
+        // Only update position if mouse moved (handled by InputManager implicitly?)
+        // Actually, CSS top/left is okay if we are careful, but transform is smoother.
+        // However, the original code used mouse movement to update cursor.
+        // Let's stick to mouse tracking from InputManager.
+
+        // We actually want the crosshair to follow the mouse pointer if it's a "cursor"
+        // OR stay in center if locked?
+        // The original code: crosshair.style.left = event.clientX + 'px';
+        // This implies the crosshair IS the mouse cursor replacement.
 
         if (!isInteracting) {
-            // Crosshair update
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(interactables, false);
+            // Use transform instead of top/left
+            // Note: clientX/Y are relative to viewport.
+            // Using requestAnimationFrame allows us to sync this.
+             // We need current mouse pos.
+            const x = (this.input.lastMousePos.x) + 'px';
+            const y = (this.input.lastMousePos.y) + 'px';
 
-            if (crosshair) {
-                if (intersects.length > 0) {
-                    crosshair.classList.add('active');
-                } else {
-                    crosshair.classList.remove('active');
-                }
+             // Check interaction for highlighting
+            this.raycaster.setFromCamera(this.input.mouse, this.camera);
+            const intersects = this.raycaster.intersectObjects(interactables, false);
+
+            if (intersects.length > 0) {
+                this.crosshair.classList.add('active');
+            } else {
+                this.crosshair.classList.remove('active');
             }
 
-            // --- LOOK (ARROWS + TOUCH DRAG + MOUSE DRAG) ---
-            _euler.setFromQuaternion(camera.quaternion);
+            // To avoid layout thrashing, we could use transforms:
+            // this.crosshair.style.transform = `translate(${x}, ${y})`;
+            // But 'left/top' with 'position: absolute' is standard for custom cursors if the element is out of flow.
+            this.crosshair.style.left = x;
+            this.crosshair.style.top = y;
+        }
+    }
 
-            // Mouse Look
-            if (isMouseDown) {
-                _euler.y -= mouseDelta.x * MOUSE_LOOK_SPEED;
-                _euler.x -= mouseDelta.y * MOUSE_LOOK_SPEED;
-            }
-            mouseDelta.set(0, 0);
+    _onResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-            // Keyboard: Yaw (Left/Right Arrows)
-            if (keys.ArrowLeft) _euler.y += LOOK_SPEED * delta;
-            if (keys.ArrowRight) _euler.y -= LOOK_SPEED * delta;
+    _showError(message, error) {
+        console.error(message, error);
+        // Create error overlay
+        const errorScreen = document.createElement('div');
+        errorScreen.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); color: #ff3333; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10000; font-family: monospace; text-align: center; padding: 20px;
+        `;
+        errorScreen.innerHTML = `
+            <h1>⚠️ ERROR</h1>
+            <p>${message}</p>
+            <p style="color:#999; font-size:0.8em">${error.message}</p>
+            <button onclick="location.reload()" style="padding:10px 20px; cursor:pointer;">Reload</button>
+        `;
+        document.body.appendChild(errorScreen);
+    }
 
-            // Keyboard: Pitch (Up/Down Arrows)
-            if (keys.ArrowUp) _euler.x += LOOK_SPEED * delta;
-            if (keys.ArrowDown) _euler.x -= LOOK_SPEED * delta;
+    animate() {
+        if (!this.isRunning) return;
+        requestAnimationFrame(() => this.animate());
 
-            // Touch: Camera look delta
-            if (touchControls) {
-                const lookDelta = touchControls.getLookDelta();
-                _euler.y -= lookDelta.x * 2;
-                _euler.x -= lookDelta.y * 2;
-            }
+        const time = performance.now();
+        const delta = Math.min((time - this.prevTime) / 1000, 0.1); // Cap delta to prevent huge jumps
+        this.prevTime = time;
 
-            // Clamp Pitch
-            _euler.x = Math.max(_PI_2 - MAX_POLAR_ANGLE, Math.min(_PI_2 - MIN_POLAR_ANGLE, _euler.x));
-            camera.quaternion.setFromEuler(_euler);
-
-            // --- MOVE (WASD + TOUCH JOYSTICK) ---
-            const actualSpeed = MOVE_SPEED * delta;
-
-            // Keyboard movement
-            if (keys.w || keys.KeyW) moveForward(actualSpeed);
-            if (keys.s || keys.KeyS) moveForward(-actualSpeed);
-            if (keys.a || keys.KeyA) moveRight(-actualSpeed);
-            if (keys.d || keys.KeyD) moveRight(actualSpeed);
-
-            // Touch joystick movement
-            if (touchControls) {
-                const moveState = touchControls.getMovement();
-                if (moveState.forward) moveForward(actualSpeed);
-                if (moveState.backward) moveForward(-actualSpeed);
-                if (moveState.left) moveRight(-actualSpeed);
-                if (moveState.right) moveRight(actualSpeed);
-            }
-
-            // Dynamic Bounds
-            const pos = camera.position;
-            pos.x = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, pos.x));
-            pos.z = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, pos.z));
+        if (isInteracting) {
+            // Pause game logic/movement when interacting
+            document.body.classList.remove('game-active');
+            return;
         }
 
-        renderer.render(scene, camera);
-
-        // Reset error counter on successful frame
-        animationErrorCount = 0;
-    } catch (error) {
-        console.error("Animation loop error:", error);
-        animationErrorCount++;
-
-        // If too many consecutive errors, show error screen
-        if (animationErrorCount >= MAX_ANIMATION_ERRORS) {
-            showErrorScreen("Game encountered critical errors", error);
+        // Hide instructions check
+        if (this.instructions && this.instructions.style.display !== 'none') {
+            document.body.classList.remove('game-active');
+            return;
         }
+
+        document.body.classList.add('game-active');
+
+        this._updateLook(delta);
+        this._updateMovement(delta);
+        this._updateCrosshair();
+
+        this.renderer.render(this.scene, this.camera);
     }
 }
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// Expose for development/debugging only (browser-compatible check)
-if (window.__DEV__ === true) {
-    window.camera = camera;
-    window.scene = scene;
-    window.renderer = renderer;
-}
-
-// --- SCENE INITIALIZATION ---
-async function initializeGame() {
-    const path = window.location.pathname;
-
-    try {
-        // Wait for scene to fully load before initializing game
-        if (path.includes('classroom.html')) {
-            await initClassroom(scene);
-        } else if (path.includes('office.html')) {
-            await initOffice(scene);
-        } else {
-            await initOffice(scene); // Default scene
-        }
-
-        // Calculate room bounds after scene loads
-        calculateRoomBounds();
-
-        // Initialize touch controls and game logic after scene is ready
-        touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
-        initGame();
-
-        // Start animation loop
-        animate();
-    } catch (err) {
-        console.error("Scene initialization error:", err);
-        // Show error screen instead of attempting to continue
-        showErrorScreen("Failed to load game scene", err);
-    }
-}
-
-// Initialize the game
-initializeGame();
+// Instantiate and start
+const game = new GameManager();
+game.loadScene();
