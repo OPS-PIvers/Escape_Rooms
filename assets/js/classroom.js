@@ -3,21 +3,28 @@ import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createShelves } from './prefabs/shelves.js';
 import { createClock } from './prefabs/clock.js'; // Assuming this exists or handled generally
-import { FLOOR_HEIGHT } from './heightConstants.js';
+import {
+    FLOOR_HEIGHT,
+    CLASSROOM_WIDTH,
+    CLASSROOM_DEPTH,
+    CLASSROOM_WALL_HEIGHT,
+    AMBIENT_LIGHT_INTENSITY,
+    DIRECTIONAL_LIGHT_INTENSITY
+} from './constants.js';
 
-// Room Configuration
-const ROOM_WIDTH = 8;
-const ROOM_DEPTH = 8;
-const WALL_HEIGHT = 3;
+// Room Configuration - using constants
+const ROOM_WIDTH = CLASSROOM_WIDTH;
+const ROOM_DEPTH = CLASSROOM_DEPTH;
+const WALL_HEIGHT = CLASSROOM_WALL_HEIGHT;
 
 export async function initClassroom(scene) {
     console.log("Initializing Classroom Scene...");
 
     // 1. Lighting (Basic setup for visibility)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xffffff, AMBIENT_LIGHT_INTENSITY);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, DIRECTIONAL_LIGHT_INTENSITY);
     dirLight.position.set(5, 10, 5);
     dirLight.castShadow = true;
     scene.add(dirLight);

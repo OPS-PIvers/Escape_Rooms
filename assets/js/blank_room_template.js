@@ -12,22 +12,37 @@
 console.log("blank_room_template.js loaded");
 import * as THREE from 'three';
 import { loadModel } from './modelLoader.js';
+import {
+    TEMPLATE_TILE_SCALE,
+    TEMPLATE_ROOM_SIZE,
+    TEMPLATE_WALL_SIZE,
+    TEMPLATE_START_POSITION,
+    TEMPLATE_BACKGROUND_COLOR,
+    FOG_COLOR,
+    FOG_NEAR,
+    FOG_FAR,
+    CAMERA_FOV,
+    CAMERA_NEAR,
+    CAMERA_FAR,
+    CAMERA_HEIGHT,
+    DEFAULT_TIMER_DURATION
+} from './constants.js';
 
 // --- CONSTANTS ---
 const interactables = [];
 let gameWon = false; // This would be controlled by game logic
-const tileScale = 2.5;
-const roomSize = 4;
-const wallSize = 2.5;
-const start = -3.75;
+const tileScale = TEMPLATE_TILE_SCALE;
+const roomSize = TEMPLATE_ROOM_SIZE;
+const wallSize = TEMPLATE_WALL_SIZE;
+const start = TEMPLATE_START_POSITION;
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB); // Light blue background
-scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+scene.background = new THREE.Color(TEMPLATE_BACKGROUND_COLOR);
+scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 5);
+const camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight, CAMERA_NEAR, CAMERA_FAR);
+camera.position.set(0, CAMERA_HEIGHT, 5);
 
 // --- LIGHTING ---
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
@@ -137,7 +152,7 @@ const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE
 displayMesh.position.z = 0.051; // Slightly in front of the box
 timerGroup.add(displayMesh);
 
-let timeLeft = 600;
+let timeLeft = DEFAULT_TIMER_DURATION;
 let finalTimeStr = "00:00";
 
 function updateTimer(dt) {

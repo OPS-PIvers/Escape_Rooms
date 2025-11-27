@@ -5,21 +5,17 @@ import { createClock } from './prefabs/clock.js';
 import { createBox, interactables } from './utils.js';
 import { mat } from './materials.js';
 import {
-    DESK_SURFACE_HEIGHT,
-    CABINET_TOP_HEIGHT,
-    COFFEE_TABLE_HEIGHT,
-    BOOKSHELF_SHELF_HEIGHTS,
-    WALL_MOUNT_HEIGHT,
+    DESK_SURFACE_Y,
+    CABINET_TOP_Y,
+    COFFEE_TABLE_Y,
+    BOOKSHELF_HEIGHTS,
+    WALL_MOUNT_Y,
     FLOOR_HEIGHT,
-    FLOOR_OFFSET
-} from './heightConstants.js';
-
-// Backward compatibility aliases
-const DESK_SURFACE_Y = DESK_SURFACE_HEIGHT;
-const CABINET_TOP_Y = CABINET_TOP_HEIGHT;
-const COFFEE_TABLE_Y = COFFEE_TABLE_HEIGHT;
-const BOOKSHELF_HEIGHTS = BOOKSHELF_SHELF_HEIGHTS;
-const WALL_MOUNT_Y = WALL_MOUNT_HEIGHT;
+    FLOOR_OFFSET,
+    OFFICE_ROOM_SIZE,
+    AMBIENT_LIGHT_INTENSITY,
+    DIRECTIONAL_LIGHT_INTENSITY
+} from './constants.js';
 
 // Helper to load models with error handling
 async function loadModelSafe(path) {
@@ -36,9 +32,9 @@ export async function initOffice(scene) {
     console.log("Initializing Office Scene...");
 
     // 1. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, AMBIENT_LIGHT_INTENSITY);
     scene.add(ambientLight);
-    const spotLight = new THREE.SpotLight(0xffffff, 1);
+    const spotLight = new THREE.SpotLight(0xffffff, DIRECTIONAL_LIGHT_INTENSITY);
     spotLight.position.set(5, 5, 0);
     scene.add(spotLight);
 
@@ -59,7 +55,6 @@ export async function initOffice(scene) {
     const wallCorner = await loadModelSafe('assets/models/wallCorner.glb');
 
     if (wallModel) {
-        const ROOM_SIZE = 6;
         const placeWall = (x, z, ry) => {
             const w = wallModel.clone();
             w.position.set(x, FLOOR_HEIGHT, z);
@@ -69,18 +64,18 @@ export async function initOffice(scene) {
         };
 
         // Walls
-        for (let x = -1; x <= 1; x += 2) placeWall(x, -ROOM_SIZE / 2, 0);
-        for (let x = -1; x <= 1; x += 2) placeWall(x, ROOM_SIZE / 2, Math.PI);
-        for (let z = -1; z <= 1; z += 2) placeWall(-ROOM_SIZE / 2, z, Math.PI / 2);
-        for (let z = -1; z <= 1; z += 2) placeWall(ROOM_SIZE / 2, z, -Math.PI / 2);
+        for (let x = -1; x <= 1; x += 2) placeWall(x, -OFFICE_ROOM_SIZE / 2, 0);
+        for (let x = -1; x <= 1; x += 2) placeWall(x, OFFICE_ROOM_SIZE / 2, Math.PI);
+        for (let z = -1; z <= 1; z += 2) placeWall(-OFFICE_ROOM_SIZE / 2, z, Math.PI / 2);
+        for (let z = -1; z <= 1; z += 2) placeWall(OFFICE_ROOM_SIZE / 2, z, -Math.PI / 2);
 
         // Corners
         if (wallCorner) {
             const corners = [
-                [-ROOM_SIZE/2, -ROOM_SIZE/2, 0],
-                [ROOM_SIZE/2, -ROOM_SIZE/2, -Math.PI/2],
-                [-ROOM_SIZE/2, ROOM_SIZE/2, Math.PI/2],
-                [ROOM_SIZE/2, ROOM_SIZE/2, Math.PI]
+                [-OFFICE_ROOM_SIZE/2, -OFFICE_ROOM_SIZE/2, 0],
+                [OFFICE_ROOM_SIZE/2, -OFFICE_ROOM_SIZE/2, -Math.PI/2],
+                [-OFFICE_ROOM_SIZE/2, OFFICE_ROOM_SIZE/2, Math.PI/2],
+                [OFFICE_ROOM_SIZE/2, OFFICE_ROOM_SIZE/2, Math.PI]
             ];
             corners.forEach(([x, z, ry]) => {
                 const corner = wallCorner.clone();

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { loadModel } from '../modelLoader.js';
-import { DESK_SURFACE_HEIGHT, FLOOR_HEIGHT } from '../heightConstants.js';
+import { DESK_SURFACE_HEIGHT, FLOOR_HEIGHT } from '../constants.js';
 
 export async function createDesk() {
     const group = new THREE.Group();

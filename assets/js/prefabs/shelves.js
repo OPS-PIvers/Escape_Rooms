@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { loadModel } from '../modelLoader.js';
-import { BOOKSHELF_SHELF_HEIGHTS, FLOOR_HEIGHT } from '../heightConstants.js';
+import { BOOKSHELF_SHELF_HEIGHTS, FLOOR_HEIGHT } from '../constants.js';
 
 export async function createShelves() {
     const group = new THREE.Group();

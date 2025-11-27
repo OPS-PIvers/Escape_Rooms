@@ -6,23 +6,29 @@ import { initGame } from './gameLogic.js';
 import { showModal, closeModal, isInteracting } from './ui.js';
 import { TouchControls } from './touchControls.js';
 import { createTouchInteractionHandler } from './touchUtils.js';
-
-// --- PHYSICS CONSTANTS ---
-const LOOK_SPEED = 1.5;
-const MOVE_SPEED = 3.0;
-const MOUSE_LOOK_SPEED = 0.002;
-const MIN_POLAR_ANGLE = 0.5;
-const MAX_POLAR_ANGLE = 2.5;
-const INITIAL_ROOM_BOUNDS = 4.5; // Initial fallback value, updated dynamically after scene loads
+import {
+    LOOK_SPEED,
+    MOVE_SPEED,
+    MOUSE_LOOK_SPEED,
+    MIN_POLAR_ANGLE,
+    MAX_POLAR_ANGLE,
+    INITIAL_ROOM_BOUNDS,
+    MAX_ANIMATION_ERRORS,
+    CAMERA_FOV,
+    CAMERA_NEAR,
+    CAMERA_FAR,
+    CAMERA_HEIGHT,
+    SCENE_BACKGROUND_COLOR
+} from './constants.js';
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xebe5ce);
-scene.fog = new THREE.Fog(0xebe5ce, 5, 30);
+scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
+scene.fog = new THREE.Fog(SCENE_BACKGROUND_COLOR, 5, 30);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 3.5); // First-person height
-camera.lookAt(0, 1.4, 0);
+const camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight, CAMERA_NEAR, CAMERA_FAR);
+camera.position.set(0, CAMERA_HEIGHT, 3.5); // First-person height
+camera.lookAt(0, CAMERA_HEIGHT - 0.2, 0);
 
 // --- CUSTOM KEYBOARD CONTROLS ---
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -247,7 +253,6 @@ function setGameCursor(active) {
 // --- ANIMATION LOOP ---
 let prevTime = performance.now();
 let animationErrorCount = 0;
-const MAX_ANIMATION_ERRORS = 10;
 
 function animate() {
     requestAnimationFrame(animate);
