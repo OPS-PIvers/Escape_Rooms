@@ -19,17 +19,33 @@ import {
     WALL_HEIGHT,
     CAMERA_HEIGHT,
     ROOM_START_COORDINATE,
-    TIMER_DURATION
+    TIMER_DURATION,
+    LOOK_SPEED,
+    MOVE_SPEED,
+    MOUSE_LOOK_SPEED,
+    MIN_POLAR_ANGLE,
+    MAX_POLAR_ANGLE,
+    INITIAL_ROOM_BOUNDS,
+    SCENE_BACKGROUND_COLOR,
+    FOG_COLOR,
+    FOG_NEAR,
+    FOG_FAR
 } from './constants.js';
+import { TouchControls } from './touchControls.js';
+import { showModal, closeModal, isInteracting } from './ui.js';
+import { createTouchInteractionHandler } from './touchUtils.js';
 
 // --- CONSTANTS ---
 const interactables = [];
 let gameWon = false; // This would be controlled by game logic
+const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
+const _PI_2 = Math.PI / 2;
+const _vector = new THREE.Vector3();
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB); // Light blue background
-scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
+scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, CAMERA_HEIGHT, 5);
@@ -201,6 +217,118 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
+// --- CONTROLS & INTERACTION ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(0, 0);
+const mouseDelta = new THREE.Vector2();
+let lastMousePos = new THREE.Vector2();
+let isMouseDown = false;
+let roomBounds = { minX: -INITIAL_ROOM_BOUNDS, maxX: INITIAL_ROOM_BOUNDS, minZ: -INITIAL_ROOM_BOUNDS, maxZ: INITIAL_ROOM_BOUNDS };
+
+// UI Elements
+const instructions = document.getElementById('instructions');
+const crosshair = document.getElementById('crosshair');
+
+// Instructions Handling
+if (instructions) {
+    instructions.addEventListener('click', () => {
+        instructions.style.display = 'none';
+    });
+}
+
+function moveForward(distance) {
+    _vector.setFromMatrixColumn(camera.matrix, 0);
+    _vector.crossVectors(camera.up, _vector);
+    camera.position.addScaledVector(_vector, distance);
+}
+
+function moveRight(distance) {
+    _vector.setFromMatrixColumn(camera.matrix, 0);
+    camera.position.addScaledVector(_vector, distance);
+}
+
+// Touch Controls
+const handleTouchInteract = createTouchInteractionHandler({
+    showModal,
+    isInteracting: () => isInteracting,
+    getContext: () => ({ doorPivot, finalTimeStr })
+});
+
+const touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
+
+// Input Handling
+const keys = {
+    ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+    w: false, a: false, s: false, d: false,
+    KeyW: false, KeyA: false, KeyS: false, KeyD: false,
+    Space: false
+};
+
+document.addEventListener('keydown', (e) => {
+    if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+        keys[e.key] = true;
+        keys[e.code] = true;
+    }
+    if ((e.code === 'Space' || e.key === ' ')) {
+        e.preventDefault();
+        if (isInteracting) {
+            closeModal();
+        } else {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactables, false);
+            if (intersects.length > 0) {
+                showModal(intersects[0].object.name, { doorPivot, finalTimeStr });
+            }
+        }
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+        keys[e.key] = false;
+        keys[e.code] = false;
+    }
+});
+
+// Mouse Interaction
+document.addEventListener('mousedown', () => { isMouseDown = true; });
+document.addEventListener('mouseup', () => { isMouseDown = false; });
+document.addEventListener('mousemove', (event) => {
+    const currentlyInteracting = isInteracting;
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    if (isMouseDown && !currentlyInteracting) {
+        const deltaX = event.clientX - lastMousePos.x;
+        const deltaY = event.clientY - lastMousePos.y;
+        mouseDelta.x += deltaX;
+        mouseDelta.y += deltaY;
+    }
+    lastMousePos.set(event.clientX, event.clientY);
+
+    if (!currentlyInteracting && crosshair) {
+        crosshair.style.left = event.clientX + 'px';
+        crosshair.style.top = event.clientY + 'px';
+    }
+});
+
+document.addEventListener('click', () => {
+    if (isInteracting) return;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(interactables, false);
+    if (intersects.length > 0) {
+        showModal(intersects[0].object.name, { doorPivot, finalTimeStr });
+    }
+});
+
+function setGameCursor(active) {
+    if (active) {
+        document.body.classList.add('game-active');
+    } else {
+        document.body.classList.remove('game-active');
+    }
+}
+
 // --- ANIMATION LOOP ---
 let prevTime = performance.now();
 
@@ -212,6 +340,69 @@ function animate() {
     prevTime = time;
 
     updateTimer(delta);
+
+    // Cursor State
+    if (!isInteracting && instructions && instructions.style.display === 'none') {
+        setGameCursor(true);
+    } else {
+        setGameCursor(false);
+    }
+
+    if (!isInteracting) {
+        // Crosshair
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(interactables, false);
+        if (crosshair) {
+            if (intersects.length > 0) {
+                crosshair.classList.add('active');
+            } else {
+                crosshair.classList.remove('active');
+            }
+        }
+
+        // Look
+        _euler.setFromQuaternion(camera.quaternion);
+        if (isMouseDown) {
+            _euler.y -= mouseDelta.x * MOUSE_LOOK_SPEED;
+            _euler.x -= mouseDelta.y * MOUSE_LOOK_SPEED;
+        }
+        mouseDelta.set(0, 0);
+
+        if (keys.ArrowLeft) _euler.y += LOOK_SPEED * delta;
+        if (keys.ArrowRight) _euler.y -= LOOK_SPEED * delta;
+        if (keys.ArrowUp) _euler.x += LOOK_SPEED * delta;
+        if (keys.ArrowDown) _euler.x -= LOOK_SPEED * delta;
+
+        // Touch look
+        if (touchControls) {
+            const lookDelta = touchControls.getLookDelta();
+            _euler.y -= lookDelta.x * 2;
+            _euler.x -= lookDelta.y * 2;
+        }
+
+        _euler.x = Math.max(_PI_2 - MAX_POLAR_ANGLE, Math.min(_PI_2 - MIN_POLAR_ANGLE, _euler.x));
+        camera.quaternion.setFromEuler(_euler);
+
+        // Move
+        const actualSpeed = MOVE_SPEED * delta;
+        if (keys.w || keys.KeyW) moveForward(actualSpeed);
+        if (keys.s || keys.KeyS) moveForward(-actualSpeed);
+        if (keys.a || keys.KeyA) moveRight(-actualSpeed);
+        if (keys.d || keys.KeyD) moveRight(actualSpeed);
+
+        if (touchControls) {
+            const moveState = touchControls.getMovement();
+            if (moveState.forward) moveForward(actualSpeed);
+            if (moveState.backward) moveForward(-actualSpeed);
+            if (moveState.left) moveRight(-actualSpeed);
+            if (moveState.right) moveRight(actualSpeed);
+        }
+
+        // Bounds
+        const pos = camera.position;
+        pos.x = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, pos.x));
+        pos.z = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, pos.z));
+    }
 
     renderer.render(scene, camera);
 }
