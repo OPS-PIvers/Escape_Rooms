@@ -35,7 +35,7 @@ export async function initClassroom(scene) {
     }
 
     // 3. Ceiling
-    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_WIDTH + 2, ROOM_DEPTH + 2); // Larger to avoid gaps
+    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_WIDTH + 0.1, ROOM_DEPTH + 0.1); // Slightly larger to avoid gaps
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
     ceiling.rotation.x = Math.PI / 2;
@@ -58,6 +58,12 @@ export async function initClassroom(scene) {
             scene.add(wall);
             return wall;
         };
+
+        // Walls - Step 1 to fill gaps. Range [-ROOM/2, ROOM/2] roughly.
+        // Wall centers at half integers?
+        // Width 8. Range [-4, 4].
+        // Wall centers: -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5.
+        // Loop range [-3.5, 3.5].
 
         const start = -ROOM_WIDTH/2 + 0.5; // -3.5
         const end = ROOM_WIDTH/2 - 0.5; // 3.5

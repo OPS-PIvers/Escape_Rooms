@@ -116,7 +116,7 @@ doorGroup.add(doorPivot);
 loadModel('assets/models/doorway.glb', {
     pos: [0.75, 0, 0],
     rot: [0, 0, 0],
-    scale: [2.5, 2.5, 2.5], // Model specific scale
+    scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], // Match room scale
     parent: doorPivot
 }).then(model => {
     // Add a simple handle to the door

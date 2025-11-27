@@ -39,19 +39,17 @@ export async function initOffice(scene) {
     const floor = await loadModelSafe('assets/models/floorFull.glb');
     if (floor) {
         // Reduced grid step to 1 for gapless flooring
-        for (let x = -ROOM_SIZE / 2; x <= ROOM_SIZE / 2; x += 1) {
-            for (let z = -ROOM_SIZE / 2; z <= ROOM_SIZE / 2; z += 1) {
-                // Loop covers [-ROOM_SIZE/2, ROOM_SIZE/2] to fill the room with tiles.
-                
+        for (let x = -ROOM_SIZE / 2; x < ROOM_SIZE / 2; x += 1) {
+            for (let z = -ROOM_SIZE / 2; z < ROOM_SIZE / 2; z += 1) {
                 const tile = floor.clone();
-                tile.position.set(x, 0, z); // Assuming tile centers at 0,0 and size is 1x1
+                tile.position.set(x + 0.5, 0, z + 0.5); // Center 0.5, 0.5 for range [0, 1] relative to grid
                 scene.add(tile);
             }
         }
     }
 
     // 3. Ceiling
-    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_SIZE + 2, ROOM_SIZE + 2);
+    const ceilingGeometry = new THREE.PlaneGeometry(ROOM_SIZE + 0.1, ROOM_SIZE + 0.1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
     ceiling.rotation.x = Math.PI / 2;
