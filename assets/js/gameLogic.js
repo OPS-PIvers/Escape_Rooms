@@ -194,6 +194,12 @@ function moveClue(slotIndex, fromObjName) {
 function setHasSkeletonKey(value) {
     hasSkeletonKey = value;
 }
+
+function decrementSafeAttempts() {
+    safeAttempts--;
+    return safeAttempts;
+}
+
 // We need to export the variables themselves so other modules can mutate them
 export {
     questionPool,
@@ -201,6 +207,7 @@ export {
     hasSkeletonKey,
     setHasSkeletonKey,
     safeAttempts,
+    decrementSafeAttempts,
     locations,
     locationMap,
     initGame,
