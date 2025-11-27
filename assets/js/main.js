@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { initClassroom } from './classroom.js';
 import { initOffice } from './office.js';
 import { interactables } from './utils.js';
-import { initGame } from './gameLogic.js';
+import { initGame, locations, locationMap, activeClues, hasSkeletonKey, questionPool } from './gameLogic.js';
 import { showModal, closeModal, isInteracting } from './ui.js';
 import { TouchControls } from './touchControls.js';
 import { createTouchInteractionHandler } from './touchUtils.js';
@@ -361,6 +361,14 @@ if (window.__DEV__ === true) {
     window.camera = camera;
     window.scene = scene;
     window.renderer = renderer;
+    window.gameLogic = {
+        initGame,
+        locations,
+        locationMap,
+        activeClues,
+        get hasSkeletonKey() { return hasSkeletonKey; }, // Getter for live value
+        questionPool
+    };
 }
 
 // --- SCENE INITIALIZATION ---
