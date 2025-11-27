@@ -16,6 +16,8 @@ import {
     TILE_SCALE,
     ROOM_SIZE,
     WALL_SIZE,
+    WALL_HEIGHT,
+    CAMERA_HEIGHT,
     ROOM_START_COORDINATE,
     TIMER_DURATION
 } from './constants.js';
@@ -30,7 +32,7 @@ scene.background = new THREE.Color(0x87CEEB); // Light blue background
 scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 5);
+camera.position.set(0, CAMERA_HEIGHT || 1.6, 5);
 
 // --- LIGHTING ---
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
@@ -74,28 +76,28 @@ roomGroup.add(ceiling);
 // Corners (placed outside the main loop logic for simplicity)
 const cornerOffset = (roomWidth / 2); // 5.0
 const cornerModel = 'assets/models/wallCorner.glb';
-loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
-loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
-loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
-loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
 for (let i = 0; i < ROOM_SIZE; i++) {
     const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
     // Back Wall (Z=-5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, -5], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [p, 0, -5], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
     // Front Wall (Z=5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, 5], rot: [0, Math.PI, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [p, 0, 5], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
     // Left Wall (X=-5)
-    loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
     // Right Wall (X=5) - with doorway at index 5 (near center)
     if (i === 5) {
-        loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+        loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
     } else {
-        loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+        loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
     }
 }
 

@@ -6,13 +6,15 @@ import { createBox, interactables } from './utils.js';
 import { mat } from './materials.js';
 
 // Height Constants
+import { WALL_HEIGHT } from './constants.js';
+
+// Height Constants
 const DESK_SURFACE_Y = 0.75;
 const CABINET_TOP_Y = 0.8;
 const COFFEE_TABLE_Y = 0.35;
 const BOOKSHELF_HEIGHTS = [0.4, 0.8, 1.2, 1.6];
 const WALL_MOUNT_Y = 2.5;
 const ROOM_SIZE = 6;
-const WALL_HEIGHT = 3;
 
 // Helper to load models with error handling
 async function loadModelSafe(path) {
@@ -64,6 +66,7 @@ export async function initOffice(scene) {
         const placeWall = (x, z, ry) => {
             const w = wallModel.clone();
             w.position.set(x, 0, z);
+            w.scale.y = WALL_HEIGHT; // Scale to reach ceiling
             w.rotation.y = ry;
             w.userData.isWall = true;
             scene.add(w);
@@ -91,6 +94,7 @@ export async function initOffice(scene) {
             corners.forEach(([x, z, ry]) => {
                 const corner = wallCorner.clone();
                 corner.position.set(x, 0, z);
+                corner.scale.y = WALL_HEIGHT;
                 corner.rotation.y = ry;
                 corner.userData.isWall = true;
                 scene.add(corner);

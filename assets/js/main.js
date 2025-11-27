@@ -12,6 +12,7 @@ import {
     MOUSE_LOOK_SPEED,
     MIN_POLAR_ANGLE,
     MAX_POLAR_ANGLE,
+    CAMERA_HEIGHT,
     INITIAL_ROOM_BOUNDS,
     SCENE_BACKGROUND_COLOR,
     FOG_COLOR,
@@ -26,8 +27,8 @@ scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
 scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 3.5); // First-person height
-camera.lookAt(0, 1.4, 0);
+camera.position.set(0, CAMERA_HEIGHT, 3.5); // First-person height
+camera.lookAt(0, CAMERA_HEIGHT, 0);
 
 // --- CUSTOM KEYBOARD CONTROLS ---
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
