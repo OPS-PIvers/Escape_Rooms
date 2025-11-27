@@ -62,7 +62,8 @@ for (let x = 0; x < ROOM_SIZE; x++) {
 }
 
 // Ceiling
-const ceilingGeometry = new THREE.PlaneGeometry(10, 10);
+const roomWidth = ROOM_SIZE * WALL_SIZE;
+const ceilingGeometry = new THREE.PlaneGeometry(roomWidth, roomWidth);
 const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
 ceiling.rotation.x = Math.PI / 2;
@@ -70,6 +71,14 @@ ceiling.position.y = 3;
 roomGroup.add(ceiling);
 
 // Walls
+// Corners (placed outside the main loop logic for simplicity)
+const cornerOffset = (roomWidth / 2); // 5.0
+const cornerModel = 'assets/models/wallCorner.glb';
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
+
 for (let i = 0; i < ROOM_SIZE; i++) {
     const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
@@ -82,8 +91,8 @@ for (let i = 0; i < ROOM_SIZE; i++) {
     // Left Wall (X=-5)
     loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
 
-    // Right Wall (X=5) - with doorway at the second segment (i=1)
-    if (i === 1) {
+    // Right Wall (X=5) - with doorway at index 5 (near center)
+    if (i === 5) {
         loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
     } else {
         loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
@@ -92,8 +101,9 @@ for (let i = 0; i < ROOM_SIZE; i++) {
 
 
 // --- DOOR & TIMER ---
+const doorZ = ROOM_START_COORDINATE + 5 * WALL_SIZE;
 const doorGroup = new THREE.Group();
-doorGroup.position.set(5, 0, ROOM_START_COORDINATE + 1 * WALL_SIZE); // Position at the doorway
+doorGroup.position.set(5, 0, doorZ);
 doorGroup.rotation.y = -Math.PI / 2;
 scene.add(doorGroup);
 
@@ -106,7 +116,7 @@ doorGroup.add(doorPivot);
 loadModel('assets/models/doorway.glb', {
     pos: [0.75, 0, 0],
     rot: [0, 0, 0],
-    scale: [2.5, 2.5, 2.5],
+    scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], // Match room scale
     parent: doorPivot
 }).then(model => {
     // Add a simple handle to the door

@@ -50,16 +50,16 @@ export const SHADOW_MAP_SIZE = 2048;
 
 // --- WORLD GENERATION (TEMPLATE) ---
 /** Scale factor for models in the blank room template. */
-export const TILE_SCALE = 2.5;
+export const TILE_SCALE = 1.0;
 
 /** Number of wall segments along one side of the room in template. */
-export const ROOM_SIZE = 4;
+export const ROOM_SIZE = 10;
 
 /** Size of a single wall segment in template. */
-export const WALL_SIZE = 2.5;
+export const WALL_SIZE = 1.0;
 
 /** Starting coordinate for room generation in template. */
-export const ROOM_START_COORDINATE = -3.75;
+export const ROOM_START_COORDINATE = -4.5;
 
 
 // --- GAME DATA CONSTANTS ---
