@@ -22,7 +22,9 @@ const modalContent = document.getElementById('modalContent');
 const optionsContainer = document.getElementById('optionsContainer');
 const modalFeedback = document.getElementById('modalFeedback');
 const closeBtn = document.getElementById('closeModalBtn');
-closeBtn.addEventListener('click', closeModal);
+if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+}
 
 export function closeModal() {
     isInteracting = false;

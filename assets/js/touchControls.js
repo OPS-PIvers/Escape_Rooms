@@ -108,10 +108,12 @@ export class TouchControls {
         // Use canvas element if available to avoid interfering with UI modals
         const touchTarget = document.querySelector('canvas') || document;
 
-        touchTarget.addEventListener('touchstart', this.boundHandlers.touchStart, { passive: false });
-        touchTarget.addEventListener('touchmove', this.boundHandlers.touchMove, { passive: false });
-        touchTarget.addEventListener('touchend', this.boundHandlers.touchEnd, { passive: false });
-        touchTarget.addEventListener('touchcancel', this.boundHandlers.touchEnd, { passive: false });
+        if (touchTarget) {
+            touchTarget.addEventListener('touchstart', this.boundHandlers.touchStart, { passive: false });
+            touchTarget.addEventListener('touchmove', this.boundHandlers.touchMove, { passive: false });
+            touchTarget.addEventListener('touchend', this.boundHandlers.touchEnd, { passive: false });
+            touchTarget.addEventListener('touchcancel', this.boundHandlers.touchEnd, { passive: false });
+        }
 
         // Interact button - only touchstart to avoid double-fire with click
         if (this.interactButton) {
