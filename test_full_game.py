@@ -2,7 +2,6 @@
 import pytest
 from playwright.sync_api import sync_playwright
 import time
-import json
 
 def solve_clue(page, location_name):
     print(f"Solving clue at: {location_name}")
@@ -29,7 +28,7 @@ def solve_clue(page, location_name):
     try:
         page.wait_for_selector(".question-box strong", timeout=3000)
         question_text = page.locator(".question-box strong").inner_text()
-    except:
+    except Exception:
         print(f"  No question text found. Title was: {title}")
         page.evaluate("""async () => {
             const ui = await import('./assets/js/ui.js');
