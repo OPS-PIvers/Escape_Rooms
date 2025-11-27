@@ -51,6 +51,23 @@ export const FOG_FAR = 30;
 export const SHADOW_MAP_SIZE = 2048;
 
 
+// --- OBJECT DIMENSIONS & PLACEMENT ---
+/** Height of the desk surface. */
+export const DESK_SURFACE_Y = 0.75;
+
+/** Height of the cabinet top. */
+export const CABINET_TOP_Y = 0.8;
+
+/** Height of the coffee table surface. */
+export const COFFEE_TABLE_Y = 0.35;
+
+/** Standard heights for bookshelf shelves. */
+export const BOOKSHELF_SHELF_HEIGHTS = [0.4, 0.8, 1.2, 1.6];
+
+/** Height for wall-mounted objects like clocks. */
+export const WALL_MOUNT_HEIGHT = 2.5;
+
+
 // --- WORLD GENERATION (TEMPLATE) ---
 /** Scale factor for models in the blank room template. */
 export const TILE_SCALE = 1.0;
@@ -66,6 +83,31 @@ export const WALL_SIZE = 1.0;
 
 /** Starting coordinate for room generation in template. */
 export const ROOM_START_COORDINATE = -4.5;
+
+
+// --- OFFICE ROOM SETTINGS ---
+/** Size of the office room (width and depth). */
+export const OFFICE_SIZE = 8;
+
+
+// --- CLASSROOM ROOM SETTINGS ---
+/** Width of the classroom. */
+export const CLASSROOM_WIDTH = 8;
+
+/** Depth of the classroom. */
+export const CLASSROOM_DEPTH = 8;
+
+/** Starting X coordinate for student desks in classroom. */
+export const CLASSROOM_DESK_START_X = -2;
+
+/** Starting Z coordinate for student desks in classroom. */
+export const CLASSROOM_DESK_START_Z = -2;
+
+/** Horizontal gap between student desks in classroom. */
+export const CLASSROOM_DESK_GAP_X = 2;
+
+/** Vertical gap between student desks in classroom. */
+export const CLASSROOM_DESK_GAP_Z = 2;
 
 
 // --- GAME DATA CONSTANTS ---
