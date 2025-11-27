@@ -12,14 +12,17 @@
 console.log("blank_room_template.js loaded");
 import * as THREE from 'three';
 import { loadModel } from './modelLoader.js';
+import {
+    TILE_SCALE,
+    ROOM_SIZE,
+    WALL_SIZE,
+    ROOM_START_COORDINATE,
+    TIMER_DURATION
+} from './constants.js';
 
 // --- CONSTANTS ---
 const interactables = [];
 let gameWon = false; // This would be controlled by game logic
-const tileScale = 2.5;
-const roomSize = 4;
-const wallSize = 2.5;
-const start = -3.75;
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
@@ -46,13 +49,13 @@ const roomGroup = new THREE.Group();
 scene.add(roomGroup);
 
 // Floor
-for (let x = 0; x < roomSize; x++) {
-    for (let z = 0; z < roomSize; z++) {
-        const px = start + x * wallSize;
-        const pz = start + z * wallSize;
+for (let x = 0; x < ROOM_SIZE; x++) {
+    for (let z = 0; z < ROOM_SIZE; z++) {
+        const px = ROOM_START_COORDINATE + x * WALL_SIZE;
+        const pz = ROOM_START_COORDINATE + z * WALL_SIZE;
         loadModel('assets/models/floorFull.glb', {
             pos: [px, 0, pz],
-            scale: [tileScale, tileScale, tileScale],
+            scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE],
             parent: roomGroup
         });
     }
@@ -67,30 +70,30 @@ ceiling.position.y = 3;
 roomGroup.add(ceiling);
 
 // Walls
-for (let i = 0; i < roomSize; i++) {
-    const p = start + i * wallSize;
+for (let i = 0; i < ROOM_SIZE; i++) {
+    const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
     // Back Wall (Z=-5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, -5], scale: [tileScale, tileScale, tileScale], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [p, 0, -5], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
 
     // Front Wall (Z=5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, 5], rot: [0, Math.PI, 0], scale: [tileScale, tileScale, tileScale], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [p, 0, 5], rot: [0, Math.PI, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
 
     // Left Wall (X=-5)
-    loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [tileScale, tileScale, tileScale], parent: roomGroup });
+    loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
 
     // Right Wall (X=5) - with doorway at the second segment (i=1)
     if (i === 1) {
-        loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [tileScale, tileScale, tileScale], parent: roomGroup });
+        loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
     } else {
-        loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [tileScale, tileScale, tileScale], parent: roomGroup });
+        loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], parent: roomGroup });
     }
 }
 
 
 // --- DOOR & TIMER ---
 const doorGroup = new THREE.Group();
-doorGroup.position.set(5, 0, start + 1 * wallSize); // Position at the doorway
+doorGroup.position.set(5, 0, ROOM_START_COORDINATE + 1 * WALL_SIZE); // Position at the doorway
 doorGroup.rotation.y = -Math.PI / 2;
 scene.add(doorGroup);
 
@@ -137,7 +140,7 @@ const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE
 displayMesh.position.z = 0.051; // Slightly in front of the box
 timerGroup.add(displayMesh);
 
-let timeLeft = 600;
+let timeLeft = TIMER_DURATION;
 let finalTimeStr = "00:00";
 
 function updateTimer(dt) {

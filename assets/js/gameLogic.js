@@ -130,18 +130,13 @@ let activeClues = [{
     solved: false
 }];
 let hasSkeletonKey = false;
-let safeAttempts = 3;
+let safeAttempts = SAFE_ATTEMPTS;
 let currentStep = 0; // For "trail" mode
 
+import { LOCATIONS, SAFE_ATTEMPTS } from './constants.js';
+
 // Expanded locations list
-const locations = [
-    "computer", "filing_cabinet_1", "filing_cabinet_2", "filing_cabinet_3", "papers", "safe",
-    "briefcase", "mug", "hat", "lamp",
-    "globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
-    "picture", "desk_lamp", "cardboard_box", "fire_extinguisher",
-    "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
-    "keyboard", "mouse", "open_book"
-];
+const locations = [...LOCATIONS];
 
 let locationMap = {};
 
@@ -167,7 +162,7 @@ function initGame() {
             locationMap[shuffledLocs[i]] = i;
         }
     }
-    safeAttempts = 3;
+    safeAttempts = SAFE_ATTEMPTS;
 }
 
 function advanceStep() {
