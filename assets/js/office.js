@@ -89,9 +89,9 @@ export async function initOffice(scene) {
                 const doorPivot = new THREE.Group();
                 // Adjust pivot based on scale. Original template uses (-0.75, 1.1, 0.02) for scale 2.5
                 // For scale 2.0: 2.0/2.5 = 0.8 scaling factor for offsets.
-                // Or just use the model's pivot point.
-                // Let's approximate: -0.6, 0.88, 0.016
-                doorPivot.position.set(-0.6, 0.88, 0.016);
+                // Calculate offsets based on WALL_SCALE and template reference values.
+                const scaleFactor = WALL_SCALE / 2.5;
+                doorPivot.position.set(-0.75 * scaleFactor, 1.1 * scaleFactor, 0.02 * scaleFactor);
                 doorGroup.add(doorPivot);
 
                 const door = doorwayModel.clone();
