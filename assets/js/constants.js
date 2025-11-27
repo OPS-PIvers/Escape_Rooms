@@ -1,4 +1,4 @@
-// centralized constants for the escape room game
+// Centralized constants for the escape room game.
 
 // --- PHYSICS & MOVEMENT ---
 /** Speed of camera rotation when using keys. */

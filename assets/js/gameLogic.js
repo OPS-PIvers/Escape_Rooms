@@ -1,3 +1,5 @@
+import { LOCATIONS, SAFE_ATTEMPTS } from './constants.js';
+
 let questionPool = [{
     t: "Flour Power",
     q: "Which city was the 'Flour Milling Capital of the World'?",
@@ -132,8 +134,6 @@ let activeClues = [{
 let hasSkeletonKey = false;
 let safeAttempts = SAFE_ATTEMPTS;
 let currentStep = 0; // For "trail" mode
-
-import { LOCATIONS, SAFE_ATTEMPTS } from './constants.js';
 
 // Expanded locations list
 const locations = [...LOCATIONS];
