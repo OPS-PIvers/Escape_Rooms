@@ -59,12 +59,6 @@ export async function initClassroom(scene) {
             return wall;
         };
 
-        // Walls - Step 1 to fill gaps. Range [-ROOM/2, ROOM/2] roughly.
-        // Wall centers at half integers?
-        // Width 8. Range [-4, 4].
-        // Wall centers: -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5.
-        // Loop range [-3.5, 3.5].
-
         const start = -ROOM_WIDTH/2 + 0.5; // -3.5
         const end = ROOM_WIDTH/2 - 0.5; // 3.5
 
