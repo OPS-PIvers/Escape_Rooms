@@ -6,7 +6,6 @@ import {
     moveClue,
     questionPool,
     safeAttempts,
-    decrementSafeAttempts,
     setHasSkeletonKey,
     gameMode,
     winningObject,
@@ -371,7 +370,7 @@ function checkKeypadCode() {
             optionsContainer.appendChild(takeBtn);
         }
     } else {
-        decrementSafeAttempts();
+        safeAttempts--;
         if (safeAttempts <= 0) {
             resetGameLogic();
         } else {

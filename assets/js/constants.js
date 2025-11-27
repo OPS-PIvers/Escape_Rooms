@@ -71,8 +71,10 @@ export const ROOM_START_COORDINATE = -4.5;
 // --- GAME DATA CONSTANTS ---
 /** List of possible locations for clues/items in the game. */
 export const LOCATIONS = [
-    "computer", "filing_cabinet_1", "filing_cabinet_2", "filing_cabinet_3", "papers", "safe",
-    "briefcase", "globe", "plant", "clock", "trash",
+    "computer", "filing_cabinet_1", "filing_cabinet_2", "filing_cabinet_3", "papers",
+    "briefcase", "mug", "hat", "lamp",
+    "globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
+    "picture", "desk_lamp", "cardboard_box", "fire_extinguisher",
     "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
-    "keyboard", "mouse"
+    "keyboard", "mouse", "open_book"
 ];

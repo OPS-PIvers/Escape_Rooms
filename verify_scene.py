@@ -8,6 +8,9 @@ async def main():
         context = await browser.new_context(has_touch=True)
         page = await context.new_page()
 
+        # Enable DEV mode to expose camera
+        await page.add_init_script("window.__DEV__ = true;")
+
         await page.goto("http://localhost:8000/office.html")
         await page.wait_for_selector('#instructions')
         await page.click('#instructions')

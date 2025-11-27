@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Runner</title>
+</head>
+<body>
+    <div id="result"></div>
+    <script type="module">
+        import * as gameLogic from './assets/js/gameLogic.js';
+
+        // Expose gameLogic to the window object so Playwright can access it
+        window.gameLogic = gameLogic;
+
+        // Helper to report ready
+        window.testReady = true;
+    </script>
+</body>
+</html>
