@@ -6,19 +6,24 @@ import { initGame } from './gameLogic.js';
 import { showModal, closeModal, isInteracting } from './ui.js';
 import { TouchControls } from './touchControls.js';
 import { createTouchInteractionHandler } from './touchUtils.js';
-
-// --- PHYSICS CONSTANTS ---
-const LOOK_SPEED = 1.5;
-const MOVE_SPEED = 3.0;
-const MOUSE_LOOK_SPEED = 0.002;
-const MIN_POLAR_ANGLE = 0.5;
-const MAX_POLAR_ANGLE = 2.5;
-const INITIAL_ROOM_BOUNDS = 4.5; // Initial fallback value, updated dynamically after scene loads
+import {
+    LOOK_SPEED,
+    MOVE_SPEED,
+    MOUSE_LOOK_SPEED,
+    MIN_POLAR_ANGLE,
+    MAX_POLAR_ANGLE,
+    INITIAL_ROOM_BOUNDS,
+    SCENE_BACKGROUND_COLOR,
+    FOG_COLOR,
+    FOG_NEAR,
+    FOG_FAR,
+    MAX_ANIMATION_ERRORS
+} from './constants.js';
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xebe5ce);
-scene.fog = new THREE.Fog(0xebe5ce, 5, 30);
+scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
+scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 1.6, 3.5); // First-person height
@@ -247,7 +252,6 @@ function setGameCursor(active) {
 // --- ANIMATION LOOP ---
 let prevTime = performance.now();
 let animationErrorCount = 0;
-const MAX_ANIMATION_ERRORS = 10;
 
 function animate() {
     requestAnimationFrame(animate);
