@@ -226,7 +226,7 @@ export async function initOffice(scene) {
     const bookshelf = await loadModelSafe('assets/models/bookcaseOpen.glb');
     if (bookshelf) {
         bookshelf.position.set(2.5, 0, -2.0);
-        bookshelf.rotation.y = -Math.PI / 2;
+        bookshelf.rotation.y = Math.PI / 2;
         scene.add(bookshelf);
     }
 
@@ -275,6 +275,7 @@ export async function initOffice(scene) {
     const sofa = await loadModelSafe('assets/models/loungeSofa.glb');
     if (sofa) {
         sofa.position.set(-1.5, 0, 2.2);
+        sofa.rotation.y = Math.PI;
         scene.add(sofa);
     }
 
@@ -302,7 +303,7 @@ export async function initOffice(scene) {
     // Safe
     const safeGroup = new THREE.Group();
     safeGroup.position.set(2.5, 0, 2.5);
-    safeGroup.rotation.y = -Math.PI / 4;
+    safeGroup.rotation.y = 3 * Math.PI / 4;
     const safeBox = createBox(0.8, 1.0, 0.8, mat.safe, 0, 0.5, 0, safeGroup, 0, 0, 0, "safe");
     const safeDial = new THREE.Mesh(
         new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16),
