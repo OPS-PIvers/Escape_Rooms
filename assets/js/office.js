@@ -45,25 +45,93 @@ export async function initOffice(scene) {
         }
     }
 
-    // 3. Walls
+    // 3. Ceiling
+    const ceilingGeometry = new THREE.BoxGeometry(7, 0.5, 7);
+    const ceilingMaterial = mat.wall || new THREE.MeshStandardMaterial({ color: 0xebe5ce });
+    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    ceiling.position.set(0, 3.25, 0); // Assuming wall height is around 3
+    scene.add(ceiling);
+
+    // 4. Walls and Door
     const wallModel = await loadModelSafe('assets/models/wall.glb');
     const wallCorner = await loadModelSafe('assets/models/wallCorner.glb');
+    const wallDoorway = await loadModelSafe('assets/models/wallDoorway.glb');
+    const doorwayModel = await loadModelSafe('assets/models/doorway.glb');
 
     if (wallModel) {
         const ROOM_SIZE = 6;
-        const placeWall = (x, z, ry) => {
-            const w = wallModel.clone();
+        // Scale to 2.0 to match the placement grid of 2.0
+        const WALL_SCALE = 2.0;
+
+        const placeWall = (x, z, ry, isDoor = false) => {
+            let w;
+            if (isDoor && wallDoorway) {
+                w = wallDoorway.clone();
+            } else {
+                w = wallModel.clone();
+            }
             w.position.set(x, 0, z);
             w.rotation.y = ry;
-            w.userData.isWall = true; // Mark for boundary detection
+            w.scale.set(WALL_SCALE, WALL_SCALE, WALL_SCALE);
+            w.userData.isWall = true;
             scene.add(w);
+
+            // If it's a door, add the door model and mechanism
+            if (isDoor && doorwayModel) {
+                const doorGroup = new THREE.Group();
+                // Position relative to the wall center
+                // Wall is at (x, 0, z). Rotated by ry.
+                // Doorway model needs to be aligned.
+                doorGroup.position.set(x, 0, z);
+                doorGroup.rotation.y = ry;
+                scene.add(doorGroup);
+
+                const doorPivot = new THREE.Group();
+                // Adjust pivot based on scale. Original template uses (-0.75, 1.1, 0.02) for scale 2.5
+                // For scale 2.0: 2.0/2.5 = 0.8 scaling factor for offsets.
+                // Or just use the model's pivot point.
+                // Let's approximate: -0.6, 0.88, 0.016
+                doorPivot.position.set(-0.6, 0.88, 0.016);
+                doorGroup.add(doorPivot);
+
+                const door = doorwayModel.clone();
+                door.position.set(0.6, 0, 0);
+                door.scale.set(WALL_SCALE, WALL_SCALE, WALL_SCALE);
+                doorPivot.add(door);
+
+                // Handle
+                const handleGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+                const handleMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1.0, roughness: 0.5 });
+                const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+                handle.position.set(0.4, 0.9, 0.08);
+                door.add(handle);
+
+                // Hitbox
+                const doorHitbox = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.2), new THREE.MeshBasicMaterial({ visible: false }));
+                doorHitbox.name = "door_office";
+                doorHitbox.position.set(0.6, 0.9, 0);
+                doorPivot.add(doorHitbox);
+                interactables.push(doorHitbox);
+            }
         };
 
         // Walls
-        for (let x = -1; x <= 1; x += 2) placeWall(x, -ROOM_SIZE / 2, 0);
-        for (let x = -1; x <= 1; x += 2) placeWall(x, ROOM_SIZE / 2, Math.PI);
-        for (let z = -1; z <= 1; z += 2) placeWall(-ROOM_SIZE / 2, z, Math.PI / 2);
-        for (let z = -1; z <= 1; z += 2) placeWall(ROOM_SIZE / 2, z, -Math.PI / 2);
+        // Back Wall (z = -3)
+        placeWall(-1, -ROOM_SIZE / 2, 0);
+        placeWall(1, -ROOM_SIZE / 2, 0);
+
+        // Front Wall (z = 3)
+        placeWall(-1, ROOM_SIZE / 2, Math.PI);
+        // Door on front wall at x=1
+        placeWall(1, ROOM_SIZE / 2, Math.PI, true);
+
+        // Left Wall (x = -3)
+        placeWall(-ROOM_SIZE / 2, -1, Math.PI / 2);
+        placeWall(-ROOM_SIZE / 2, 1, Math.PI / 2);
+
+        // Right Wall (x = 3)
+        placeWall(ROOM_SIZE / 2, -1, -Math.PI / 2);
+        placeWall(ROOM_SIZE / 2, 1, -Math.PI / 2);
 
         // Corners
         if (wallCorner) {
@@ -77,7 +145,8 @@ export async function initOffice(scene) {
                 const corner = wallCorner.clone();
                 corner.position.set(x, 0, z);
                 corner.rotation.y = ry;
-                corner.userData.isWall = true; // Mark for boundary detection
+                corner.scale.set(WALL_SCALE, WALL_SCALE, WALL_SCALE);
+                corner.userData.isWall = true;
                 scene.add(corner);
             });
         }

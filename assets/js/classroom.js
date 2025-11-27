@@ -3,6 +3,7 @@ import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createShelves } from './prefabs/shelves.js';
 import { createClock } from './prefabs/clock.js'; // Assuming this exists or handled generally
+import { mat } from './materials.js';
 
 // Room Configuration
 const ROOM_WIDTH = 8;
@@ -34,18 +35,29 @@ export async function initClassroom(scene) {
         }
     }
 
-    // 3. Walls
+    // 3. Ceiling (Added for better immersion)
+    const ceilingGeometry = new THREE.BoxGeometry(ROOM_WIDTH + 1, 0.5, ROOM_DEPTH + 1);
+    const ceilingMaterial = mat.wall || new THREE.MeshStandardMaterial({ color: 0xebe5ce });
+    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    ceiling.position.set(0, WALL_HEIGHT + 0.25, 0);
+    scene.add(ceiling);
+
+    // 4. Walls
     const wallModel = await loadModel('assets/models/wall.glb');
     const wallCorner = await loadModel('assets/models/wallCorner.glb');
     const wallWindow = await loadModel('assets/models/wallWindow.glb');
     const doorway = await loadModel('assets/models/doorway.glb');
     
     if (wallModel) {
+        // Scaling to 2.0 to match grid of 2.0
+        const WALL_SCALE = 2.0;
+
         // Helper to place walls
         const placeWall = (model, x, z, rotationY) => {
             const wall = model.clone();
             wall.position.set(x, 0, z);
             wall.rotation.y = rotationY;
+            wall.scale.set(WALL_SCALE, WALL_SCALE, WALL_SCALE);
             wall.userData.isWall = true; // Mark for boundary detection
             scene.add(wall);
             return wall;
@@ -81,14 +93,15 @@ export async function initClassroom(scene) {
         }
     }
 
-    // 4. Door (Placed specifically to align with wall)
+    // 5. Door (Placed specifically to align with wall)
     if (doorway) {
         doorway.position.set(3, 0, ROOM_DEPTH / 2); // Front right corner area
         doorway.rotation.y = Math.PI;
+        doorway.scale.set(2.0, 2.0, 2.0); // Scaled to match walls
         scene.add(doorway);
     }
 
-    // 5. Teacher's Area
+    // 6. Teacher's Area
     const teacherDeskGroup = await createDesk();
     if (teacherDeskGroup) {
         teacherDeskGroup.position.set(0, 0, 2.5);
@@ -96,7 +109,7 @@ export async function initClassroom(scene) {
         scene.add(teacherDeskGroup);
     }
 
-    // 6. Student Desks (Grid Layout)
+    // 7. Student Desks (Grid Layout)
     const startX = -2;
     const startZ = -2;
     const gapX = 2;
@@ -114,7 +127,7 @@ export async function initClassroom(scene) {
         }
     }
 
-    // 7. Shelves at the back
+    // 8. Shelves at the back
     const shelves = await createShelves();
     if (shelves) {
         shelves.position.set(-2, 0, -ROOM_DEPTH / 2 + 0.5);
@@ -125,7 +138,7 @@ export async function initClassroom(scene) {
         scene.add(shelves2);
     }
 
-    // 8. Clock
+    // 9. Clock
     // If createClock exists, use it, otherwise simple placement
     try {
         if (typeof createClock === 'function') {

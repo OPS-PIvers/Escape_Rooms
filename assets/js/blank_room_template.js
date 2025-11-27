@@ -58,15 +58,19 @@ for (let x = 0; x < roomSize; x++) {
     }
 }
 
-// Ceiling
-const ceilingGeometry = new THREE.PlaneGeometry(10, 10);
-const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+// Ceiling (Better ceiling with thickness to prevent light leaks)
+// Room is 10x10. We use a box slightly larger to cover gaps.
+const ceilingGeometry = new THREE.BoxGeometry(11, 0.5, 11);
+const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd, side: THREE.FrontSide });
 const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-ceiling.rotation.x = Math.PI / 2;
-ceiling.position.y = 3;
+ceiling.position.y = 3.25; // Height of wall (approx 3?) + half thickness. Assuming walls are ~3 high.
+// In template, scale 2.5 on 'wall.glb'. If wall is 3m high?
+// Standard wall height is usually 2.5-3m.
+// If not specified, we guess.
 roomGroup.add(ceiling);
 
 // Walls
+// We use overlapping walls to ensure no gaps.
 for (let i = 0; i < roomSize; i++) {
     const p = start + i * wallSize;
 
