@@ -16,6 +16,9 @@ export const MIN_POLAR_ANGLE = 0.5;
 /** Maximum vertical angle for the camera (radians). */
 export const MAX_POLAR_ANGLE = 2.5;
 
+/** Default height of the player camera. */
+export const CAMERA_HEIGHT = 1.4;
+
 /** Default initial room bounds for player movement collision. */
 export const INITIAL_ROOM_BOUNDS = 4.5;
 
@@ -54,6 +57,9 @@ export const TILE_SCALE = 1.0;
 
 /** Number of wall segments along one side of the room in template. */
 export const ROOM_SIZE = 10;
+
+/** Height of the walls in units. */
+export const WALL_HEIGHT = 3.0;
 
 /** Size of a single wall segment in template. */
 export const WALL_SIZE = 1.0;

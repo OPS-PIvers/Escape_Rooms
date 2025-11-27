@@ -3,11 +3,11 @@ import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createShelves } from './prefabs/shelves.js';
 import { createClock } from './prefabs/clock.js'; // Assuming this exists or handled generally
+import { WALL_HEIGHT } from './constants.js';
 
 // Room Configuration
 const ROOM_WIDTH = 8;
 const ROOM_DEPTH = 8;
-const WALL_HEIGHT = 3;
 
 export async function initClassroom(scene) {
     console.log("Initializing Classroom Scene...");
@@ -53,6 +53,7 @@ export async function initClassroom(scene) {
         const placeWall = (model, x, z, rotationY) => {
             const wall = model.clone();
             wall.position.set(x, 0, z);
+            wall.scale.y = WALL_HEIGHT;
             wall.rotation.y = rotationY;
             wall.userData.isWall = true; // Mark for boundary detection
             scene.add(wall);
