@@ -75,6 +75,13 @@ for (let x = 0; x < ROOM_SIZE; x++) {
             pos: [px, 0, pz],
             scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE],
             parent: roomGroup
+        }).then(model => {
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = child.material.clone();
+                    child.material.color.setHex(0x555555);
+                }
+            });
         });
     }
 }
@@ -82,7 +89,7 @@ for (let x = 0; x < ROOM_SIZE; x++) {
 // Ceiling
 const roomWidth = ROOM_SIZE * WALL_SIZE;
 const ceilingGeometry = new THREE.PlaneGeometry(roomWidth, roomWidth);
-const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
 const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
 ceiling.rotation.x = Math.PI / 2;
 ceiling.position.y = 3;
@@ -90,14 +97,14 @@ roomGroup.add(ceiling);
 
 // Walls
 // Corners (placed outside the main loop logic for simplicity)
-const cornerOffset = (roomWidth / 2); // 5.0
+const cornerOffset = (roomWidth / 2) - 0.5; // 4.5
 const cornerModel = 'assets/models/wallCorner.glb';
 loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-for (let i = 0; i < ROOM_SIZE; i++) {
+for (let i = 1; i < ROOM_SIZE - 1; i++) {
     const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
     // Back Wall (Z=-5)
@@ -127,7 +134,7 @@ scene.add(doorGroup);
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
-doorPivot.position.set(-0.75, 1.1, 0.02);
+doorPivot.position.set(-0.75, 0, 0.02);
 doorGroup.add(doorPivot);
 
 // Load Door Model
@@ -154,7 +161,7 @@ interactables.push(doorHitbox);
 
 // Timer
 const timerGroup = new THREE.Group();
-timerGroup.position.set(0, 2.6, 0.1);
+timerGroup.position.set(0.35, 2.6, 0.1);
 doorGroup.add(timerGroup);
 const timerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.1), new THREE.MeshStandardMaterial({ color: 0x111111 }));
 timerGroup.add(timerBox);
