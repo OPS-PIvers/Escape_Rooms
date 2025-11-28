@@ -139,6 +139,56 @@ lintel.position.set(wallOffset, doorHeight + lintelHeight / 2, doorZStart + door
 roomGroup.add(lintel);
 
 // --- DOOR ASSEMBLY ---
+// Corners (placed outside the main loop logic for simplicity)
+const cornerOffset = (roomWidth / 2) - 0.5; // Offset corners inward by half a tile to align with wall segments
+const cornerModel = 'assets/models/wallCorner.glb';
+
+// Top-Left Corner
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+// Top-Right Corner
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+// Bottom-Left Corner
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+// Bottom-Right Corner
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+// Skip first and last segments as corners occupy those positions
+for (let i = 1; i < ROOM_SIZE - 1; i++) {
+    const p = ROOM_START_COORDINATE + i * WALL_SIZE;
+
+    // Back Wall (Z=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, -cornerOffset], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+    // Front Wall (Z=cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+    // Left Wall (X=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [-cornerOffset, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+    // Right Wall (X=cornerOffset) - with doorway at index 5 (near center)
+    if (i === 5) {
+        loadModel('assets/models/wallDoorway.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    } else {
+        loadModel('assets/models/wall.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    }
+}
+
+
+// --- DOOR & TIMER ---
+const doorZ = ROOM_START_COORDINATE + 5 * WALL_SIZE;
+const doorGroup = new THREE.Group();
+doorGroup.position.set(cornerOffset, 0, doorZ);
+doorGroup.rotation.y = -Math.PI / 2;
+scene.add(doorGroup);
+
+// Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
 // Pivot at the hinge: Inner corner of the doorway
 // X = 4.5 - 0.5 = 4.0 (Inner face)
@@ -161,17 +211,17 @@ doorPivot.add(doorMesh);
 
 // Door Handle
 const handle = new THREE.Mesh(new THREE.SphereGeometry(0.06), handleMaterial);
-handle.position.set(-0.1, 1.0, 0.85); // Sticking out into room, near far edge
+handle.position.set(-0.1, -0.1, 0.35); // Sticking out into room, near edge (Z=0.35 is inside [-0.5, 0.5])
 doorMesh.add(handle);
 
 // Skeleton Key Lock
 const lockPlate = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.1), lockMaterial);
-lockPlate.position.set(-0.06, 0.9, 0.85); // Just below/near handle
+lockPlate.position.set(-0.06, -0.25, 0.35); // Just below handle
 doorMesh.add(lockPlate);
 
 const keyHole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.03, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
 keyHole.rotation.z = Math.PI / 2;
-keyHole.position.set(-0.08, 0.9, 0.85);
+keyHole.position.set(-0.08, -0.25, 0.35);
 doorMesh.add(keyHole);
 
 // Door Hitbox (for interaction)
