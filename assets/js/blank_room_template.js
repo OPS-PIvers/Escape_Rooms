@@ -97,13 +97,14 @@ roomGroup.add(ceiling);
 
 // Walls
 // Corners (placed outside the main loop logic for simplicity)
-const cornerOffset = (roomWidth / 2) - 0.5; // 4.5
+const cornerOffset = (roomWidth / 2) - 0.5; // Offset corners inward by half a tile to align with wall segments
 const cornerModel = 'assets/models/wallCorner.glb';
 loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
+// Skip first and last segments as corners occupy those positions
 for (let i = 1; i < ROOM_SIZE - 1; i++) {
     const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
