@@ -241,6 +241,8 @@ const handle = createPaddleHandle();
 // Door Height Extent: [-1.1, 1.1] -> Handle height 1m from floor. Floor is at -1.1 relative to center. So -1.1 + 1.0 = -0.1.
 // Z offset to stick out of door: 0.05 (surface) + small gap
 handle.position.set((roomInfo.doorW / 2) - 0.15, -0.1, doorThickness/2 + 0.005);
+// Rotate handle 180 degrees clockwise (PI radians around Z axis)
+handle.rotation.z = Math.PI;
 doorMesh.add(handle);
 
 // Invisible Hitbox for Door
