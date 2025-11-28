@@ -1,8 +1,12 @@
+// Classroom Escape Room - Uses RoomEngine foundation
 import * as THREE from 'three';
+import { RoomEngine } from './roomEngine.js';
 import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createShelves } from './prefabs/shelves.js';
-import { createClock } from './prefabs/clock.js'; // Assuming this exists or handled generally
+import { createClock } from './prefabs/clock.js';
+import { showModal } from './ui.js';
+import { initGame } from './gameLogic.js';
 import {
     WALL_HEIGHT,
     CLASSROOM_WIDTH,
@@ -14,63 +18,49 @@ import {
     WALL_MOUNT_HEIGHT
 } from './constants.js';
 
+// Build the classroom scene content
+async function buildClassroomScene(engine) {
+    const scene = engine.scene;
 
-export async function initClassroom(scene) {
-    console.log("Initializing Classroom Scene...");
-
-    // 1. Lighting (Basic setup for visibility)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 5);
-    dirLight.castShadow = true;
-    scene.add(dirLight);
-
-    // 2. Floor
+    // 1. Floor
     const floor = await loadModel('assets/models/floorFull.glb');
     if (floor) {
-        // Tile the floor with step 1 to avoid gaps
         for (let x = -CLASSROOM_WIDTH / 2; x < CLASSROOM_WIDTH / 2; x += 1) {
             for (let z = -CLASSROOM_DEPTH / 2; z < CLASSROOM_DEPTH / 2; z += 1) {
                 const tile = floor.clone();
-                tile.position.set(x + 0.5, 0, z + 0.5); // Center 0.5, 0.5 for range [0, 1] relative to grid
+                tile.position.set(x + 0.5, 0, z + 0.5);
                 scene.add(tile);
             }
         }
     }
 
-    // 3. Ceiling
-    const ceilingGeometry = new THREE.PlaneGeometry(CLASSROOM_WIDTH + 0.1, CLASSROOM_DEPTH + 0.1); // Slightly larger to avoid gaps
+    // 2. Ceiling
+    const ceilingGeometry = new THREE.PlaneGeometry(CLASSROOM_WIDTH + 0.1, CLASSROOM_DEPTH + 0.1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // 4. Walls
+    // 3. Walls
     const wallModel = await loadModel('assets/models/wall.glb');
     const wallCorner = await loadModel('assets/models/wallCorner.glb');
     const wallWindow = await loadModel('assets/models/wallWindow.glb');
     const doorway = await loadModel('assets/models/doorway.glb');
-    
+
     if (wallModel) {
-        // Helper to place walls
         const placeWall = (model, x, z, rotationY) => {
             const wall = model.clone();
             wall.position.set(x, 0, z);
             wall.scale.y = WALL_HEIGHT;
             wall.rotation.y = rotationY;
-            wall.userData.isWall = true; // Mark for boundary detection
+            wall.userData.isWall = true;
             scene.add(wall);
             return wall;
         };
 
         const start = -CLASSROOM_WIDTH/2 + 0.5;
         const end = CLASSROOM_WIDTH/2 - 0.5;
-
-        // Door Logic: Far right of the wall (or centered relative to something?)
-        // Originally at 3.5. Which is (8/2) - 0.5.
         const doorX = (CLASSROOM_WIDTH / 2) - 0.5;
 
         // Back Wall (Solid)
@@ -80,13 +70,12 @@ export async function initClassroom(scene) {
 
         // Front Wall (Blackboard/Teacher side)
         for (let x = start; x <= end; x += 1) {
-            // Leave space for door
             if (Math.abs(x - doorX) > 0.1) placeWall(wallModel, x, CLASSROOM_DEPTH / 2, Math.PI);
         }
 
         // Left Wall (Windows)
         for (let z = start; z <= end; z += 1) {
-             placeWall(wallWindow || wallModel, -CLASSROOM_WIDTH / 2, z, Math.PI / 2);
+            placeWall(wallWindow || wallModel, -CLASSROOM_WIDTH / 2, z, Math.PI / 2);
         }
 
         // Right Wall (Solid)
@@ -96,24 +85,17 @@ export async function initClassroom(scene) {
 
         // Corners
         if (wallCorner) {
-            // Top-Left
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, 0);
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
-
-            // Top-Right
             placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
             placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, Math.PI);
-
-            // Bottom-Left
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, 0);
-
-            // Bottom-Right
             placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI);
             placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
         }
 
-        // 5. Door (Placed specifically to align with wall)
+        // 4. Door (Placed specifically to align with wall)
         if (doorway) {
             doorway.position.set(doorX, 0, CLASSROOM_DEPTH / 2);
             doorway.rotation.y = Math.PI;
@@ -121,17 +103,15 @@ export async function initClassroom(scene) {
         }
     }
 
-
-    // 6. Teacher's Area
+    // 5. Teacher's Area
     const teacherDeskGroup = await createDesk();
     if (teacherDeskGroup) {
-        // Relative to front center
         teacherDeskGroup.position.set(0, 0, CLASSROOM_DEPTH/2 - 1.5);
-        teacherDeskGroup.rotation.y = Math.PI; // Facing students
+        teacherDeskGroup.rotation.y = Math.PI;
         scene.add(teacherDeskGroup);
     }
 
-    // 7. Student Desks (Grid Layout)
+    // 6. Student Desks (Grid Layout)
     const startX = CLASSROOM_DESK_START_X;
     const startZ = CLASSROOM_DESK_START_Z;
     const gapX = CLASSROOM_DESK_GAP_X;
@@ -142,14 +122,13 @@ export async function initClassroom(scene) {
             const deskGroup = await createDesk();
             if (deskGroup) {
                 deskGroup.position.set(startX + (col * gapX), 0, startZ + (row * gapZ));
-                // Randomize slight rotation for realism
-                deskGroup.rotation.y = (Math.random() - 0.5) * 0.1; 
+                deskGroup.rotation.y = (Math.random() - 0.5) * 0.1;
                 scene.add(deskGroup);
             }
         }
     }
 
-    // 8. Shelves at the back
+    // 7. Shelves at the back
     const shelves = await createShelves();
     if (shelves) {
         shelves.position.set(-2, 0, -CLASSROOM_DEPTH / 2 + 0.5);
@@ -160,8 +139,7 @@ export async function initClassroom(scene) {
         scene.add(shelves2);
     }
 
-    // 9. Clock
-    // If createClock exists, use it, otherwise simple placement
+    // 8. Clock
     try {
         if (typeof createClock === 'function') {
             createClock(scene, new THREE.Vector3(0, WALL_MOUNT_HEIGHT, -CLASSROOM_DEPTH/2 + 0.1));
@@ -170,5 +148,38 @@ export async function initClassroom(scene) {
         console.warn("Clock prefab not available");
     }
 
-    console.log("Classroom Scene Loaded");
+    console.log("Classroom Scene Loaded - " + engine.interactables.length + " interactable objects");
 }
+
+// Initialize the classroom room
+async function initClassroom() {
+    // Create engine with classroom-specific config
+    const engine = new RoomEngine({
+        roomWidth: CLASSROOM_WIDTH,
+        roomDepth: CLASSROOM_DEPTH,
+        enableProceduralRoom: false, // We'll build our own scene
+        enableDoor: false, // Classroom doesn't use the template door (yet)
+        enableTimer: false, // Classroom doesn't use timer (yet)
+        cameraX: 0,
+        cameraZ: 3.5,
+        onInteract: (name, obj) => {
+            // Handle game-specific interactions
+            showModal(name, {});
+        }
+    });
+
+    // Build the classroom scene
+    await buildClassroomScene(engine);
+
+    // Initialize game logic
+    initGame();
+
+    // Start the engine
+    engine.start();
+
+    // Expose for debugging
+    window.engine = engine;
+}
+
+// Start the game
+initClassroom();

@@ -1,10 +1,13 @@
+// Office Escape Room - Uses RoomEngine foundation
 import * as THREE from 'three';
+import { RoomEngine } from './roomEngine.js';
 import { loadModel } from './modelLoader.js';
 import { createDesk } from './prefabs/desk.js';
 import { createClock } from './prefabs/clock.js';
-import { createBox, interactables } from './utils.js';
+import { createBox } from './utils.js';
 import { mat } from './materials.js';
-
+import { showModal } from './ui.js';
+import { initGame, activeClues, locationMap } from './gameLogic.js';
 import {
     WALL_HEIGHT,
     DESK_SURFACE_Y,
@@ -25,31 +28,23 @@ async function loadModelSafe(path) {
     }
 }
 
-// Executive Office Layout
-export async function initOffice(scene) {
-    console.log("Initializing Office Scene...");
+// Build the office scene content
+async function buildOfficeScene(engine) {
+    const scene = engine.scene;
 
-    // 1. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambientLight);
-    const spotLight = new THREE.SpotLight(0xffffff, 1);
-    spotLight.position.set(5, 5, 0);
-    scene.add(spotLight);
-
-    // 2. Flooring
+    // 1. Flooring
     const floor = await loadModelSafe('assets/models/floorFull.glb');
     if (floor) {
-        // Reduced grid step to 1 for gapless flooring
         for (let x = -OFFICE_SIZE / 2; x < OFFICE_SIZE / 2; x += 1) {
             for (let z = -OFFICE_SIZE / 2; z < OFFICE_SIZE / 2; z += 1) {
                 const tile = floor.clone();
-                tile.position.set(x + 0.5, 0, z + 0.5); // Center 0.5, 0.5 for range [0, 1] relative to grid
+                tile.position.set(x + 0.5, 0, z + 0.5);
                 scene.add(tile);
             }
         }
     }
 
-    // 3. Ceiling
+    // 2. Ceiling
     const ceilingGeometry = new THREE.PlaneGeometry(OFFICE_SIZE + 0.1, OFFICE_SIZE + 0.1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
@@ -57,7 +52,7 @@ export async function initOffice(scene) {
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // 4. Walls
+    // 3. Walls
     const wallModel = await loadModelSafe('assets/models/wall.glb');
     const wallCorner = await loadModelSafe('assets/models/wallCorner.glb');
 
@@ -65,39 +60,29 @@ export async function initOffice(scene) {
         const placeWall = (x, z, ry) => {
             const w = wallModel.clone();
             w.position.set(x, 0, z);
-            w.scale.y = WALL_HEIGHT; // Scale to reach ceiling
+            w.scale.y = WALL_HEIGHT;
             w.rotation.y = ry;
             w.userData.isWall = true;
             scene.add(w);
         };
 
-        // Walls - Step 1 to fill gaps
         for (let x = -OFFICE_SIZE/2 + 0.5; x <= OFFICE_SIZE/2 - 0.5; x += 1) {
-             placeWall(x, -OFFICE_SIZE / 2, 0); // Back
-             placeWall(x, OFFICE_SIZE / 2, Math.PI); // Front
+            placeWall(x, -OFFICE_SIZE / 2, 0); // Back
+            placeWall(x, OFFICE_SIZE / 2, Math.PI); // Front
         }
         for (let z = -OFFICE_SIZE/2 + 0.5; z <= OFFICE_SIZE/2 - 0.5; z += 1) {
-             placeWall(-OFFICE_SIZE / 2, z, Math.PI / 2); // Left
-             placeWall(OFFICE_SIZE / 2, z, -Math.PI / 2); // Right
+            placeWall(-OFFICE_SIZE / 2, z, Math.PI / 2); // Left
+            placeWall(OFFICE_SIZE / 2, z, -Math.PI / 2); // Right
         }
 
-        // Corners
         if (wallCorner) {
-            // Each corner needs two segments to form an L-shape
             const corners = [
-                // Top-Left (-x, -z)
                 [-OFFICE_SIZE/2, -OFFICE_SIZE/2, 0],
                 [-OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
-
-                // Top-Right (x, -z)
                 [OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
                 [OFFICE_SIZE/2, -OFFICE_SIZE/2, Math.PI],
-
-                // Bottom-Left (-x, z)
                 [-OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2],
                 [-OFFICE_SIZE/2, OFFICE_SIZE/2, 0],
-
-                // Bottom-Right (x, z)
                 [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI],
                 [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2]
             ];
@@ -112,7 +97,6 @@ export async function initOffice(scene) {
         }
     }
 
-    // Relative coordinates helpers
     const halfSize = OFFICE_SIZE / 2;
 
     // ZONE 1: EXECUTIVE WORK AREA (Near Back Left)
@@ -133,7 +117,7 @@ export async function initOffice(scene) {
     if (computerScreen) {
         computerScreen.position.set(-halfSize + 1.5, DESK_SURFACE_Y, -halfSize + 1.0);
         computerScreen.name = "computer";
-        interactables.push(computerScreen);
+        engine.interactables.push(computerScreen);
         scene.add(computerScreen);
     }
 
@@ -141,7 +125,7 @@ export async function initOffice(scene) {
     if (keyboard) {
         keyboard.position.set(-halfSize + 1.5, DESK_SURFACE_Y, -halfSize + 1.4);
         keyboard.name = "keyboard";
-        interactables.push(keyboard);
+        engine.interactables.push(keyboard);
         scene.add(keyboard);
     }
 
@@ -149,7 +133,7 @@ export async function initOffice(scene) {
     if (mouse) {
         mouse.position.set(-halfSize + 2.0, DESK_SURFACE_Y, -halfSize + 1.4);
         mouse.name = "mouse";
-        interactables.push(mouse);
+        engine.interactables.push(mouse);
         scene.add(mouse);
     }
 
@@ -171,7 +155,7 @@ export async function initOffice(scene) {
     if (trash) {
         trash.position.set(-halfSize + 0.7, 0, -halfSize + 1.8);
         trash.name = "trash";
-        interactables.push(trash);
+        engine.interactables.push(trash);
         scene.add(trash);
     }
 
@@ -180,7 +164,7 @@ export async function initOffice(scene) {
     if (filingCabinet1) {
         filingCabinet1.position.set(-0.5, 0, -halfSize + 0.2);
         filingCabinet1.name = "filing_cabinet_1";
-        interactables.push(filingCabinet1);
+        engine.interactables.push(filingCabinet1);
         scene.add(filingCabinet1);
     }
 
@@ -188,7 +172,7 @@ export async function initOffice(scene) {
     if (filingCabinet2) {
         filingCabinet2.position.set(0.5, 0, -halfSize + 0.2);
         filingCabinet2.name = "filing_cabinet_2";
-        interactables.push(filingCabinet2);
+        engine.interactables.push(filingCabinet2);
         scene.add(filingCabinet2);
     }
 
@@ -196,7 +180,7 @@ export async function initOffice(scene) {
     if (filingCabinet3) {
         filingCabinet3.position.set(1.5, 0, -halfSize + 0.2);
         filingCabinet3.name = "filing_cabinet_3";
-        interactables.push(filingCabinet3);
+        engine.interactables.push(filingCabinet3);
         scene.add(filingCabinet3);
     }
 
@@ -215,7 +199,7 @@ export async function initOffice(scene) {
     }
     const topPaper = papersGroup.children[papersGroup.children.length - 1];
     topPaper.name = "papers";
-    interactables.push(topPaper);
+    engine.interactables.push(topPaper);
     scene.add(papersGroup);
 
     // Globe
@@ -232,7 +216,7 @@ export async function initOffice(scene) {
         new THREE.MeshStandardMaterial({ color: 0x4682B4, roughness: 0.6 })
     );
     globeSphere.name = "globe";
-    interactables.push(globeSphere);
+    engine.interactables.push(globeSphere);
     globeGroup.add(globeSphere);
     scene.add(globeGroup);
 
@@ -251,7 +235,7 @@ export async function initOffice(scene) {
     if (bookCluster1) {
         bookCluster1.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[0], bookshelfZ);
         bookCluster1.name = "book_cluster_1";
-        interactables.push(bookCluster1);
+        engine.interactables.push(bookCluster1);
         scene.add(bookCluster1);
     }
 
@@ -260,7 +244,7 @@ export async function initOffice(scene) {
         bookCluster2.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[1], bookshelfZ);
         bookCluster2.rotation.y = Math.PI / 4;
         bookCluster2.name = "book_cluster_2";
-        interactables.push(bookCluster2);
+        engine.interactables.push(bookCluster2);
         scene.add(bookCluster2);
     }
 
@@ -269,7 +253,7 @@ export async function initOffice(scene) {
         bookCluster3.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[2], bookshelfZ + 0.1);
         bookCluster3.rotation.y = -Math.PI / 6;
         bookCluster3.name = "book_cluster_3";
-        interactables.push(bookCluster3);
+        engine.interactables.push(bookCluster3);
         scene.add(bookCluster3);
     }
 
@@ -278,14 +262,13 @@ export async function initOffice(scene) {
         bookCluster4.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[3], bookshelfZ - 0.1);
         bookCluster4.rotation.y = Math.PI / 3;
         bookCluster4.name = "book_cluster_4";
-        interactables.push(bookCluster4);
+        engine.interactables.push(bookCluster4);
         scene.add(bookCluster4);
     }
 
     // ZONE 4: LOUNGE/MEETING AREA (Center/Left)
     const rug = await loadModelSafe('assets/models/rugRounded.glb');
     if (rug) {
-        // Let's make it relative to front-left quadrant
         rug.position.set(-halfSize + 1.5, 0.01, halfSize - 1.5);
         scene.add(rug);
     }
@@ -309,6 +292,8 @@ export async function initOffice(scene) {
     createBox(0.6, 0.4, 0.15, mat.leather, 0, COFFEE_TABLE_Y + 0.02, 0, briefcaseGroup, 0, 0, 0, "briefcase");
     createBox(0.02, 0.1, 0.1, mat.chrome, 0, COFFEE_TABLE_Y + 0.22, 0, briefcaseGroup);
     scene.add(briefcaseGroup);
+    const briefcase = briefcaseGroup.children.find(child => child.name === "briefcase");
+    if (briefcase) engine.interactables.push(briefcase);
 
     const floorLamp = await loadModelSafe('assets/models/lampRoundFloor.glb');
     if (floorLamp) {
@@ -332,6 +317,7 @@ export async function initOffice(scene) {
     createBox(0.05, 0.2, 0.05, 0xcccccc, 0.2, 0, 0.45, safeBox);
     createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox);
     scene.add(safeGroup);
+    engine.interactables.push(safeBox);
 
     // Clock (Back Wall)
     createClock(scene, new THREE.Vector3(0, WALL_MOUNT_HEIGHT, -halfSize + 0.05), new THREE.Euler(0, 0, 0));
@@ -339,9 +325,9 @@ export async function initOffice(scene) {
     // Plants
     const plant1 = await loadModelSafe('assets/models/pottedPlant.glb');
     if (plant1) {
-        plant1.position.set(-halfSize + 0.3, 0, -halfSize + 0.3); // Back Left Corner
+        plant1.position.set(-halfSize + 0.3, 0, -halfSize + 0.3);
         plant1.name = "plant";
-        interactables.push(plant1);
+        engine.interactables.push(plant1);
         scene.add(plant1);
     }
 
@@ -358,5 +344,38 @@ export async function initOffice(scene) {
         scene.add(coatRack);
     }
 
-    console.log("Office Scene Loaded - " + interactables.length + " interactable objects");
+    console.log("Office Scene Loaded - " + engine.interactables.length + " interactable objects");
 }
+
+// Initialize the office room
+async function initOffice() {
+    // Create engine with office-specific config
+    const engine = new RoomEngine({
+        roomWidth: OFFICE_SIZE,
+        roomDepth: OFFICE_SIZE,
+        enableProceduralRoom: false, // We'll build our own scene
+        enableDoor: false, // Office doesn't use the template door (yet)
+        enableTimer: false, // Office doesn't use timer (yet)
+        cameraX: 0,
+        cameraZ: 3.5,
+        onInteract: (name, obj) => {
+            // Handle game-specific interactions
+            showModal(name, {});
+        }
+    });
+
+    // Build the office scene
+    await buildOfficeScene(engine);
+
+    // Initialize game logic
+    initGame();
+
+    // Start the engine
+    engine.start();
+
+    // Expose for debugging
+    window.engine = engine;
+}
+
+// Start the game
+initOffice();
