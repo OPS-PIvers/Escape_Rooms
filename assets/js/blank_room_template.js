@@ -245,6 +245,41 @@ handle.position.set((roomInfo.doorW / 2) - 0.15, -0.1, doorThickness/2 + 0.005);
 handle.rotation.y = Math.PI;
 doorMesh.add(handle);
 
+// Skeleton Key Lock
+function createSkeletonKeyLock() {
+    const lockGroup = new THREE.Group();
+
+    // Lock plate (escutcheon)
+    const plateGeometry = new THREE.CylinderGeometry(0.035, 0.035, 0.008, 32);
+    const lockPlate = new THREE.Mesh(plateGeometry, handleMat);
+    lockPlate.rotation.x = Math.PI / 2;
+    lockGroup.add(lockPlate);
+
+    // Keyhole - outer circle
+    const keyholeOuter = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.012, 0.012, 16),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    keyholeOuter.rotation.x = Math.PI / 2;
+    keyholeOuter.position.z = 0.01;
+    lockGroup.add(keyholeOuter);
+
+    // Keyhole - slot below circle
+    const keyholeSlot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.006, 0.018, 0.012),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    keyholeSlot.position.set(0, -0.015, 0.01);
+    lockGroup.add(keyholeSlot);
+
+    return lockGroup;
+}
+
+const lock = createSkeletonKeyLock();
+// Position lock above the handle on the interior side of the door (negative Z)
+lock.position.set((roomInfo.doorW / 2) - 0.15, 0.05, -(doorThickness/2 + 0.005));
+doorMesh.add(lock);
+
 // Invisible Hitbox for Door
 const doorHitbox = new THREE.Mesh(
     new THREE.BoxGeometry(roomInfo.doorW, roomInfo.doorH, 0.5),
