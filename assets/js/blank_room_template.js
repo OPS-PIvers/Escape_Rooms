@@ -108,20 +108,20 @@ loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI,
 for (let i = 1; i < ROOM_SIZE - 1; i++) {
     const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
-    // Back Wall (Z=-5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, -5], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    // Back Wall (Z=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, -cornerOffset], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-    // Front Wall (Z=5)
-    loadModel('assets/models/wall.glb', { pos: [p, 0, 5], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    // Front Wall (Z=cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-    // Left Wall (X=-5)
-    loadModel('assets/models/wall.glb', { pos: [-5, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    // Left Wall (X=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [-cornerOffset, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-    // Right Wall (X=5) - with doorway at index 5 (near center)
+    // Right Wall (X=cornerOffset) - with doorway at index 5 (near center)
     if (i === 5) {
-        loadModel('assets/models/wallDoorway.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+        loadModel('assets/models/wallDoorway.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
     } else {
-        loadModel('assets/models/wall.glb', { pos: [5, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+        loadModel('assets/models/wall.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
     }
 }
 
@@ -129,7 +129,7 @@ for (let i = 1; i < ROOM_SIZE - 1; i++) {
 // --- DOOR & TIMER ---
 const doorZ = ROOM_START_COORDINATE + 5 * WALL_SIZE;
 const doorGroup = new THREE.Group();
-doorGroup.position.set(5, 0, doorZ);
+doorGroup.position.set(cornerOffset, 0, doorZ);
 doorGroup.rotation.y = -Math.PI / 2;
 scene.add(doorGroup);
 
