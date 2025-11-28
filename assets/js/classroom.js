@@ -105,114 +105,17 @@ async function buildClassroomScene(engine) {
     lintel.receiveShadow = true;
     scene.add(lintel);
 
-    // ===== CLASSROOM FEATURES =====
+    // ===== OBJECTS CLEARED - Add objects here one at a time =====
 
-    // Chalkboard on front wall
-    const chalkboard = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 2, 0.1),
-        materials.chalkboard
-    );
-    chalkboard.position.set(0, 1.5, halfDepth - 0.3);
-    chalkboard.name = "chalkboard";
-    engine.interactables.push(chalkboard);
-    scene.add(chalkboard);
-
-    // ===== FURNITURE & PROPS (Using GLB models) =====
-
-    // Teacher's desk at front
-    const teacherDesk = await loadModel('assets/models/desk.glb');
-    if (teacherDesk) {
-        teacherDesk.position.set(-3, 0, halfDepth - 1.5);
-        teacherDesk.rotation.y = Math.PI;
-        teacherDesk.name = "teacher_desk";
-        engine.interactables.push(teacherDesk);
-        scene.add(teacherDesk);
-    }
-
-    // Student desks (3x3 grid)
-    const deskPositions = [
-        [-3, 0, 1], [0, 0, 1], [3, 0, 1],
-        [-3, 0, -1], [0, 0, -1], [3, 0, -1],
-        [-3, 0, -3], [0, 0, -3], [3, 0, -3]
-    ];
-
-    for (let i = 0; i < deskPositions.length; i++) {
-        const desk = await loadModel('assets/models/desk.glb');
-        if (desk) {
-            desk.position.set(...deskPositions[i]);
-            desk.rotation.y = Math.PI;
-            desk.name = `student_desk_${i + 1}`;
-            engine.interactables.push(desk);
-            scene.add(desk);
-        }
-    }
-
-    // Bookshelf at back
-    const bookshelf = await loadModel('assets/models/bookcaseOpen.glb');
-    if (bookshelf) {
-        bookshelf.position.set(-4, 0, -halfDepth + 0.5);
-        scene.add(bookshelf);
-    }
-
-    // Books on shelf (interactable)
-    const books = await loadModel('assets/models/books.glb');
-    if (books) {
-        books.position.set(-4, 1, -halfDepth + 0.5);
-        books.name = "books";
-        engine.interactables.push(books);
-        scene.add(books);
-    }
-
-    // Globe (interactable)
-    const globeGroup = new THREE.Group();
-    globeGroup.position.set(3, 0, halfDepth - 1.5);
-
-    const globeBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.1, 0.05),
-        new THREE.MeshStandardMaterial({ color: 0x8B4513 })
-    );
-    globeBase.position.y = 0.75;
-    globeGroup.add(globeBase);
-
-    const globe = new THREE.Mesh(
-        new THREE.SphereGeometry(0.25, 32, 32),
-        new THREE.MeshStandardMaterial({ color: 0x4682B4, roughness: 0.6 })
-    );
-    globe.position.y = 1.05;
-    globe.name = "globe";
-    engine.interactables.push(globe);
-    globeGroup.add(globe);
-    scene.add(globeGroup);
-
-    // Clock on back wall
-    const clockGroup = new THREE.Group();
-    clockGroup.position.set(0, 2.2, -halfDepth + 0.1);
-
-    const clockFrame = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32),
-        new THREE.MeshStandardMaterial({ color: 0x333333 })
-    );
-    clockFrame.rotation.x = Math.PI / 2;
-    clockGroup.add(clockFrame);
-
-    const clockFace = new THREE.Mesh(
-        new THREE.CircleGeometry(0.28, 32),
-        new THREE.MeshStandardMaterial({ color: 0xffffff })
-    );
-    clockFace.position.z = 0.051;
-    clockFace.name = "clock";
-    engine.interactables.push(clockFace);
-    clockGroup.add(clockFace);
-    scene.add(clockGroup);
-
-    // Trash can (interactable)
-    const trash = await loadModel('assets/models/trashcan.glb');
-    if (trash) {
-        trash.position.set(4, 0, -halfDepth + 0.5);
-        trash.name = "trash";
-        engine.interactables.push(trash);
-        scene.add(trash);
-    }
+    // Example:
+    // const desk = await loadModel('assets/models/desk.glb');
+    // if (desk) {
+    //     desk.position.set(-3, 0, halfDepth - 1.5);
+    //     desk.rotation.y = Math.PI;
+    //     desk.name = "teacher_desk";
+    //     engine.interactables.push(desk);
+    //     scene.add(desk);
+    // }
 
     console.log(`Classroom loaded: ${engine.interactables.length} interactable objects`);
 }
