@@ -20,18 +20,18 @@
     <div id="crosshair"></div>
 
     <!-- Clue Modal -->
-    <div id="clueModal">
+    <div id="clueModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <h2 id="modalTitle">Evidence Found</h2>
         <div id="modalContent"></div>
         <div id="optionsContainer"></div>
         <div id="modalFeedback"></div>
-        <button id="closeModalBtn">Close</button>
+        <button id="closeModalBtn" aria-label="Close modal">Close</button>
     </div>
 
     <!-- Victory Modal -->
-    <div id="victoryModal">
-        <h1>Mission Accomplished</h1>
-        <p>You have escaped the archive.</p>
+    <div id="victoryModal" role="dialog" aria-modal="true" aria-labelledby="victoryTitle">
+        <h1 id="victoryTitle">Mission Accomplished</h1>
+        <p>You have escaped the classroom!</p>
         <div id="victoryTime"></div>
     </div>
 
@@ -44,6 +44,6 @@
         }
     </script>
 
-    <script type="module" src="assets/js/classroom.js?v=6754cbf"></script>
+    <script type="module" src="assets/js/classroom.js?v=37d8f3c"></script>
 </body>
 </html>

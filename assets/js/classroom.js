@@ -1,169 +1,201 @@
-// Classroom Escape Room - Uses RoomEngine foundation
+// Classroom Escape Room - Rebuilt from template with RoomEngine
+console.log("classroom.js loaded");
+
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
 import { loadModel } from './modelLoader.js';
-import { createDesk } from './prefabs/desk.js';
-import { createShelves } from './prefabs/shelves.js';
-import { createClock } from './prefabs/clock.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
-import {
-    WALL_HEIGHT,
-    CLASSROOM_WIDTH,
-    CLASSROOM_DEPTH,
-    CLASSROOM_DESK_START_X,
-    CLASSROOM_DESK_START_Z,
-    CLASSROOM_DESK_GAP_X,
-    CLASSROOM_DESK_GAP_Z,
-    WALL_MOUNT_HEIGHT
-} from './constants.js';
+import { WALL_HEIGHT } from './constants.js';
 
-// Build the classroom scene content
+// Room Configuration
+const CLASSROOM_WIDTH = 12;
+const CLASSROOM_DEPTH = 12;
+const WALL_THICKNESS = 0.5;
+
+// Materials
+const materials = {
+    wall: new THREE.MeshStandardMaterial({ color: 0xe8d4b0, roughness: 0.9 }), // Warm beige
+    floor: new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.8 }), // Wood floor
+    ceiling: new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.9 }), // Off-white
+    chalkboard: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 })
+};
+
+// Build the classroom scene
 async function buildClassroomScene(engine) {
     const scene = engine.scene;
+    const halfWidth = CLASSROOM_WIDTH / 2;
+    const halfDepth = CLASSROOM_DEPTH / 2;
 
-    // 1. Floor
-    const floor = await loadModel('assets/models/floorFull.glb');
-    if (floor) {
-        for (let x = -CLASSROOM_WIDTH / 2; x < CLASSROOM_WIDTH / 2; x += 1) {
-            for (let z = -CLASSROOM_DEPTH / 2; z < CLASSROOM_DEPTH / 2; z += 1) {
-                const tile = floor.clone();
-                tile.position.set(x + 0.5, 0, z + 0.5);
-                scene.add(tile);
-            }
-        }
-    }
+    // ===== ROOM STRUCTURE (Procedural) =====
 
-    // 2. Ceiling
-    const ceilingGeometry = new THREE.PlaneGeometry(CLASSROOM_WIDTH + 0.1, CLASSROOM_DEPTH + 0.1);
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    // Floor
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(CLASSROOM_WIDTH, CLASSROOM_DEPTH),
+        materials.floor
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Ceiling
+    const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(CLASSROOM_WIDTH, CLASSROOM_DEPTH),
+        materials.ceiling
+    );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // 3. Walls
-    const wallModel = await loadModel('assets/models/wall.glb');
-    const wallCorner = await loadModel('assets/models/wallCorner.glb');
-    const wallWindow = await loadModel('assets/models/wallWindow.glb');
-    const doorway = await loadModel('assets/models/doorway.glb');
+    // Walls (4 solid walls - door is handled by RoomEngine)
+    const walls = [
+        // Back wall (North)
+        { width: CLASSROOM_WIDTH, pos: [0, WALL_HEIGHT/2, -halfDepth] },
+        // Front wall (South)
+        { width: CLASSROOM_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
+        // Left wall (West)
+        { width: CLASSROOM_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
+        // Right wall (East)
+        { width: CLASSROOM_DEPTH, pos: [halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
+    ];
 
-    if (wallModel) {
-        const placeWall = (model, x, z, rotationY) => {
-            const wall = model.clone();
-            wall.position.set(x, 0, z);
-            wall.scale.y = WALL_HEIGHT;
-            wall.rotation.y = rotationY;
-            wall.userData.isWall = true;
-            scene.add(wall);
-            return wall;
-        };
+    walls.forEach(wall => {
+        const mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wall.width, WALL_HEIGHT, WALL_THICKNESS),
+            materials.wall
+        );
+        mesh.position.set(...wall.pos);
+        if (wall.rotY) mesh.rotation.y = wall.rotY;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+    });
 
-        const start = -CLASSROOM_WIDTH/2 + 0.5;
-        const end = CLASSROOM_WIDTH/2 - 0.5;
-        const doorX = (CLASSROOM_WIDTH / 2) - 0.5;
+    // ===== CLASSROOM FEATURES =====
 
-        // Back Wall (Solid)
-        for (let x = start; x <= end; x += 1) {
-            placeWall(wallModel, x, -CLASSROOM_DEPTH / 2, 0);
-        }
+    // Chalkboard on front wall
+    const chalkboard = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 2, 0.1),
+        materials.chalkboard
+    );
+    chalkboard.position.set(0, 1.5, halfDepth - 0.3);
+    chalkboard.name = "chalkboard";
+    engine.interactables.push(chalkboard);
+    scene.add(chalkboard);
 
-        // Front Wall (Blackboard/Teacher side)
-        for (let x = start; x <= end; x += 1) {
-            if (Math.abs(x - doorX) > 0.1) placeWall(wallModel, x, CLASSROOM_DEPTH / 2, Math.PI);
-        }
+    // ===== FURNITURE & PROPS (Using GLB models) =====
 
-        // Left Wall (Windows)
-        for (let z = start; z <= end; z += 1) {
-            placeWall(wallWindow || wallModel, -CLASSROOM_WIDTH / 2, z, Math.PI / 2);
-        }
+    // Teacher's desk at front
+    const teacherDesk = await loadModel('assets/models/desk.glb');
+    if (teacherDesk) {
+        teacherDesk.position.set(-3, 0, halfDepth - 1.5);
+        teacherDesk.rotation.y = Math.PI;
+        teacherDesk.name = "teacher_desk";
+        engine.interactables.push(teacherDesk);
+        scene.add(teacherDesk);
+    }
 
-        // Right Wall (Solid)
-        for (let z = start; z <= end; z += 1) {
-            placeWall(wallModel, CLASSROOM_WIDTH / 2, z, -Math.PI / 2);
-        }
+    // Student desks (3x3 grid)
+    const deskPositions = [
+        [-3, 0, 1], [0, 0, 1], [3, 0, 1],
+        [-3, 0, -1], [0, 0, -1], [3, 0, -1],
+        [-3, 0, -3], [0, 0, -3], [3, 0, -3]
+    ];
 
-        // Corners
-        if (wallCorner) {
-            placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, 0);
-            placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
-            placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
-            placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, Math.PI);
-            placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
-            placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, 0);
-            placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI);
-            placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
-        }
-
-        // 4. Door (Placed specifically to align with wall)
-        if (doorway) {
-            doorway.position.set(doorX, 0, CLASSROOM_DEPTH / 2);
-            doorway.rotation.y = Math.PI;
-            scene.add(doorway);
+    for (let i = 0; i < deskPositions.length; i++) {
+        const desk = await loadModel('assets/models/desk.glb');
+        if (desk) {
+            desk.position.set(...deskPositions[i]);
+            desk.rotation.y = Math.PI;
+            desk.name = `student_desk_${i + 1}`;
+            engine.interactables.push(desk);
+            scene.add(desk);
         }
     }
 
-    // 5. Teacher's Area
-    const teacherDeskGroup = await createDesk();
-    if (teacherDeskGroup) {
-        teacherDeskGroup.position.set(0, 0, CLASSROOM_DEPTH/2 - 1.5);
-        teacherDeskGroup.rotation.y = Math.PI;
-        scene.add(teacherDeskGroup);
+    // Bookshelf at back
+    const bookshelf = await loadModel('assets/models/bookcaseOpen.glb');
+    if (bookshelf) {
+        bookshelf.position.set(-4, 0, -halfDepth + 0.5);
+        scene.add(bookshelf);
     }
 
-    // 6. Student Desks (Grid Layout)
-    const startX = CLASSROOM_DESK_START_X;
-    const startZ = CLASSROOM_DESK_START_Z;
-    const gapX = CLASSROOM_DESK_GAP_X;
-    const gapZ = CLASSROOM_DESK_GAP_Z;
-
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-            const deskGroup = await createDesk();
-            if (deskGroup) {
-                deskGroup.position.set(startX + (col * gapX), 0, startZ + (row * gapZ));
-                deskGroup.rotation.y = (Math.random() - 0.5) * 0.1;
-                scene.add(deskGroup);
-            }
-        }
+    // Books on shelf (interactable)
+    const books = await loadModel('assets/models/books.glb');
+    if (books) {
+        books.position.set(-4, 1, -halfDepth + 0.5);
+        books.name = "books";
+        engine.interactables.push(books);
+        scene.add(books);
     }
 
-    // 7. Shelves at the back
-    const shelves = await createShelves();
-    if (shelves) {
-        shelves.position.set(-2, 0, -CLASSROOM_DEPTH / 2 + 0.5);
-        scene.add(shelves);
+    // Globe (interactable)
+    const globeGroup = new THREE.Group();
+    globeGroup.position.set(3, 0, halfDepth - 1.5);
 
-        const shelves2 = await createShelves();
-        shelves2.position.set(2, 0, -CLASSROOM_DEPTH / 2 + 0.5);
-        scene.add(shelves2);
+    const globeBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.1, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+    );
+    globeBase.position.y = 0.75;
+    globeGroup.add(globeBase);
+
+    const globe = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0x4682B4, roughness: 0.6 })
+    );
+    globe.position.y = 1.05;
+    globe.name = "globe";
+    engine.interactables.push(globe);
+    globeGroup.add(globe);
+    scene.add(globeGroup);
+
+    // Clock on back wall
+    const clockGroup = new THREE.Group();
+    clockGroup.position.set(0, 2.2, -halfDepth + 0.1);
+
+    const clockFrame = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+    );
+    clockFrame.rotation.x = Math.PI / 2;
+    clockGroup.add(clockFrame);
+
+    const clockFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.28, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    clockFace.position.z = 0.051;
+    clockFace.name = "clock";
+    engine.interactables.push(clockFace);
+    clockGroup.add(clockFace);
+    scene.add(clockGroup);
+
+    // Trash can (interactable)
+    const trash = await loadModel('assets/models/trashcan.glb');
+    if (trash) {
+        trash.position.set(4, 0, -halfDepth + 0.5);
+        trash.name = "trash";
+        engine.interactables.push(trash);
+        scene.add(trash);
     }
 
-    // 8. Clock
-    try {
-        if (typeof createClock === 'function') {
-            createClock(scene, new THREE.Vector3(0, WALL_MOUNT_HEIGHT, -CLASSROOM_DEPTH/2 + 0.1));
-        }
-    } catch (e) {
-        console.warn("Clock prefab not available");
-    }
-
-    console.log("Classroom Scene Loaded - " + engine.interactables.length + " interactable objects");
+    console.log(`Classroom loaded: ${engine.interactables.length} interactable objects`);
 }
 
-// Initialize the classroom room
+// Initialize the classroom
 async function initClassroom() {
-    // Create engine with classroom-specific config
     const engine = new RoomEngine({
         roomWidth: CLASSROOM_WIDTH,
         roomDepth: CLASSROOM_DEPTH,
-        enableProceduralRoom: false, // We'll build our own scene
-        enableDoor: false, // Classroom doesn't use the template door (yet)
-        enableTimer: false, // Classroom doesn't use timer (yet)
+        wallThickness: WALL_THICKNESS,
+        enableProceduralRoom: false, // We build our own
+        enableDoor: true,             // Use RoomEngine door
+        enableTimer: true,            // Use RoomEngine timer
         cameraX: 0,
-        cameraZ: 3.5,
+        cameraZ: 3,
         onInteract: (name, obj) => {
-            // Handle game-specific interactions
+            // Handle interactions via game logic
             showModal(name, {});
         }
     });
@@ -171,7 +203,7 @@ async function initClassroom() {
     // Build the classroom scene
     await buildClassroomScene(engine);
 
-    // Initialize game logic
+    // Initialize game logic (puzzles, clues, etc.)
     initGame();
 
     // Start the engine
@@ -181,5 +213,5 @@ async function initClassroom() {
     window.engine = engine;
 }
 
-// Start the game
+// Start
 initClassroom();

@@ -1,365 +1,322 @@
-// Office Escape Room - Uses RoomEngine foundation
+// Office Escape Room - Rebuilt from template with RoomEngine
+console.log("office.js loaded");
+
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
 import { loadModel } from './modelLoader.js';
-import { createDesk } from './prefabs/desk.js';
-import { createClock } from './prefabs/clock.js';
-import { createBox } from './utils.js';
-import { mat } from './materials.js';
 import { showModal } from './ui.js';
-import { initGame, activeClues, locationMap } from './gameLogic.js';
-import {
-    WALL_HEIGHT,
-    DESK_SURFACE_Y,
-    CABINET_TOP_Y,
-    COFFEE_TABLE_Y,
-    BOOKSHELF_SHELF_HEIGHTS,
-    WALL_MOUNT_HEIGHT,
-    OFFICE_SIZE
-} from './constants.js';
+import { initGame } from './gameLogic.js';
+import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
 
-// Helper to load models with error handling
-async function loadModelSafe(path) {
-    try {
-        return await loadModel(path);
-    } catch (err) {
-        console.warn(`Failed to load ${path}:`, err.message);
-        return null;
-    }
-}
+// Room Configuration
+const OFFICE_WIDTH = 12;
+const OFFICE_DEPTH = 12;
+const WALL_THICKNESS = 0.5;
 
-// Build the office scene content
+// Materials
+const materials = {
+    wall: new THREE.MeshStandardMaterial({ color: 0xd4c5a9, roughness: 0.9 }), // Tan
+    floor: new THREE.MeshStandardMaterial({ color: 0x3d2f1f, roughness: 0.7 }), // Dark wood
+    ceiling: new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.9 }), // White
+    safe: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8, roughness: 0.3 })
+};
+
+// Build the office scene
 async function buildOfficeScene(engine) {
     const scene = engine.scene;
+    const halfWidth = OFFICE_WIDTH / 2;
+    const halfDepth = OFFICE_DEPTH / 2;
 
-    // 1. Flooring
-    const floor = await loadModelSafe('assets/models/floorFull.glb');
-    if (floor) {
-        for (let x = -OFFICE_SIZE / 2; x < OFFICE_SIZE / 2; x += 1) {
-            for (let z = -OFFICE_SIZE / 2; z < OFFICE_SIZE / 2; z += 1) {
-                const tile = floor.clone();
-                tile.position.set(x + 0.5, 0, z + 0.5);
-                scene.add(tile);
-            }
-        }
-    }
+    // ===== ROOM STRUCTURE (Procedural) =====
 
-    // 2. Ceiling
-    const ceilingGeometry = new THREE.PlaneGeometry(OFFICE_SIZE + 0.1, OFFICE_SIZE + 0.1);
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    // Floor
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(OFFICE_WIDTH, OFFICE_DEPTH),
+        materials.floor
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Ceiling
+    const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(OFFICE_WIDTH, OFFICE_DEPTH),
+        materials.ceiling
+    );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // 3. Walls
-    const wallModel = await loadModelSafe('assets/models/wall.glb');
-    const wallCorner = await loadModelSafe('assets/models/wallCorner.glb');
+    // Walls (4 solid walls - door is handled by RoomEngine)
+    const walls = [
+        // Back wall (North)
+        { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT/2, -halfDepth] },
+        // Front wall (South)
+        { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
+        // Left wall (West)
+        { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
+        // Right wall (East)
+        { width: OFFICE_DEPTH, pos: [halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
+    ];
 
-    if (wallModel) {
-        const placeWall = (x, z, ry) => {
-            const w = wallModel.clone();
-            w.position.set(x, 0, z);
-            w.scale.y = WALL_HEIGHT;
-            w.rotation.y = ry;
-            w.userData.isWall = true;
-            scene.add(w);
-        };
+    walls.forEach(wall => {
+        const mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wall.width, WALL_HEIGHT, WALL_THICKNESS),
+            materials.wall
+        );
+        mesh.position.set(...wall.pos);
+        if (wall.rotY) mesh.rotation.y = wall.rotY;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+    });
 
-        for (let x = -OFFICE_SIZE/2 + 0.5; x <= OFFICE_SIZE/2 - 0.5; x += 1) {
-            placeWall(x, -OFFICE_SIZE / 2, 0); // Back
-            placeWall(x, OFFICE_SIZE / 2, Math.PI); // Front
-        }
-        for (let z = -OFFICE_SIZE/2 + 0.5; z <= OFFICE_SIZE/2 - 0.5; z += 1) {
-            placeWall(-OFFICE_SIZE / 2, z, Math.PI / 2); // Left
-            placeWall(OFFICE_SIZE / 2, z, -Math.PI / 2); // Right
-        }
+    // ===== EXECUTIVE DESK AREA (Back Left) =====
 
-        if (wallCorner) {
-            const corners = [
-                [-OFFICE_SIZE/2, -OFFICE_SIZE/2, 0],
-                [-OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
-                [OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
-                [OFFICE_SIZE/2, -OFFICE_SIZE/2, Math.PI],
-                [-OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2],
-                [-OFFICE_SIZE/2, OFFICE_SIZE/2, 0],
-                [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI],
-                [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2]
-            ];
-            corners.forEach(([x, z, ry]) => {
-                const corner = wallCorner.clone();
-                corner.position.set(x, 0, z);
-                corner.scale.y = WALL_HEIGHT;
-                corner.rotation.y = ry;
-                corner.userData.isWall = true;
-                scene.add(corner);
-            });
-        }
-    }
-
-    const halfSize = OFFICE_SIZE / 2;
-
-    // ZONE 1: EXECUTIVE WORK AREA (Near Back Left)
-    const desk = await loadModelSafe('assets/models/desk.glb');
+    const desk = await loadModel('assets/models/desk.glb');
     if (desk) {
-        desk.position.set(-halfSize + 1.5, 0, -halfSize + 1.2);
+        desk.position.set(-halfWidth + 1.5, 0, -halfDepth + 1.5);
+        desk.name = "desk";
+        engine.interactables.push(desk);
         scene.add(desk);
     }
 
-    const chair = await loadModelSafe('assets/models/chairDesk.glb');
+    const chair = await loadModel('assets/models/chairDesk.glb');
     if (chair) {
-        chair.position.set(-halfSize + 1.5, 0, -halfSize + 2.2);
+        chair.position.set(-halfWidth + 1.5, 0, -halfDepth + 2.5);
         chair.rotation.y = Math.PI;
         scene.add(chair);
     }
 
-    const computerScreen = await loadModelSafe('assets/models/computerScreen.glb');
-    if (computerScreen) {
-        computerScreen.position.set(-halfSize + 1.5, DESK_SURFACE_Y, -halfSize + 1.0);
-        computerScreen.name = "computer";
-        engine.interactables.push(computerScreen);
-        scene.add(computerScreen);
+    // Computer setup
+    const computer = await loadModel('assets/models/computerScreen.glb');
+    if (computer) {
+        computer.position.set(-halfWidth + 1.5, DESK_SURFACE_Y, -halfDepth + 1.3);
+        computer.name = "computer";
+        engine.interactables.push(computer);
+        scene.add(computer);
     }
 
-    const keyboard = await loadModelSafe('assets/models/computerKeyboard.glb');
+    const keyboard = await loadModel('assets/models/computerKeyboard.glb');
     if (keyboard) {
-        keyboard.position.set(-halfSize + 1.5, DESK_SURFACE_Y, -halfSize + 1.4);
+        keyboard.position.set(-halfWidth + 1.5, DESK_SURFACE_Y, -halfDepth + 1.7);
         keyboard.name = "keyboard";
         engine.interactables.push(keyboard);
         scene.add(keyboard);
     }
 
-    const mouse = await loadModelSafe('assets/models/computerMouse.glb');
+    const mouse = await loadModel('assets/models/computerMouse.glb');
     if (mouse) {
-        mouse.position.set(-halfSize + 2.0, DESK_SURFACE_Y, -halfSize + 1.4);
+        mouse.position.set(-halfWidth + 2, DESK_SURFACE_Y, -halfDepth + 1.7);
         mouse.name = "mouse";
         engine.interactables.push(mouse);
         scene.add(mouse);
     }
 
-    const deskLamp = await loadModelSafe('assets/models/lampSquareTable.glb');
+    const deskLamp = await loadModel('assets/models/lampSquareTable.glb');
     if (deskLamp) {
-        deskLamp.position.set(-halfSize + 0.8, DESK_SURFACE_Y, -halfSize + 1.2);
-        deskLamp.rotation.y = Math.PI / 4;
+        deskLamp.position.set(-halfWidth + 0.8, DESK_SURFACE_Y, -halfDepth + 1.5);
         scene.add(deskLamp);
     }
 
-    const laptop = await loadModelSafe('assets/models/laptop.glb');
-    if (laptop) {
-        laptop.position.set(-halfSize + 2.2, DESK_SURFACE_Y, -halfSize + 1.0);
-        laptop.rotation.y = -Math.PI / 6;
-        scene.add(laptop);
+    // ===== FILING CABINETS (Back Wall Center) =====
+
+    const cabinetPositions = [-1, 0, 1];
+    for (let i = 0; i < cabinetPositions.length; i++) {
+        const cabinet = await loadModel('assets/models/kitchenCabinetDrawer.glb');
+        if (cabinet) {
+            cabinet.position.set(cabinetPositions[i], 0, -halfDepth + 0.3);
+            cabinet.name = `filing_cabinet_${i + 1}`;
+            engine.interactables.push(cabinet);
+            scene.add(cabinet);
+        }
     }
 
-    const trash = await loadModelSafe('assets/models/trashcan.glb');
-    if (trash) {
-        trash.position.set(-halfSize + 0.7, 0, -halfSize + 1.8);
-        trash.name = "trash";
-        engine.interactables.push(trash);
-        scene.add(trash);
-    }
+    // ===== BOOKSHELF (Right Wall) =====
 
-    // ZONE 2: STORAGE WALL (Back Wall)
-    const filingCabinet1 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
-    if (filingCabinet1) {
-        filingCabinet1.position.set(-0.5, 0, -halfSize + 0.2);
-        filingCabinet1.name = "filing_cabinet_1";
-        engine.interactables.push(filingCabinet1);
-        scene.add(filingCabinet1);
-    }
-
-    const filingCabinet2 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
-    if (filingCabinet2) {
-        filingCabinet2.position.set(0.5, 0, -halfSize + 0.2);
-        filingCabinet2.name = "filing_cabinet_2";
-        engine.interactables.push(filingCabinet2);
-        scene.add(filingCabinet2);
-    }
-
-    const filingCabinet3 = await loadModelSafe('assets/models/kitchenCabinetDrawer.glb');
-    if (filingCabinet3) {
-        filingCabinet3.position.set(1.5, 0, -halfSize + 0.2);
-        filingCabinet3.name = "filing_cabinet_3";
-        engine.interactables.push(filingCabinet3);
-        scene.add(filingCabinet3);
-    }
-
-    // Papers Stack
-    const papersGroup = new THREE.Group();
-    papersGroup.position.set(0.5, CABINET_TOP_Y, -halfSize + 0.3);
-    for (let i = 0; i < 10; i++) {
-        const paper = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.25, 0.35),
-            mat.paper
-        );
-        paper.rotation.x = -Math.PI / 2;
-        paper.rotation.z = (i % 2 === 0 ? 1 : -1) * 0.05;
-        paper.position.y = i * 0.005;
-        papersGroup.add(paper);
-    }
-    const topPaper = papersGroup.children[papersGroup.children.length - 1];
-    topPaper.name = "papers";
-    engine.interactables.push(topPaper);
-    scene.add(papersGroup);
-
-    // Globe
-    const globeGroup = new THREE.Group();
-    globeGroup.position.set(-0.5, CABINET_TOP_Y + 0.03, -halfSize + 0.3);
-    const globeBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.1, 0.05),
-        new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 })
-    );
-    globeBase.position.y = -0.28;
-    globeGroup.add(globeBase);
-    const globeSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.25, 32, 32),
-        new THREE.MeshStandardMaterial({ color: 0x4682B4, roughness: 0.6 })
-    );
-    globeSphere.name = "globe";
-    engine.interactables.push(globeSphere);
-    globeGroup.add(globeSphere);
-    scene.add(globeGroup);
-
-    // ZONE 3: BOOKSHELF & LIBRARY AREA (Right Wall)
-    const bookshelfX = halfSize - 0.5;
-    const bookshelfZ = -halfSize + 1.0;
-
-    const bookshelf = await loadModelSafe('assets/models/bookcaseOpen.glb');
+    const bookshelf = await loadModel('assets/models/bookcaseOpen.glb');
     if (bookshelf) {
-        bookshelf.position.set(bookshelfX, 0, bookshelfZ);
+        bookshelf.position.set(halfWidth - 0.5, 0, -halfDepth + 2);
         bookshelf.rotation.y = -Math.PI / 2;
         scene.add(bookshelf);
     }
 
-    const bookCluster1 = await loadModelSafe('assets/models/books.glb');
-    if (bookCluster1) {
-        bookCluster1.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[0], bookshelfZ);
-        bookCluster1.name = "book_cluster_1";
-        engine.interactables.push(bookCluster1);
-        scene.add(bookCluster1);
+    // Books on shelves (staggered heights)
+    const bookHeights = [0.5, 1.0, 1.5, 2.0];
+    for (let i = 0; i < bookHeights.length; i++) {
+        const books = await loadModel('assets/models/books.glb');
+        if (books) {
+            books.position.set(halfWidth - 0.3, bookHeights[i], -halfDepth + 2);
+            books.rotation.y = Math.random() * 0.5 - 0.25;
+            books.name = `book_cluster_${i + 1}`;
+            engine.interactables.push(books);
+            scene.add(books);
+        }
     }
 
-    const bookCluster2 = await loadModelSafe('assets/models/books.glb');
-    if (bookCluster2) {
-        bookCluster2.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[1], bookshelfZ);
-        bookCluster2.rotation.y = Math.PI / 4;
-        bookCluster2.name = "book_cluster_2";
-        engine.interactables.push(bookCluster2);
-        scene.add(bookCluster2);
-    }
+    // ===== LOUNGE AREA (Front Left) =====
 
-    const bookCluster3 = await loadModelSafe('assets/models/books.glb');
-    if (bookCluster3) {
-        bookCluster3.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[2], bookshelfZ + 0.1);
-        bookCluster3.rotation.y = -Math.PI / 6;
-        bookCluster3.name = "book_cluster_3";
-        engine.interactables.push(bookCluster3);
-        scene.add(bookCluster3);
-    }
-
-    const bookCluster4 = await loadModelSafe('assets/models/books.glb');
-    if (bookCluster4) {
-        bookCluster4.position.set(bookshelfX - 0.2, BOOKSHELF_SHELF_HEIGHTS[3], bookshelfZ - 0.1);
-        bookCluster4.rotation.y = Math.PI / 3;
-        bookCluster4.name = "book_cluster_4";
-        engine.interactables.push(bookCluster4);
-        scene.add(bookCluster4);
-    }
-
-    // ZONE 4: LOUNGE/MEETING AREA (Center/Left)
-    const rug = await loadModelSafe('assets/models/rugRounded.glb');
-    if (rug) {
-        rug.position.set(-halfSize + 1.5, 0.01, halfSize - 1.5);
-        scene.add(rug);
-    }
-
-    const sofa = await loadModelSafe('assets/models/loungeSofa.glb');
+    const sofa = await loadModel('assets/models/loungeSofa.glb');
     if (sofa) {
-        sofa.position.set(-halfSize + 1.5, 0, halfSize - 0.8);
+        sofa.position.set(-halfWidth + 2, 0, halfDepth - 1.5);
         scene.add(sofa);
     }
 
-    const coffeeTable = await loadModelSafe('assets/models/tableCoffeeGlass.glb');
+    const coffeeTable = await loadModel('assets/models/tableCoffeeGlass.glb');
     if (coffeeTable) {
-        coffeeTable.position.set(-halfSize + 1.5, 0, halfSize - 2.2);
+        coffeeTable.position.set(-halfWidth + 2, 0, halfDepth - 3);
         scene.add(coffeeTable);
     }
 
-    // Briefcase
-    const briefcaseGroup = new THREE.Group();
-    briefcaseGroup.position.set(-halfSize + 1.8, 0, halfSize - 2.2);
-    briefcaseGroup.rotation.y = 0.3;
-    createBox(0.6, 0.4, 0.15, mat.leather, 0, COFFEE_TABLE_Y + 0.02, 0, briefcaseGroup, 0, 0, 0, "briefcase");
-    createBox(0.02, 0.1, 0.1, mat.chrome, 0, COFFEE_TABLE_Y + 0.22, 0, briefcaseGroup);
-    scene.add(briefcaseGroup);
-    const briefcase = briefcaseGroup.children.find(child => child.name === "briefcase");
-    if (briefcase) engine.interactables.push(briefcase);
+    // Briefcase on coffee table
+    const briefcase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 0.15, 0.4),
+        new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.5 })
+    );
+    briefcase.position.set(-halfWidth + 2.2, 0.3, halfDepth - 3);
+    briefcase.rotation.y = 0.3;
+    briefcase.name = "briefcase";
+    engine.interactables.push(briefcase);
+    scene.add(briefcase);
 
-    const floorLamp = await loadModelSafe('assets/models/lampRoundFloor.glb');
+    const floorLamp = await loadModel('assets/models/lampRoundFloor.glb');
     if (floorLamp) {
-        floorLamp.position.set(-halfSize + 0.7, 0, halfSize - 0.8);
+        floorLamp.position.set(-halfWidth + 0.7, 0, halfDepth - 1.5);
         scene.add(floorLamp);
     }
 
-    // ZONE 5: SPECIAL ITEMS & DECORATIONS
-    // Safe (Back Right)
+    // ===== SAFE (Back Right Corner) =====
+
     const safeGroup = new THREE.Group();
-    safeGroup.position.set(halfSize - 0.5, 0, halfSize - 0.5);
+    safeGroup.position.set(halfWidth - 1, 0.5, -halfDepth + 1);
     safeGroup.rotation.y = -Math.PI / 4;
-    const safeBox = createBox(0.8, 1.0, 0.8, mat.safe, 0, 0.5, 0, safeGroup, 0, 0, 0, "safe");
+
+    const safeBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 1.0, 0.8),
+        materials.safe
+    );
+    safeBox.name = "safe";
+    safeBox.castShadow = true;
+    engine.interactables.push(safeBox);
+    safeGroup.add(safeBox);
+
+    // Safe door (front face)
+    const safeDoor = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 0.9, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+    );
+    safeDoor.position.set(0, 0, 0.41);
+    safeBox.add(safeDoor);
+
+    // Safe dial
     const safeDial = new THREE.Mesh(
         new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16),
-        new THREE.MeshStandardMaterial({ color: 0xcccccc })
+        new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
     );
     safeDial.rotation.x = Math.PI / 2;
-    safeDial.position.set(0, 0.2, 0.41);
+    safeDial.position.set(0, 0.2, 0.45);
     safeBox.add(safeDial);
-    createBox(0.05, 0.2, 0.05, 0xcccccc, 0.2, 0, 0.45, safeBox);
-    createBox(0.7, 0.9, 0.02, 0x222222, 0, 0, 0.405, safeBox);
-    scene.add(safeGroup);
-    engine.interactables.push(safeBox);
 
-    // Clock (Back Wall)
-    createClock(scene, new THREE.Vector3(0, WALL_MOUNT_HEIGHT, -halfSize + 0.05), new THREE.Euler(0, 0, 0));
+    // Safe handle
+    const safeHandle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.2, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
+    );
+    safeHandle.position.set(0.2, 0, 0.45);
+    safeBox.add(safeHandle);
+
+    scene.add(safeGroup);
+
+    // ===== DECORATIONS & PROPS =====
+
+    // Globe on filing cabinet
+    const globeGroup = new THREE.Group();
+    globeGroup.position.set(0, 0.95, -halfDepth + 0.3);
+
+    const globeBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+    );
+    globeGroup.add(globeBase);
+
+    const globe = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0x4682B4, roughness: 0.6 })
+    );
+    globe.position.y = 0.25;
+    globe.name = "globe";
+    engine.interactables.push(globe);
+    globeGroup.add(globe);
+    scene.add(globeGroup);
+
+    // Clock on back wall
+    const clockGroup = new THREE.Group();
+    clockGroup.position.set(0, 2.2, -halfDepth + 0.1);
+
+    const clockFrame = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    clockFrame.rotation.x = Math.PI / 2;
+    clockGroup.add(clockFrame);
+
+    const clockFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.28, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    clockFace.position.z = 0.051;
+    clockFace.name = "clock";
+    engine.interactables.push(clockFace);
+    clockGroup.add(clockFace);
+    scene.add(clockGroup);
 
     // Plants
-    const plant1 = await loadModelSafe('assets/models/pottedPlant.glb');
+    const plant1 = await loadModel('assets/models/pottedPlant.glb');
     if (plant1) {
-        plant1.position.set(-halfSize + 0.3, 0, -halfSize + 0.3);
+        plant1.position.set(-halfWidth + 0.5, 0, -halfDepth + 0.5);
         plant1.name = "plant";
         engine.interactables.push(plant1);
         scene.add(plant1);
     }
 
-    const plant2 = await loadModelSafe('assets/models/plantSmall1.glb');
+    const plant2 = await loadModel('assets/models/plantSmall1.glb');
     if (plant2) {
-        plant2.position.set(halfSize - 0.7, 0, halfSize - 1.0);
+        plant2.position.set(halfWidth - 1, 0, halfDepth - 1);
         scene.add(plant2);
     }
 
-    // Coat Rack
-    const coatRack = await loadModelSafe('assets/models/coatRackStanding.glb');
+    // Trash can
+    const trash = await loadModel('assets/models/trashcan.glb');
+    if (trash) {
+        trash.position.set(-halfWidth + 0.7, 0, -halfDepth + 2);
+        trash.name = "trash";
+        engine.interactables.push(trash);
+        scene.add(trash);
+    }
+
+    // Coat rack
+    const coatRack = await loadModel('assets/models/coatRackStanding.glb');
     if (coatRack) {
-        coatRack.position.set(-halfSize + 0.3, 0, -halfSize + 1.2);
+        coatRack.position.set(-halfWidth + 0.5, 0, -halfDepth + 1.5);
         scene.add(coatRack);
     }
 
-    console.log("Office Scene Loaded - " + engine.interactables.length + " interactable objects");
+    console.log(`Office loaded: ${engine.interactables.length} interactable objects`);
 }
 
-// Initialize the office room
+// Initialize the office
 async function initOffice() {
-    // Create engine with office-specific config
     const engine = new RoomEngine({
-        roomWidth: OFFICE_SIZE,
-        roomDepth: OFFICE_SIZE,
-        enableProceduralRoom: false, // We'll build our own scene
-        enableDoor: false, // Office doesn't use the template door (yet)
-        enableTimer: false, // Office doesn't use timer (yet)
+        roomWidth: OFFICE_WIDTH,
+        roomDepth: OFFICE_DEPTH,
+        wallThickness: WALL_THICKNESS,
+        enableProceduralRoom: false, // We build our own
+        enableDoor: true,             // Use RoomEngine door
+        enableTimer: true,            // Use RoomEngine timer
         cameraX: 0,
-        cameraZ: 3.5,
+        cameraZ: 3,
         onInteract: (name, obj) => {
-            // Handle game-specific interactions
+            // Handle interactions via game logic
             showModal(name, {});
         }
     });
@@ -367,7 +324,7 @@ async function initOffice() {
     // Build the office scene
     await buildOfficeScene(engine);
 
-    // Initialize game logic
+    // Initialize game logic (puzzles, clues, etc.)
     initGame();
 
     // Start the engine
@@ -377,5 +334,5 @@ async function initOffice() {
     window.engine = engine;
 }
 
-// Start the game
+// Start
 initOffice();
