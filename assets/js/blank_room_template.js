@@ -226,8 +226,8 @@ function createPaddleHandle() {
 
     // The Paddle (Lever)
     const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.015), handleMat);
-    // Paddle sticks out horizontally
-    paddle.position.set(0.04, 0, 0.06);
+    // Paddle sticks out horizontally pointing left (toward door center)
+    paddle.position.set(-0.04, 0, 0.06);
     handleGroup.add(paddle);
 
     return handleGroup;
@@ -240,8 +240,6 @@ const handle = createPaddleHandle();
 // Door Height Extent: [-1.1, 1.1] -> Handle height 1m from floor. Floor is at -1.1 relative to center. So -1.1 + 1.0 = -0.1.
 // Z offset to stick out of door: 0.05 (surface) + small gap
 handle.position.set((roomInfo.doorW / 2) - 0.15, -0.1, doorThickness/2 + 0.005);
-// Rotate handle 180 degrees around Y axis so paddle points toward door center
-handle.rotation.y = Math.PI;
 doorMesh.add(handle);
 
 // Skeleton Key Lock
