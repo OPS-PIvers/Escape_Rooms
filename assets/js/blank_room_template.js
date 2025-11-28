@@ -91,6 +91,54 @@ ceiling.position.y = WALL_HEIGHT;
 roomGroup.add(ceiling);
 
 // Walls
+// Back Wall (Z = -4.5)
+const backWall = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, WALL_HEIGHT, wallThickness), wallMaterial);
+backWall.position.set(0, WALL_HEIGHT / 2, -wallOffset);
+roomGroup.add(backWall);
+
+// Front Wall (Z = 4.5)
+const frontWall = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, WALL_HEIGHT, wallThickness), wallMaterial);
+frontWall.position.set(0, WALL_HEIGHT / 2, wallOffset);
+roomGroup.add(frontWall);
+
+// Left Wall (X = -4.5) - spans between front and back
+// Length = roomWidth - 2 * wallThickness = 8
+const sideWallLength = roomWidth - 2 * wallThickness;
+const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, sideWallLength), wallMaterial);
+leftWall.position.set(-wallOffset, WALL_HEIGHT / 2, 0);
+roomGroup.add(leftWall);
+
+// Right Wall (X = 4.5) - with Doorway
+// The doorway is at Z range [0, 1] approximately.
+// We construct it from 3 parts: Part1 (Z < 0), Part2 (Z > 1), Lintel (above door)
+
+// Door position configuration
+const doorZStart = 0.0;
+const doorWidth = 1.0;
+const doorHeight = 2.2;
+const doorZEnd = doorZStart + doorWidth;
+
+// Right Wall Part 1 (Z: -4 to 0)
+// Center Z = -2, Length = 4
+const rw1Length = 4.0;
+const rw1 = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, rw1Length), wallMaterial);
+rw1.position.set(wallOffset, WALL_HEIGHT / 2, -2);
+roomGroup.add(rw1);
+
+// Right Wall Part 2 (Z: 1 to 4)
+// Center Z = 2.5, Length = 3
+const rw2Length = 3.0;
+const rw2 = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, rw2Length), wallMaterial);
+rw2.position.set(wallOffset, WALL_HEIGHT / 2, 2.5);
+roomGroup.add(rw2);
+
+// Lintel (Above door, Z: 0 to 1)
+const lintelHeight = WALL_HEIGHT - doorHeight;
+const lintel = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, lintelHeight, doorWidth), wallMaterial);
+lintel.position.set(wallOffset, doorHeight + lintelHeight / 2, doorZStart + doorWidth / 2);
+roomGroup.add(lintel);
+
+// --- DOOR ASSEMBLY ---
 // Corners (placed outside the main loop logic for simplicity)
 const cornerOffset = (roomWidth / 2) - 0.5; // Offset corners inward by half a tile to align with wall segments
 const cornerModel = 'assets/models/wallCorner.glb';
