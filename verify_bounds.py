@@ -1,17 +1,9 @@
 
 import asyncio
+import json
 from playwright.async_api import async_playwright
 
 async def verify_bounds():
-    """
-    Verifies the bounding boxes of wall and corner models in the blank room template.
-
-    Launches a headless browser, navigates to the blank_room_template.html page,
-    and extracts position, rotation, scale, and bounding box information for all
-    objects in the room group.
-
-    Prints the collected data as JSON to stdout.
-    """
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
@@ -22,9 +14,9 @@ async def verify_bounds():
         # Click instructions to start
         try:
             await page.click('#instructions', timeout=5000)
-        except Exception as e:
+        except:
             print("Could not click instructions, maybe not present or already hidden")
-            print(f"Exception: {e}")
+
         # Wait for scene to populate (simple wait)
         await page.wait_for_timeout(3000)
 
@@ -167,7 +159,6 @@ async def verify_bounds():
         """)
 
         # Print nicely
-        import json
         print(json.dumps(bounds_data, indent=2))
         await browser.close()
 
