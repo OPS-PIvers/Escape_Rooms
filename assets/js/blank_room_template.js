@@ -1,24 +1,16 @@
 // This file serves as a blank template for creating new escape room scenes.
-// To use this template, developers should:
-// 1. Duplicate this file and its corresponding HTML file (`blank_room_template.html`).
-// 2. Rename the files to match the new scene's name.
-// 3. Update the HTML file to reference the new JavaScript file.
-// 4. Customize the scene by adding models, interactable objects, and game logic.
-//    - Import necessary modules like `gameLogic.js`, `ui.js`, etc.
-//    - Add 3D models using `loadModel` from `modelLoader.js`.
-//    - Populate the `interactables` array with objects that the player can click on.
-// 5. Adjust lighting, camera position, and room geometry as needed.
+// It uses procedural geometry (Three.js primitives) instead of loading external GLB assets for the room structure.
+// To use this template:
+// 1. Duplicate this file and `blank_room_template.html`.
+// 2. Rename them to your new scene name.
+// 3. Customize the room layout, interactables, and logic below.
 
-console.log("blank_room_template.js loaded");
+console.log("blank_room_template.js (Procedural) loaded");
 import * as THREE from 'three';
-import { loadModel } from './modelLoader.js';
 import {
-    TILE_SCALE,
     ROOM_SIZE,
-    WALL_SIZE,
     WALL_HEIGHT,
     CAMERA_HEIGHT,
-    ROOM_START_COORDINATE,
     TIMER_DURATION,
     LOOK_SPEED,
     MOVE_SPEED,
@@ -37,7 +29,7 @@ import { createTouchInteractionHandler } from './touchUtils.js';
 
 // --- CONSTANTS ---
 const interactables = [];
-let gameWon = false; // This would be controlled by game logic
+let gameWon = false;
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
 const _PI_2 = Math.PI / 2;
 const _vector = new THREE.Vector3();
@@ -48,51 +40,54 @@ scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
 scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, CAMERA_HEIGHT, 5);
+camera.position.set(0, CAMERA_HEIGHT, 0); // Start in center
 
 // --- LIGHTING ---
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
 hemiLight.position.set(0, 20, 0);
 scene.add(hemiLight);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-dirLight.position.set(-10, 10, -10);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(-5, 10, -5);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
 scene.add(dirLight);
 
-// --- ROOM ---
+// Point light near the door to highlight it
+const doorLight = new THREE.PointLight(0xffaa00, 0.5, 10);
+doorLight.position.set(3, 2, 0.5);
+scene.add(doorLight);
+
+// --- PROCEDURAL ROOM GENERATION ---
 const roomGroup = new THREE.Group();
 scene.add(roomGroup);
 
+// Materials
+const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.9 });
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.8 });
+const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.9 });
+const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 }); // SaddleBrown
+const handleMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8, roughness: 0.2 }); // Gold
+const lockMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.5 });
+
+// Dimensions
+const roomWidth = 10; // 10x10 room
+const wallThickness = 1.0;
+const halfWidth = roomWidth / 2; // 5
+const wallOffset = halfWidth - (wallThickness / 2); // 4.5
+
 // Floor
-for (let x = 0; x < ROOM_SIZE; x++) {
-    for (let z = 0; z < ROOM_SIZE; z++) {
-        const px = ROOM_START_COORDINATE + x * WALL_SIZE;
-        const pz = ROOM_START_COORDINATE + z * WALL_SIZE;
-        loadModel('assets/models/floorFull.glb', {
-            pos: [px, 0, pz],
-            scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE],
-            parent: roomGroup
-        }).then(model => {
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.material = child.material.clone();
-                    child.material.color.setHex(0x555555);
-                }
-            });
-        });
-    }
-}
+const floorGeo = new THREE.PlaneGeometry(roomWidth, roomWidth);
+const floor = new THREE.Mesh(floorGeo, floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+roomGroup.add(floor);
 
 // Ceiling
-const roomWidth = ROOM_SIZE * WALL_SIZE;
-const ceilingGeometry = new THREE.PlaneGeometry(roomWidth, roomWidth);
-const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+const ceilingGeo = new THREE.PlaneGeometry(roomWidth, roomWidth);
+const ceiling = new THREE.Mesh(ceilingGeo, ceilingMaterial);
 ceiling.rotation.x = Math.PI / 2;
-ceiling.position.y = 3;
+ceiling.position.y = WALL_HEIGHT;
 roomGroup.add(ceiling);
 
 // Walls
@@ -147,36 +142,57 @@ scene.add(doorGroup);
 
 // Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
-doorPivot.position.set(-0.75, 0, 0.02);
-doorGroup.add(doorPivot);
+// Pivot at the hinge: Inner corner of the doorway
+// X = 4.5 - 0.5 = 4.0 (Inner face)
+// Z = 0.0 (Start of door hole)
+doorPivot.position.set(wallOffset - wallThickness / 2, 0, doorZStart);
+roomGroup.add(doorPivot);
 
-// Load Door Model
-loadModel('assets/models/doorway.glb', {
-    pos: [0.75, 0, 0],
-    rot: [0, 0, 0],
-    scale: [TILE_SCALE, TILE_SCALE, TILE_SCALE], // Match room scale
-    parent: doorPivot
-}).then(model => {
-    // Add a simple handle to the door
-    const handleGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-    const handleMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1.0, roughness: 0.5 });
-    const handle = new THREE.Mesh(handleGeometry, handleMaterial);
-    handle.position.set(0.5, 1.1, 0.1); // Position relative to the door model
-    model.add(handle);
-});
+// The Door Mesh
+const doorThickness = 0.1;
+const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(doorThickness, doorHeight, doorWidth), doorMaterial);
+// Position relative to pivot: Shifted so hinge is at edge
+// Center X = 0 (flush with pivot X) ?? No, if pivot is at corner, door should swing in.
+// Let's place the door center at (0, height/2, width/2) so it swings into the room.
+// But we want it to align with the wall hole when closed.
+// If closed, it sits at Z [0, 1]. Width is along Z.
+// So center Z is 0.5.
+// Center X should be 0 (if flush with wall inner face).
+doorMesh.position.set(0, doorHeight / 2, doorWidth / 2);
+doorPivot.add(doorMesh);
 
-// Add a hitbox for interaction
-const doorHitbox = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 0.2), new THREE.MeshBasicMaterial({ visible: false }));
-doorHitbox.name = "door";
-doorHitbox.position.set(0.75, 1.1, 0);
+// Door Handle
+const handle = new THREE.Mesh(new THREE.SphereGeometry(0.06), handleMaterial);
+handle.position.set(-0.1, -0.1, 0.35); // Sticking out into room, near edge (Z=0.35 is inside [-0.5, 0.5])
+doorMesh.add(handle);
+
+// Skeleton Key Lock
+const lockPlate = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.1), lockMaterial);
+lockPlate.position.set(-0.06, -0.25, 0.35); // Just below handle
+doorMesh.add(lockPlate);
+
+const keyHole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.03, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+keyHole.rotation.z = Math.PI / 2;
+keyHole.position.set(-0.08, -0.25, 0.35);
+doorMesh.add(keyHole);
+
+// Door Hitbox (for interaction)
+const doorHitbox = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2, 1), new THREE.MeshBasicMaterial({ visible: false }));
+doorHitbox.name = "locked_door";
+doorHitbox.position.set(0, 1, 0.5);
 doorPivot.add(doorHitbox);
 interactables.push(doorHitbox);
 
-// Timer
+
+// --- TIMER ---
+// Mounted on the wall above the door
 const timerGroup = new THREE.Group();
-timerGroup.position.set(0.35, 2.6, 0.1);
-doorGroup.add(timerGroup);
-const timerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.1), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+// Position on the lintel inner face
+timerGroup.position.set(wallOffset - wallThickness / 2 - 0.02, 2.5, 0.5);
+timerGroup.rotation.y = -Math.PI / 2; // Face into the room (-X direction)
+roomGroup.add(timerGroup);
+
+const timerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.05), new THREE.MeshStandardMaterial({ color: 0x111111 }));
 timerGroup.add(timerBox);
 
 const timerCanvas = document.createElement('canvas');
@@ -184,8 +200,8 @@ timerCanvas.width = 512;
 timerCanvas.height = 256;
 const tCtx = timerCanvas.getContext('2d');
 const timerTexture = new THREE.CanvasTexture(timerCanvas);
-const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshBasicMaterial({ map: timerTexture }));
-displayMesh.position.z = 0.051; // Slightly in front of the box
+const displayMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.25), new THREE.MeshBasicMaterial({ map: timerTexture }));
+displayMesh.position.z = 0.03; // Slightly in front of the box
 timerGroup.add(displayMesh);
 
 let timeLeft = TIMER_DURATION;
@@ -200,6 +216,8 @@ function updateTimer(dt) {
 
     tCtx.fillStyle = '#050505';
     tCtx.fillRect(0, 0, 512, 256);
+
+    // Glow effect
     tCtx.shadowColor = "#ff0000";
     tCtx.shadowBlur = 30;
     tCtx.fillStyle = '#ff3333';
@@ -208,31 +226,30 @@ function updateTimer(dt) {
     tCtx.textBaseline = 'middle';
     tCtx.fillText(timeStr, 256, 128);
 
-    // --- Border effect ---
+    // Border
     tCtx.save();
     tCtx.shadowColor = "rgba(0,0,0,0.7)";
     tCtx.shadowBlur = 8;
-    tCtx.lineWidth = 8;
-    tCtx.strokeStyle = "#ff3333";
-    tCtx.strokeRect(8, 8, 496, 240);
+    tCtx.lineWidth = 10;
+    tCtx.strokeStyle = "#aa0000";
+    tCtx.strokeRect(10, 10, 492, 236);
     tCtx.restore();
 
-    // --- Scanline effect ---
+    // Scanlines
     tCtx.save();
-    tCtx.globalAlpha = 0.12;
-    tCtx.fillStyle = "#fff";
-    for (let y = 0; y < 256; y += 4) {
+    tCtx.globalAlpha = 0.15;
+    tCtx.fillStyle = "#ffffff";
+    for (let y = 0; y < 256; y += 6) {
         tCtx.fillRect(0, y, 512, 2);
     }
     tCtx.restore();
+
     timerTexture.needsUpdate = true;
 }
 
 
 // --- RENDERER ---
-const renderer = new THREE.WebGLRenderer({
-    antialias: true
-});
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
@@ -243,7 +260,18 @@ const mouse = new THREE.Vector2(0, 0);
 const mouseDelta = new THREE.Vector2();
 let lastMousePos = new THREE.Vector2();
 let isMouseDown = false;
-let roomBounds = { minX: -INITIAL_ROOM_BOUNDS, maxX: INITIAL_ROOM_BOUNDS, minZ: -INITIAL_ROOM_BOUNDS, maxZ: INITIAL_ROOM_BOUNDS };
+
+// Calculate valid movement bounds based on room size and wall thickness
+// Room width is 10, centered at 0. Inner wall faces are at +/- 4.0 (since walls are 1.0 thick at +/- 4.5 center)
+// Player collision radius approximation (keep them slightly away from wall)
+const BOUND_OFFSET = 0.2;
+const validBound = (roomWidth / 2) - wallThickness - BOUND_OFFSET;
+let roomBounds = {
+    minX: -validBound,
+    maxX: validBound,
+    minZ: -validBound,
+    maxZ: validBound
+};
 
 // UI Elements
 const instructions = document.getElementById('instructions');
@@ -253,6 +281,7 @@ const crosshair = document.getElementById('crosshair');
 if (instructions) {
     instructions.addEventListener('click', () => {
         instructions.style.display = 'none';
+        // Request pointer lock for better experience if desired, but click-drag is standard here
     });
 }
 
@@ -369,7 +398,7 @@ function animate() {
     }
 
     if (!isInteracting) {
-        // Crosshair
+        // Crosshair check
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(interactables, false);
         if (crosshair) {
@@ -418,8 +447,9 @@ function animate() {
             if (moveState.right) moveRight(actualSpeed);
         }
 
-        // Bounds
+        // Collision / Bounds
         const pos = camera.position;
+        // Simple rectangular bounds
         pos.x = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, pos.x));
         pos.z = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, pos.z));
     }
