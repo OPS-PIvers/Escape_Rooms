@@ -22,9 +22,9 @@ async def verify_bounds():
         # Click instructions to start
         try:
             await page.click('#instructions', timeout=5000)
-        except:
+        except Exception as e:
             print("Could not click instructions, maybe not present or already hidden")
-
+            print(f"Exception: {e}")
         # Wait for scene to populate (simple wait)
         await page.wait_for_timeout(3000)
 
