@@ -91,54 +91,56 @@ ceiling.position.y = WALL_HEIGHT;
 roomGroup.add(ceiling);
 
 // Walls
-// Back Wall (Z = -4.5)
-const backWall = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, WALL_HEIGHT, wallThickness), wallMaterial);
-backWall.position.set(0, WALL_HEIGHT / 2, -wallOffset);
-roomGroup.add(backWall);
+// Corners (placed outside the main loop logic for simplicity)
+const cornerOffset = (roomWidth / 2) - 0.5; // Offset corners inward by half a tile to align with wall segments
+const cornerModel = 'assets/models/wallCorner.glb';
 
-// Front Wall (Z = 4.5)
-const frontWall = new THREE.Mesh(new THREE.BoxGeometry(roomWidth, WALL_HEIGHT, wallThickness), wallMaterial);
-frontWall.position.set(0, WALL_HEIGHT / 2, wallOffset);
-roomGroup.add(frontWall);
+// Top-Left Corner
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// Left Wall (X = -4.5) - spans between front and back
-// Length = roomWidth - 2 * wallThickness = 8
-const sideWallLength = roomWidth - 2 * wallThickness;
-const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, sideWallLength), wallMaterial);
-leftWall.position.set(-wallOffset, WALL_HEIGHT / 2, 0);
-roomGroup.add(leftWall);
+// Top-Right Corner
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, -cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// Right Wall (X = 4.5) - with Doorway
-// The doorway is at Z range [0, 1] approximately.
-// We construct it from 3 parts: Part1 (Z < 0), Part2 (Z > 1), Lintel (above door)
+// Bottom-Left Corner
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [-cornerOffset, 0, cornerOffset], rot: [0, 0, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// Door position configuration
-const doorZStart = 0.0;
-const doorWidth = 1.0;
-const doorHeight = 2.2;
-const doorZEnd = doorZStart + doorWidth;
+// Bottom-Right Corner
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+loadModel(cornerModel, { pos: [cornerOffset, 0, cornerOffset], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// Right Wall Part 1 (Z: -4 to 0)
-// Center Z = -2, Length = 4
-const rw1Length = 4.0;
-const rw1 = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, rw1Length), wallMaterial);
-rw1.position.set(wallOffset, WALL_HEIGHT / 2, -2);
-roomGroup.add(rw1);
+// Skip first and last segments as corners occupy those positions
+for (let i = 1; i < ROOM_SIZE - 1; i++) {
+    const p = ROOM_START_COORDINATE + i * WALL_SIZE;
 
-// Right Wall Part 2 (Z: 1 to 4)
-// Center Z = 2.5, Length = 3
-const rw2Length = 3.0;
-const rw2 = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, WALL_HEIGHT, rw2Length), wallMaterial);
-rw2.position.set(wallOffset, WALL_HEIGHT / 2, 2.5);
-roomGroup.add(rw2);
+    // Back Wall (Z=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, -cornerOffset], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// Lintel (Above door, Z: 0 to 1)
-const lintelHeight = WALL_HEIGHT - doorHeight;
-const lintel = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, lintelHeight, doorWidth), wallMaterial);
-lintel.position.set(wallOffset, doorHeight + lintelHeight / 2, doorZStart + doorWidth / 2);
-roomGroup.add(lintel);
+    // Front Wall (Z=cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [p, 0, cornerOffset], rot: [0, Math.PI, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
 
-// --- DOOR ASSEMBLY ---
+    // Left Wall (X=-cornerOffset)
+    loadModel('assets/models/wall.glb', { pos: [-cornerOffset, 0, p], rot: [0, Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+
+    // Right Wall (X=cornerOffset) - with doorway at index 5 (near center)
+    if (i === 5) {
+        loadModel('assets/models/wallDoorway.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    } else {
+        loadModel('assets/models/wall.glb', { pos: [cornerOffset, 0, p], rot: [0, -Math.PI / 2, 0], scale: [TILE_SCALE, WALL_HEIGHT, TILE_SCALE], parent: roomGroup });
+    }
+}
+
+
+// --- DOOR & TIMER ---
+const doorZ = ROOM_START_COORDINATE + 5 * WALL_SIZE;
+const doorGroup = new THREE.Group();
+doorGroup.position.set(cornerOffset, 0, doorZ);
+doorGroup.rotation.y = -Math.PI / 2;
+scene.add(doorGroup);
+
+// Door Pivot Group for hinging
 const doorPivot = new THREE.Group();
 // Pivot at the hinge: Inner corner of the doorway
 // X = 4.5 - 0.5 = 4.0 (Inner face)

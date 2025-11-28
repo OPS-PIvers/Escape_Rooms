@@ -83,11 +83,23 @@ export async function initOffice(scene) {
 
         // Corners
         if (wallCorner) {
+            // Each corner needs two segments to form an L-shape
             const corners = [
+                // Top-Left (-x, -z)
                 [-OFFICE_SIZE/2, -OFFICE_SIZE/2, 0],
+                [-OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
+
+                // Top-Right (x, -z)
                 [OFFICE_SIZE/2, -OFFICE_SIZE/2, -Math.PI/2],
+                [OFFICE_SIZE/2, -OFFICE_SIZE/2, Math.PI],
+
+                // Bottom-Left (-x, z)
                 [-OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2],
-                [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI]
+                [-OFFICE_SIZE/2, OFFICE_SIZE/2, 0],
+
+                // Bottom-Right (x, z)
+                [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI],
+                [OFFICE_SIZE/2, OFFICE_SIZE/2, Math.PI/2]
             ];
             corners.forEach(([x, z, ry]) => {
                 const corner = wallCorner.clone();

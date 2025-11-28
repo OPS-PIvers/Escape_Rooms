@@ -96,10 +96,21 @@ export async function initClassroom(scene) {
 
         // Corners
         if (wallCorner) {
+            // Top-Left
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, 0);
+            placeWall(wallCorner, -CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
+
+            // Top-Right
             placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, -Math.PI/2);
+            placeWall(wallCorner, CLASSROOM_WIDTH/2, -CLASSROOM_DEPTH/2, Math.PI);
+
+            // Bottom-Left
             placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
+            placeWall(wallCorner, -CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, 0);
+
+            // Bottom-Right
             placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI);
+            placeWall(wallCorner, CLASSROOM_WIDTH/2, CLASSROOM_DEPTH/2, Math.PI/2);
         }
 
         // 5. Door (Placed specifically to align with wall)
