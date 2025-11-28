@@ -47,15 +47,13 @@ async function buildClassroomScene(engine) {
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // Walls (4 solid walls - door is handled by RoomEngine)
+    // Walls (3 solid walls + north wall with door opening)
     const walls = [
-        // Back wall (North)
-        { width: CLASSROOM_WIDTH, pos: [0, WALL_HEIGHT/2, -halfDepth] },
-        // Front wall (South)
+        // Front wall (South) - Solid
         { width: CLASSROOM_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
-        // Left wall (West)
+        // Left wall (West) - Solid
         { width: CLASSROOM_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
-        // Right wall (East)
+        // Right wall (East) - Solid
         { width: CLASSROOM_DEPTH, pos: [halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
     ];
 
@@ -70,6 +68,42 @@ async function buildClassroomScene(engine) {
         mesh.receiveShadow = true;
         scene.add(mesh);
     });
+
+    // North wall (Back) - With door opening (3 pieces: left, right, lintel)
+    const doorW = 1.2;
+    const doorH = 2.2;
+    const sideWidth = (CLASSROOM_WIDTH - doorW) / 2;
+    const lintelHeight = WALL_HEIGHT - doorH;
+
+    // Left piece of north wall
+    const wallLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(sideWidth, WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    wallLeft.position.set(-(doorW/2 + sideWidth/2), WALL_HEIGHT/2, -halfDepth);
+    wallLeft.castShadow = true;
+    wallLeft.receiveShadow = true;
+    scene.add(wallLeft);
+
+    // Right piece of north wall
+    const wallRight = new THREE.Mesh(
+        new THREE.BoxGeometry(sideWidth, WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    wallRight.position.set((doorW/2 + sideWidth/2), WALL_HEIGHT/2, -halfDepth);
+    wallRight.castShadow = true;
+    wallRight.receiveShadow = true;
+    scene.add(wallRight);
+
+    // Lintel above door
+    const lintel = new THREE.Mesh(
+        new THREE.BoxGeometry(doorW, lintelHeight, WALL_THICKNESS),
+        materials.wall
+    );
+    lintel.position.set(0, doorH + lintelHeight/2, -halfDepth);
+    lintel.castShadow = true;
+    lintel.receiveShadow = true;
+    scene.add(lintel);
 
     // ===== CLASSROOM FEATURES =====
 
