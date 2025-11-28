@@ -330,8 +330,13 @@ const instructions = document.getElementById('instructions');
 const crosshair = document.getElementById('crosshair');
 
 if (instructions) {
-    instructions.addEventListener('click', () => {
+    const dismissInstructions = () => {
         instructions.style.display = 'none';
+    };
+    instructions.addEventListener('click', dismissInstructions);
+    instructions.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        dismissInstructions();
     });
 }
 
