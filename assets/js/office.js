@@ -324,6 +324,10 @@ async function initOffice() {
     // Build the office scene
     await buildOfficeScene(engine);
 
+    // Create door and timer (since we're not using procedural room)
+    engine.createDoor();
+    engine.createTimer();
+
     // Initialize game logic (puzzles, clues, etc.)
     initGame();
 

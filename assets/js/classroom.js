@@ -203,6 +203,10 @@ async function initClassroom() {
     // Build the classroom scene
     await buildClassroomScene(engine);
 
+    // Create door and timer (since we're not using procedural room)
+    engine.createDoor();
+    engine.createTimer();
+
     // Initialize game logic (puzzles, clues, etc.)
     initGame();
 

@@ -352,7 +352,7 @@ export class RoomEngine {
     }
 
     _updateTimer(dt) {
-        if (!this.config.enableTimer) return;
+        if (!this.config.enableTimer || !this.timerCtx) return;
         if (!this.gameWon) this.timeLeft = Math.max(0, this.timeLeft - dt);
 
         const m = Math.floor(this.timeLeft / 60);
@@ -590,6 +590,45 @@ export class RoomEngine {
         }
 
         this.renderer.render(this.scene, this.camera);
+    }
+
+    // Public method to create door for custom rooms
+    createDoor(position = null) {
+        if (!this.config.enableDoor) return;
+
+        const halfD = this.config.roomDepth / 2;
+        const doorW = 1.2;
+        const doorH = 2.2;
+        const wallZ = position?.z ?? -halfD;
+
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 });
+        const handleMat = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, metalness: 0.8, roughness: 0.2 });
+
+        // Create a group for the door if we don't have a room group
+        const doorGroup = new THREE.Group();
+        this.scene.add(doorGroup);
+
+        this._createDoor(doorGroup, doorW, doorH, wallZ, doorMat, handleMat);
+
+        // Add light near door
+        const doorLight = new THREE.PointLight(0xffaa00, 0.5, 10);
+        doorLight.position.set(0, 2, wallZ + 1);
+        this.scene.add(doorLight);
+    }
+
+    // Public method to create timer for custom rooms
+    createTimer(position = null) {
+        if (!this.config.enableTimer) return;
+
+        const halfD = this.config.roomDepth / 2;
+        const doorH = 2.2;
+        const wallZ = position?.z ?? -halfD;
+
+        // Create a group for the timer
+        const timerGroup = new THREE.Group();
+        this.scene.add(timerGroup);
+
+        this._createTimer(timerGroup, doorH, wallZ);
     }
 
     start() {
