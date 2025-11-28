@@ -236,10 +236,11 @@ function createPaddleHandle() {
 
 const handle = createPaddleHandle();
 // Position handle on the door
-// Right side of door (X ~= doorW).
-// Height ~= 1.0 (standard handle height).
-// Z offset to stick out of door.
-handle.position.set(roomInfo.doorW - 0.15, 1.0, doorThickness/2 + 0.005);
+// Relative to door mesh center (0,0,0)
+// Door Width Extent: [-0.6, 0.6] -> Handle on right: ~0.45
+// Door Height Extent: [-1.1, 1.1] -> Handle height 1m from floor. Floor is at -1.1 relative to center. So -1.1 + 1.0 = -0.1.
+// Z offset to stick out of door: 0.05 (surface) + small gap
+handle.position.set((roomInfo.doorW / 2) - 0.15, -0.1, doorThickness/2 + 0.005);
 doorMesh.add(handle);
 
 // Invisible Hitbox for Door
