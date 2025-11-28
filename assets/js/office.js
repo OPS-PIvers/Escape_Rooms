@@ -102,7 +102,6 @@ export async function initOffice(scene) {
 
     // Relative coordinates helpers
     const halfSize = OFFICE_SIZE / 2;
-    const padding = 0.5; // Padding from walls
 
     // ZONE 1: EXECUTIVE WORK AREA (Near Back Left)
     const desk = await loadModelSafe('assets/models/desk.glb');
@@ -274,7 +273,6 @@ export async function initOffice(scene) {
     // ZONE 4: LOUNGE/MEETING AREA (Center/Left)
     const rug = await loadModelSafe('assets/models/rugRounded.glb');
     if (rug) {
-        rug.position.set(-1.5, 0.01, 1.5); // Keep fixed for now or relative?
         // Let's make it relative to front-left quadrant
         rug.position.set(-halfSize + 1.5, 0.01, halfSize - 1.5);
         scene.add(rug);
