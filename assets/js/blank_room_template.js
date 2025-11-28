@@ -19,8 +19,7 @@ import {
     FOG_FAR
 } from './constants.js';
 import { TouchControls } from './touchControls.js';
-import { showModal, closeModal, isInteracting } from './ui.js';
-import { createTouchInteractionHandler } from './touchUtils.js';
+import { closeModal, isInteracting } from './ui.js';
 
 // --- CONSTANTS ---
 const interactables = [];
@@ -391,12 +390,12 @@ function moveRight(distance) {
     camera.position.addScaledVector(_vector, distance);
 }
 
-// Touch
-const handleTouchInteract = createTouchInteractionHandler({
-    showModal,
-    isInteracting: () => isInteracting,
-    getContext: () => ({ doorPivot, finalTimeStr })
-});
+// Touch - use the same interact function for consistency
+const handleTouchInteract = () => {
+    if (!isInteracting) {
+        interact();
+    }
+};
 const touchControls = new TouchControls(camera, raycaster, interactables, handleTouchInteract);
 
 // Keys
