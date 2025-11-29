@@ -86,12 +86,11 @@ Modal dialogs and user interface:
 
 #### 6. **Support Modules**
 - **[constants.js](assets/js/constants.js)**: Shared configuration values
-- **[modelLoader.js](assets/js/modelLoader.js)**: GLB/GLTF model loading utilities
+- **[prefabs.js](assets/js/prefabs.js)**: Procedural object generators (desk, chair, bookshelf, safe, etc.)
 - **[materials.js](assets/js/materials.js)**: Reusable Three.js materials
 - **[utils.js](assets/js/utils.js)**: Helper functions (createBox, etc.)
 - **[touchControls.js](assets/js/touchControls.js)**: Mobile touch control system
 - **[touchUtils.js](assets/js/touchUtils.js)**: Touch interaction helpers
-- **[prefabs/](assets/js/prefabs/)**: Reusable scene objects (desk, clock, shelves)
 
 ## File Structure
 
@@ -110,18 +109,13 @@ Escape_Rooms/
 │   │   ├── gameLogic.js           # Puzzle/clue system
 │   │   ├── ui.js                  # Modal and UI management
 │   │   ├── constants.js           # Shared constants
-│   │   ├── modelLoader.js         # Model loading utilities
+│   │   ├── prefabs.js             # ⭐ PROCEDURAL OBJECT GENERATORS
 │   │   ├── materials.js           # Reusable materials
 │   │   ├── utils.js               # Helper functions
 │   │   ├── touchControls.js       # Touch controls
-│   │   ├── touchUtils.js          # Touch utilities
-│   │   └── prefabs/               # Reusable objects
-│   │       ├── desk.js
-│   │       ├── clock.js
-│   │       └── shelves.js
-│   ├── css/
-│   │   └── main.css               # Shared styles
-│   └── models/                    # GLB/GLTF 3D models
+│   │   └── touchUtils.js          # Touch utilities
+│   └── css/
+│       └── main.css               # Shared styles
 └── CLAUDE.md                      # This file
 ```
 
@@ -166,32 +160,39 @@ Escape_Rooms/
 ```javascript
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { loadModel } from './modelLoader.js';
+import * as Prefabs from './prefabs.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
 
-async function buildMyRoomScene(engine) {
+function buildMyRoomScene(engine) {
     const scene = engine.scene;
+    const halfWidth = 5;
+    const halfDepth = 5;
 
-    // Add floor
-    const floor = await loadModel('assets/models/floorFull.glb');
-    // ... add tiles
-
-    // Add walls, furniture, props
-    // ...
-
-    // Add interactables
-    const desk = await loadModel('assets/models/desk.glb');
+    // Add procedural furniture
+    const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+    desk.position.set(-halfWidth + 2, 0, -halfDepth + 2);
     desk.name = "desk";
     engine.interactables.push(desk);
     scene.add(desk);
+
+    // Add more objects
+    const chair = Prefabs.createChair();
+    chair.position.set(-halfWidth + 2, 0, -halfDepth + 3);
+    scene.add(chair);
+
+    const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
+    safe.position.set(halfWidth - 1, 0, -halfDepth + 1);
+    safe.children[0].name = "safe";  // The body is interactable
+    engine.interactables.push(safe.children[0]);
+    scene.add(safe);
 }
 
-async function initMyRoom() {
+function initMyRoom() {
     const engine = new RoomEngine({
         roomWidth: 10,
         roomDepth: 10,
-        enableProceduralRoom: false,  // Build custom scene
+        enableProceduralRoom: true,   // Use procedural room
         enableDoor: true,
         enableTimer: true,
         onInteract: (name, obj) => {
@@ -199,7 +200,7 @@ async function initMyRoom() {
         }
     });
 
-    await buildMyRoomScene(engine);
+    buildMyRoomScene(engine);
     initGame();
     engine.start();
 }
@@ -221,10 +222,17 @@ Copy and modify [blank_room_template.html](blank_room_template.html) and [blank_
 ### 1. Interactables System
 Objects that can be clicked/tapped must be registered:
 ```javascript
-const object = await loadModel('path/to/model.glb');
-object.name = "unique_identifier";
-engine.interactables.push(object);
-scene.add(object);
+// For single objects
+const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+desk.name = "desk";
+engine.interactables.push(desk);
+scene.add(desk);
+
+// For groups (like safe), register the specific mesh
+const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
+safe.children[0].name = "safe";  // The body mesh
+engine.interactables.push(safe.children[0]);
+scene.add(safe);
 ```
 
 ### 2. Interaction Handling
@@ -241,17 +249,50 @@ new RoomEngine({
 });
 ```
 
-### 3. Async Scene Building
-Rooms load models asynchronously:
+### 3. Procedural Object Creation
+All objects are created using procedural generators from prefabs.js:
 ```javascript
-async function buildScene(engine) {
-    const model1 = await loadModel('model1.glb');
-    const model2 = await loadModel('model2.glb');
-    // Build scene...
+function buildScene(engine) {
+    // Create objects with explicit dimensions
+    const desk = Prefabs.createDesk(1.5, 0.75, 0.8);  // width, height, depth
+    const chair = Prefabs.createChair(0.5, 0.9);      // seatHeight, backHeight
+    const bookshelf = Prefabs.createBookshelf(1.0, 2.0, 0.4, 4);  // w, h, d, shelves
+
+    // Position and add to scene
+    desk.position.set(x, y, z);
+    scene.add(desk);
 }
 ```
 
-### 4. Dynamic Bounds
+### 4. Available Prefabs
+The prefabs.js module provides these generators:
+
+**Furniture:**
+- `createDesk(width, height, depth)` - Office/student desk with drawer
+- `createChair(seatHeight, backHeight)` - Simple chair with backrest
+- `createBookshelf(width, height, depth, shelves)` - Bookshelf with adjustable shelves
+- `createFilingCabinet(width, height, depth, drawers)` - Metal filing cabinet
+- `createSofa(width, depth, seatHeight)` - Lounge sofa with armrests
+- `createCoffeeTable(width, height, depth)` - Glass-top coffee table
+
+**Office Equipment:**
+- `createComputer(screenWidth, screenHeight)` - Monitor with stand
+- `createKeyboard(width, depth)` - Keyboard with keys
+- `createMouse()` - Computer mouse
+- `createSafe(width, height, depth)` - Safe with dial and handle
+
+**Decorations:**
+- `createGlobe(radius)` - Globe on wooden base
+- `createClock(radius)` - Wall clock with hands
+- `createBooks(count, stackHeight)` - Stack of books
+- `createPlant(potRadius, plantHeight)` - Potted plant
+- `createLamp(type)` - Desk or floor lamp ('desk' or 'floor')
+- `createBriefcase(width, height, depth)` - Leather briefcase
+- `createTrashCan(radius, height)` - Cylindrical trash can
+- `createCoatRack(height)` - Standing coat rack
+- `createChalkboard(width, height)` - Chalkboard with frame
+
+### 5. Dynamic Bounds
 RoomEngine automatically constrains camera movement. Override with:
 ```javascript
 engine.roomBounds = {
@@ -275,14 +316,16 @@ window.interactables // Array of clickable objects
 ### Common Issues
 
 **Objects not clickable:**
-- Ensure object is added to `engine.interactables`
+- Ensure object (or child mesh) is added to `engine.interactables`
 - Check object has a `name` property
 - Verify raycasting is working (check crosshair highlight)
+- For Groups, make sure to register the specific mesh, not the group
 
-**Models not loading:**
-- Check file path is correct
-- Use browser DevTools Network tab
-- Ensure GLB file is valid
+**Objects not visible:**
+- Check position is within room bounds
+- Verify object is added to scene
+- Check for JavaScript errors in console
+- Ensure shadows are properly configured
 
 **Controls not working:**
 - Check instructions modal is dismissed
@@ -291,15 +334,18 @@ window.interactables // Array of clickable objects
 
 ## Performance Tips
 
-1. **Use model cloning** for repeated objects:
+1. **Reuse geometries and materials** for repeated objects:
 ```javascript
-const tile = baseFloor.clone();
+const deskGeometry = new THREE.BoxGeometry(1.5, 0.05, 0.8);
+const deskMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+// Reuse for multiple desks
 ```
 
 2. **Limit interactables** - only add clickable objects
 3. **Use fog** to hide far geometry
 4. **Optimize shadow maps** - set appropriate resolution
-5. **Test on mobile** - touch controls may need adjustment
+5. **Procedural generation is fast** - no network overhead
+6. **Test on mobile** - touch controls may need adjustment
 
 ## Version Control
 

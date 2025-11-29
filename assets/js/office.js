@@ -3,11 +3,10 @@ console.log("office.js loaded");
 
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { createObject } from './objectCreator.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
-import { createDesk } from './prefabs/desk.js';
+import * as Prefabs from './prefabs.js';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
@@ -108,28 +107,24 @@ async function buildOfficeScene(engine) {
 
     // ===== OBJECTS =====
 
-    // Desk Group
-    const deskGroup = await createDesk();
-    if (deskGroup) {
-        deskGroup.position.set(-halfWidth + 2, 0, -halfDepth + 2);
-        deskGroup.rotation.y = Math.PI / 4;
-        scene.add(deskGroup);
-    }
+    // Desk with computer setup
+    const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+    desk.position.set(-halfWidth + 2, 0, -halfDepth + 2);
+    desk.rotation.y = Math.PI / 4;
+    desk.name = "desk";
+    engine.interactables.push(desk);
+    scene.add(desk);
 
-    // Standalone Chair
-    const chair = await createObject('chair');
-    if (chair) {
-        chair.position.set(halfWidth - 2, 0, halfDepth - 2);
-        chair.rotation.y = -Math.PI / 4;
-        scene.add(chair);
-    }
+    // Chair
+    const chair = Prefabs.createChair(0.5, 0.9);
+    chair.position.set(halfWidth - 2, 0, halfDepth - 2);
+    chair.rotation.y = -Math.PI / 4;
+    scene.add(chair);
 
-    // Standalone Plant
-    const plant = await createObject('plantSmall1');
-    if (plant) {
-        plant.position.set(halfWidth - 1, 0, -halfDepth + 1);
-        scene.add(plant);
-    }
+    // Plant
+    const plant = Prefabs.createPlant(0.15, 0.4);
+    plant.position.set(halfWidth - 1, 0, -halfDepth + 1);
+    scene.add(plant);
 
     console.log(`Office loaded: ${engine.interactables.length} interactable objects`);
 }

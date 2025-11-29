@@ -3,10 +3,10 @@ console.log("classroom.js loaded");
 
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { createObject } from './objectCreator.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT } from './constants.js';
+import * as Prefabs from './prefabs.js';
 
 // Room Configuration
 const CLASSROOM_WIDTH = 12;
@@ -107,15 +107,13 @@ async function buildClassroomScene(engine) {
 
     // ===== OBJECTS CLEARED - Add objects here one at a time =====
 
-    // Example:
-    // const desk = await createObject('desk');
-    // if (desk) {
-    //     desk.position.set(-3, 0, halfDepth - 1.5);
-    //     desk.rotation.y = Math.PI;
-    //     desk.name = "teacher_desk";
-    //     engine.interactables.push(desk);
-    //     scene.add(desk);
-    // }
+    // Example using procedural objects:
+    // const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+    // desk.position.set(-3, 0, halfDepth - 1.5);
+    // desk.rotation.y = Math.PI;
+    // desk.name = "teacher_desk";
+    // engine.interactables.push(desk);
+    // scene.add(desk);
 
     console.log(`Classroom loaded: ${engine.interactables.length} interactable objects`);
 }
