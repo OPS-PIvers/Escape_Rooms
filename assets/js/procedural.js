@@ -169,6 +169,10 @@ function genFloor(type) {
     return mesh(boxGeo, mats.woodDark, 0, 0, 0, 0,0,0, 1, 0.1, 1);
 }
 
+/**
+ * Generates a wall segment.
+ * @param {string} type - The type of wall to generate (e.g., 'wallWindow', 'wallDoorway', 'wallCorner').
+ */
 function genWall(type) {
     const group = new THREE.Group();
     const wallWidth = 1, wallHeight = 3, wallDepth = 0.1;
@@ -243,7 +247,6 @@ function genFallback(name) {
     const group = new THREE.Group();
     // Debug mesh: Wireframe to indicate missing/fallback object
     const m = mesh(boxGeo, new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true }), 0, 0.5, 0);
-    m.name = name; // Label the mesh for easier identification
     group.add(m);
     return group;
 }
