@@ -59,22 +59,62 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             0
         );
 
-        // Drawer body (this is what gets clicked)
-        const drawer = new THREE.Mesh(
-            new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerDepth),
+        // Drawer as an open box (front, bottom, left, right, back - no top)
+        const drawerThickness = 0.02;
+
+        // Front face
+        const drawerFront = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerThickness),
             drawerMaterial
         );
-        drawer.castShadow = true;
-        drawer.name = `drawer_${i}`; // Name the mesh for interaction
-        drawerGroup.add(drawer);
+        drawerFront.position.z = drawerDepth/2 - drawerThickness/2;
+        drawerFront.castShadow = true;
+        drawerFront.name = `drawer_${i}`; // Name for interaction
+        drawerGroup.add(drawerFront);
 
-        // Drawer handle
+        // Bottom
+        const drawerBottom = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerWidth, drawerThickness, drawerDepth - drawerThickness),
+            drawerMaterial
+        );
+        drawerBottom.position.y = -drawerHeight/2 + drawerThickness/2;
+        drawerBottom.castShadow = true;
+        drawerGroup.add(drawerBottom);
+
+        // Left side
+        const drawerLeft = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerThickness, drawerHeight, drawerDepth - drawerThickness),
+            drawerMaterial
+        );
+        drawerLeft.position.x = -drawerWidth/2 + drawerThickness/2;
+        drawerLeft.castShadow = true;
+        drawerGroup.add(drawerLeft);
+
+        // Right side
+        const drawerRight = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerThickness, drawerHeight, drawerDepth - drawerThickness),
+            drawerMaterial
+        );
+        drawerRight.position.x = drawerWidth/2 - drawerThickness/2;
+        drawerRight.castShadow = true;
+        drawerGroup.add(drawerRight);
+
+        // Back
+        const drawerBack = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerThickness),
+            drawerMaterial
+        );
+        drawerBack.position.z = -drawerDepth/2 + drawerThickness/2;
+        drawerBack.castShadow = true;
+        drawerGroup.add(drawerBack);
+
+        // Drawer handle (positioned on the front face)
         const handle = new THREE.Mesh(
             new THREE.CylinderGeometry(0.02, 0.02, 0.1),
             handleMaterial
         );
         handle.rotation.z = Math.PI / 2;
-        handle.position.set(0, 0, depth/2 - 0.03);
+        handle.position.set(0, 0, drawerDepth/2 + 0.01); // Just in front of drawer front
         handle.name = `drawer_${i}_handle`; // Also make handle clickable
         drawerGroup.add(handle);
 
@@ -84,8 +124,8 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         drawerGroup.userData.targetZ = 0; // For animation
         drawerGroup.userData.openDistance = 0.3; // How far drawer slides out
 
-        // Store reference to mesh for easy access
-        drawer.userData.drawerGroup = drawerGroup;
+        // Store reference to drawerGroup on all clickable parts
+        drawerFront.userData.drawerGroup = drawerGroup;
         handle.userData.drawerGroup = drawerGroup;
 
         group.add(drawerGroup);
