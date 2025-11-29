@@ -243,6 +243,7 @@ function genFallback(name) {
     const group = new THREE.Group();
     // Debug mesh: Wireframe to indicate missing/fallback object
     const m = mesh(boxGeo, new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true }), 0, 0.5, 0);
+    m.name = name; // Label the mesh for easier identification
     group.add(m);
     return group;
 }
