@@ -231,34 +231,37 @@ async function buildOfficeScene(engine) {
         if (idx === 1) {
             // Create pivot point for swinging bookshelf
             secretBookshelfPivot = new THREE.Group();
-            // Position pivot at the LEFT edge of the bookshelf (where hinge would be)
-            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3 - config.width/2, 0, config.z);
+            // Position pivot at the back edge of the bookshelf (where hinge would be, against the wall)
+            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z - config.width/2);
             scene.add(secretBookshelfPivot);
 
             // Create bookshelf and add to pivot
             const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
-            bookshelf.position.set(config.width/2, 0, 0); // Offset from pivot point
+            bookshelf.position.set(0, 0, config.width/2); // Offset from pivot point
+            bookshelf.rotation.y = Math.PI / 2; // Rotate to face west
             secretBookshelfPivot.add(bookshelf);
         } else {
             // Normal static bookshelf
             const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
             bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
+            bookshelf.rotation.y = Math.PI / 2; // Rotate to face west
             scene.add(bookshelf);
         }
 
         // Populate shelves with interactive items
         const shelfSpacing = shelfHeight / numShelves;
+        const baseX = halfWidth - shelfDepth/2 - 0.3;
 
         // Bottom shelf (shelf 0) - Books and decorations
         if (idx === 0) {
             const books1 = Prefabs.createBooks(7, 0.15);
-            books1.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.8, shelfSpacing * 0 + 0.1, config.z - 0.3);
+            books1.position.set(baseX, shelfSpacing * 0 + 0.1, config.z - 0.8);
             books1.name = "library_books_1";
             engine.interactables.push(books1);
             scene.add(books1);
 
             const plant1 = Prefabs.createPlant(0.08, 0.3);
-            plant1.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 0 + 0.05, config.z + 0.4);
+            plant1.position.set(baseX, shelfSpacing * 0 + 0.05, config.z + 0.6);
             plant1.children.forEach(child => {
                 if (child.name === 'globe') child.name = 'library_plant_1';
             });
@@ -275,10 +278,12 @@ async function buildOfficeScene(engine) {
                 new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.8 })
             );
             // Position it on shelf 2 (middle shelf) sticking out slightly
-            const bookX = config.width/2 - 0.8;
+            // In the pivot's local space, accounting for the bookshelf rotation
+            const bookZ = -0.8; // Along the shelf length
             const bookY = shelfSpacing * 2 + 0.15;
-            const bookZ = shelfDepth/2 + 0.02; // Stick out from shelf front
+            const bookX = -(shelfDepth/2 + 0.02); // Stick out from shelf front (negative X because rotated)
             triggerBook.position.set(bookX, bookY, bookZ);
+            triggerBook.rotation.y = Math.PI / 2; // Rotate to match bookshelf
             triggerBook.castShadow = true;
             triggerBook.name = "secret_book";
             triggerBook.userData.isSecretTrigger = true;
@@ -287,13 +292,14 @@ async function buildOfficeScene(engine) {
 
             // Add regular books to the secret bookshelf
             const books2 = Prefabs.createBooks(6, 0.15);
-            books2.position.set(config.width/2 - 0.5, shelfSpacing * 1 + 0.05, 0);
+            books2.position.set(0, shelfSpacing * 1 + 0.05, -0.5);
+            books2.rotation.y = Math.PI / 2;
             books2.name = "library_books_2";
             engine.interactables.push(books2);
             secretBookshelfPivot.add(books2);
 
             const globe = Prefabs.createGlobe(0.15);
-            globe.position.set(config.width/2 + 0.4, shelfSpacing * 1 + 0.05, 0);
+            globe.position.set(0, shelfSpacing * 1 + 0.05, 0.4);
             globe.children.forEach(child => {
                 if (child.name === 'globe') {
                     engine.interactables.push(child);
@@ -305,13 +311,13 @@ async function buildOfficeScene(engine) {
         // Shelf 2 - Books and small lamp
         if (idx === 2) {
             const books3 = Prefabs.createBooks(8, 0.15);
-            books3.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.7, shelfSpacing * 2 + 0.05, config.z - 0.2);
+            books3.position.set(baseX, shelfSpacing * 2 + 0.05, config.z - 0.7);
             books3.name = "library_books_3";
             engine.interactables.push(books3);
             scene.add(books3);
 
             const lamp = Prefabs.createLamp('desk');
-            lamp.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.7, shelfSpacing * 2 + 0.05, config.z + 0.5);
+            lamp.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.7);
             lamp.name = "library_lamp";
             engine.interactables.push(lamp);
             scene.add(lamp);
@@ -320,13 +326,13 @@ async function buildOfficeScene(engine) {
         // Shelf 3 - Books and decorative items
         if (idx === 3) {
             const books4 = Prefabs.createBooks(5, 0.15);
-            books4.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.4, shelfSpacing * 3 + 0.05, config.z - 0.6);
+            books4.position.set(baseX, shelfSpacing * 3 + 0.05, config.z - 0.4);
             books4.name = "library_books_4";
             engine.interactables.push(books4);
             scene.add(books4);
 
             const plant2 = Prefabs.createPlant(0.07, 0.25);
-            plant2.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.5, shelfSpacing * 3 + 0.05, config.z + 0.2);
+            plant2.position.set(baseX, shelfSpacing * 3 + 0.05, config.z + 0.5);
             plant2.name = "library_plant_2";
             engine.interactables.push(plant2);
             scene.add(plant2);
@@ -336,14 +342,14 @@ async function buildOfficeScene(engine) {
         if (idx === 0) {
             // Additional books on shelf 2
             const books5 = Prefabs.createBooks(6, 0.15);
-            books5.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.2, shelfSpacing * 2 + 0.05, config.z + 0.1);
+            books5.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.2);
             books5.name = "library_books_5";
             engine.interactables.push(books5);
             scene.add(books5);
 
             // Briefcase on shelf 1
             const briefcase = Prefabs.createBriefcase(0.4, 0.12, 0.3);
-            briefcase.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 1 + 0.08, config.z - 0.3);
+            briefcase.position.set(baseX, shelfSpacing * 1 + 0.08, config.z - 0.6);
             briefcase.name = "library_briefcase";
             engine.interactables.push(briefcase);
             scene.add(briefcase);
@@ -352,30 +358,31 @@ async function buildOfficeScene(engine) {
         if (idx === 1) {
             // Books on shelf 3
             const books6 = Prefabs.createBooks(7, 0.15);
-            books6.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.6, shelfSpacing * 3 + 0.05, config.z - 0.4);
+            books6.position.set(0, shelfSpacing * 3 + 0.05, -0.6);
+            books6.rotation.y = Math.PI / 2;
             books6.name = "library_books_6";
             engine.interactables.push(books6);
-            scene.add(books6);
+            secretBookshelfPivot.add(books6);
 
             // Small plant on shelf 2
             const plant3 = Prefabs.createPlant(0.06, 0.2);
-            plant3.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.8, shelfSpacing * 2 + 0.05, config.z + 0.3);
+            plant3.position.set(0, shelfSpacing * 2 + 0.05, 0.8);
             plant3.name = "library_plant_3";
             engine.interactables.push(plant3);
-            scene.add(plant3);
+            secretBookshelfPivot.add(plant3);
         }
 
         if (idx === 2) {
             // Books on bottom shelf
             const books7 = Prefabs.createBooks(9, 0.15);
-            books7.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.3, shelfSpacing * 0 + 0.1, config.z - 0.5);
+            books7.position.set(baseX, shelfSpacing * 0 + 0.1, config.z - 0.3);
             books7.name = "library_books_7";
             engine.interactables.push(books7);
             scene.add(books7);
 
             // Another globe on shelf 3
             const globe2 = Prefabs.createGlobe(0.12);
-            globe2.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 3 + 0.05, config.z + 0.4);
+            globe2.position.set(baseX, shelfSpacing * 3 + 0.05, config.z + 0.6);
             globe2.children.forEach(child => {
                 if (child.name === 'globe') {
                     child.name = 'library_globe_2';
@@ -388,21 +395,21 @@ async function buildOfficeScene(engine) {
         if (idx === 3) {
             // Books on shelf 1
             const books8 = Prefabs.createBooks(8, 0.15);
-            books8.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.7, shelfSpacing * 1 + 0.05, config.z - 0.2);
+            books8.position.set(baseX, shelfSpacing * 1 + 0.05, config.z - 0.7);
             books8.name = "library_books_8";
             engine.interactables.push(books8);
             scene.add(books8);
 
             // Books on shelf 2
             const books9 = Prefabs.createBooks(6, 0.15);
-            books9.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.3, shelfSpacing * 2 + 0.05, config.z + 0.4);
+            books9.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.3);
             books9.name = "library_books_9";
             engine.interactables.push(books9);
             scene.add(books9);
 
             // Decorative item on bottom shelf
             const plant4 = Prefabs.createPlant(0.08, 0.25);
-            plant4.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.7, shelfSpacing * 0 + 0.05, config.z + 0.5);
+            plant4.position.set(baseX, shelfSpacing * 0 + 0.05, config.z + 0.7);
             plant4.name = "library_plant_4";
             engine.interactables.push(plant4);
             scene.add(plant4);
