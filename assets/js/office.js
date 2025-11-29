@@ -113,6 +113,14 @@ async function buildOfficeScene(engine) {
     desk.rotation.y = Math.PI / 4; // Angled toward room
     desk.name = "desk";
     engine.interactables.push(desk);
+
+    // Register each drawer as interactable
+    if (desk.userData.drawers) {
+        desk.userData.drawers.forEach(drawer => {
+            engine.interactables.push(drawer);
+        });
+    }
+
     scene.add(desk);
 
     // Desk Chair (facing the desk)
@@ -121,15 +129,64 @@ async function buildOfficeScene(engine) {
     deskChair.rotation.y = Math.PI / 4 + Math.PI; // Facing desk
     scene.add(deskChair);
 
-    // Computer on desk
-    const computer = Prefabs.createComputer(0.4, 0.3);
-    computer.position.set(-halfWidth + 1.3, DESK_SURFACE_Y, -halfDepth + 1.3);
+    // Computer on desk (scaled bigger and moved forward toward chair)
+    const computer = Prefabs.createComputer(0.5, 0.4);
+    computer.position.set(-halfWidth + 1.5, DESK_SURFACE_Y, -halfDepth + 1.3);
     computer.rotation.y = Math.PI / 4; // Screen faces chair
     computer.children[0].name = "computer"; // Make screen interactable
     engine.interactables.push(computer.children[0]);
     scene.add(computer);
 
+    // Keyboard on desk (in front of monitor)
+    const keyboard = Prefabs.createKeyboard(0.4, 0.15);
+    keyboard.position.set(-halfWidth + 1.7, DESK_SURFACE_Y, -halfDepth + 1.5);
+    keyboard.rotation.y = Math.PI / 4; // Aligned with monitor
+    scene.add(keyboard);
+
+    // Mouse on desk (to the right of keyboard)
+    const mouse = Prefabs.createMouse();
+    mouse.position.set(-halfWidth + 1.9, DESK_SURFACE_Y, -halfDepth + 1.3);
+    mouse.rotation.y = Math.PI / 4; // Aligned with setup
+    scene.add(mouse);
+
     console.log(`Office loaded: ${engine.interactables.length} interactable objects`);
+
+    // Return engine and desk for drawer animation
+    return { engine, desk };
+}
+
+// Drawer state management
+let currentlyOpenDrawer = null;
+
+function handleDrawerInteraction(drawer) {
+    // Close currently open drawer if it's different
+    if (currentlyOpenDrawer && currentlyOpenDrawer !== drawer) {
+        currentlyOpenDrawer.userData.isOpen = false;
+        currentlyOpenDrawer.userData.targetZ = 0;
+    }
+
+    // Toggle clicked drawer
+    drawer.userData.isOpen = !drawer.userData.isOpen;
+    drawer.userData.targetZ = drawer.userData.isOpen ? drawer.userData.openDistance : 0;
+
+    // Update currently open drawer reference
+    currentlyOpenDrawer = drawer.userData.isOpen ? drawer : null;
+}
+
+function animateDrawers(desk, deltaTime) {
+    if (!desk.userData.drawers) return;
+
+    desk.userData.drawers.forEach(drawer => {
+        // Smooth animation toward target position
+        const speed = 2.0; // Animation speed
+        const diff = drawer.userData.targetZ - drawer.position.z;
+
+        if (Math.abs(diff) > 0.001) {
+            drawer.position.z += diff * speed * deltaTime;
+        } else {
+            drawer.position.z = drawer.userData.targetZ;
+        }
+    });
 }
 
 // Initialize the office
@@ -144,13 +201,18 @@ async function initOffice() {
         cameraX: 0,
         cameraZ: 3,
         onInteract: (name, obj) => {
-            // Handle interactions via game logic
+            // Handle drawer interactions
+            if (name && name.startsWith('drawer_')) {
+                handleDrawerInteraction(obj);
+                return; // Don't show modal for drawers
+            }
+            // Handle other interactions via game logic
             showModal(name, {});
         }
     });
 
     // Build the office scene
-    await buildOfficeScene(engine);
+    const { desk } = await buildOfficeScene(engine);
 
     // Create door and timer (since we're not using procedural room)
     engine.createDoor();
@@ -159,11 +221,20 @@ async function initOffice() {
     // Initialize game logic (puzzles, clues, etc.)
     initGame();
 
+    // Add drawer animation to the render loop
+    const originalAnimate = engine.animate.bind(engine);
+    engine.animate = function(time) {
+        originalAnimate(time);
+        // Animate drawers (deltaTime is approximately 1/60 for 60fps)
+        animateDrawers(desk, 1/60);
+    };
+
     // Start the engine
     engine.start();
 
     // Expose for debugging
     window.engine = engine;
+    window.desk = desk;
 }
 
 // Start

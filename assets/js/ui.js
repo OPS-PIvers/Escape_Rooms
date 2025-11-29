@@ -300,6 +300,14 @@ export function showModal(objName, {
         }
     }
 
+    // --- COMPUTER PASSWORD ENTRY ---
+    if (objName === "computer") {
+        renderPasswordEntry();
+        modal.style.display = 'block';
+        isInteracting = true;
+        return;
+    }
+
     if (qIndex === -1 || qIndex === null || qIndex === undefined) {
         // Flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
@@ -513,5 +521,89 @@ function handleKeypad(num) {
         currentCode += num;
         const displayEl = document.getElementById('codeDisplay');
         if (displayEl) displayEl.textContent = currentCode.padEnd(4, '_');
+    }
+}
+
+// Computer password system
+let computerUnlocked = false;
+const COMPUTER_PASSWORD = "admin"; // Change this to any password you want
+
+function renderPasswordEntry() {
+    modalTitle.textContent = "COMPUTER LOGIN";
+
+    if (computerUnlocked) {
+        modalContent.innerHTML = `
+            <div style="color: #4caf50; text-align: center; margin: 20px 0;">
+                <h3>✓ SYSTEM UNLOCKED</h3>
+                <p>Access Granted</p>
+                <p style="margin-top: 15px; font-size: 14px; color: #aaa;">
+                    Computer files accessed successfully.
+                </p>
+            </div>
+        `;
+        optionsContainer.innerHTML = "";
+        modalFeedback.textContent = "";
+        return;
+    }
+
+    modalContent.innerHTML = `
+        <div style="text-align: center;">
+            <p>ENTER PASSWORD:</p>
+            <input type="password" id="computerPassword"
+                   style="width: 100%; padding: 10px; font-size: 16px;
+                          background: #1a1a1a; color: #fff; border: 2px solid #4a4a4a;
+                          border-radius: 4px; text-align: center; font-family: monospace;
+                          margin: 10px 0;"
+                   placeholder="Password"
+                   autocomplete="off">
+        </div>
+    `;
+
+    optionsContainer.innerHTML = "";
+
+    // Create submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'option-btn';
+    submitBtn.textContent = 'LOGIN';
+    submitBtn.style.backgroundColor = '#4a4a4a';
+    submitBtn.onclick = checkComputerPassword;
+    optionsContainer.appendChild(submitBtn);
+
+    modalFeedback.textContent = "";
+
+    // Allow Enter key to submit
+    setTimeout(() => {
+        const input = document.getElementById('computerPassword');
+        if (input) {
+            input.focus();
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkComputerPassword();
+                }
+            });
+        }
+    }, 100);
+}
+
+function checkComputerPassword() {
+    const input = document.getElementById('computerPassword');
+    if (!input) return;
+
+    const enteredPassword = input.value;
+
+    if (enteredPassword === COMPUTER_PASSWORD) {
+        computerUnlocked = true;
+        modalFeedback.style.color = '#4caf50';
+        modalFeedback.textContent = '✓ ACCESS GRANTED';
+
+        // Re-render with success state
+        setTimeout(() => {
+            renderPasswordEntry();
+        }, 800);
+    } else {
+        modalFeedback.style.color = '#e57373';
+        modalFeedback.textContent = '✗ INVALID PASSWORD';
+        input.value = '';
+        input.focus();
     }
 }

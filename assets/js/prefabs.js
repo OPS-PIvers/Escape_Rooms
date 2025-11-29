@@ -39,23 +39,53 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         group.add(leg);
     });
 
-    // Drawer (right side)
-    const drawer = new THREE.Mesh(
-        new THREE.BoxGeometry(width * 0.4, height * 0.3, depth - 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.6 })
-    );
-    drawer.position.set(width * 0.25, height * 0.5, 0);
-    drawer.castShadow = true;
-    group.add(drawer);
+    // Drawers (3-drawer stack on right side)
+    const drawerWidth = width * 0.4;
+    const drawerDepth = depth - 0.1;
+    const drawerHeight = height * 0.25;
+    const drawerSpacing = height * 0.05;
+    const drawerMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.6 });
+    const handleMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7 });
 
-    // Drawer handle
-    const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.02, 0.02, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7 })
-    );
-    handle.rotation.z = Math.PI / 2;
-    handle.position.set(width * 0.25, height * 0.5, depth/2 - 0.03);
-    group.add(handle);
+    // Array to store drawer references for animation
+    group.userData.drawers = [];
+
+    for (let i = 0; i < 3; i++) {
+        // Create drawer group to move drawer + handle together
+        const drawerGroup = new THREE.Group();
+        drawerGroup.position.set(
+            width * 0.25,
+            drawerSpacing + (i * (drawerHeight + drawerSpacing)) + drawerHeight / 2,
+            0
+        );
+
+        // Drawer body
+        const drawer = new THREE.Mesh(
+            new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerDepth),
+            drawerMaterial
+        );
+        drawer.castShadow = true;
+        drawerGroup.add(drawer);
+
+        // Drawer handle
+        const handle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.02, 0.02, 0.1),
+            handleMaterial
+        );
+        handle.rotation.z = Math.PI / 2;
+        handle.position.set(0, 0, depth/2 - 0.03);
+        drawerGroup.add(handle);
+
+        // Make drawer interactable
+        drawerGroup.name = `drawer_${i}`;
+        drawerGroup.userData.isOpen = false;
+        drawerGroup.userData.drawerIndex = i;
+        drawerGroup.userData.targetZ = 0; // For animation
+        drawerGroup.userData.openDistance = 0.3; // How far drawer slides out
+
+        group.add(drawerGroup);
+        group.userData.drawers.push(drawerGroup);
+    }
 
     return group;
 }
