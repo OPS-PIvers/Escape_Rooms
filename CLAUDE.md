@@ -301,6 +301,118 @@ engine.roomBounds = {
 };
 ```
 
+### 6. Object Orientation and Positioning
+
+**IMPORTANT**: Always consider object orientation when placing furniture and props. Objects must face the correct direction for the scene to make sense.
+
+#### Coordinate System
+- **X-axis**: East (+) / West (-)
+- **Y-axis**: Up (+) / Down (-)
+- **Z-axis**: South (+) / North (-)
+- **Rotation**: `rotation.y` controls horizontal facing (yaw)
+
+#### Common Rotation Values
+```javascript
+0           // Facing North (default, toward -Z)
+Math.PI/2   // Facing East  (90° clockwise)
+Math.PI     // Facing South (180°)
+-Math.PI/2  // Facing West  (90° counter-clockwise)
+```
+
+#### Wall-Mounted Objects
+When placing objects against walls, consider both position AND rotation:
+
+```javascript
+// WRONG: Bookshelf perpendicular to east wall
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, z);  // Against east wall
+// No rotation - faces NORTH by default (perpendicular to wall!)
+scene.add(bookshelf);
+
+// CORRECT: Bookshelf parallel to east wall, facing west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, z);  // Against east wall
+bookshelf.rotation.y = Math.PI / 2;  // Rotate to face WEST into room
+scene.add(bookshelf);
+```
+
+#### Orientation by Wall Position
+
+| Wall Position | Rotation | Faces Direction |
+|--------------|----------|-----------------|
+| **North wall** (Z = -halfDepth) | `0` or `0` | South (into room) |
+| **South wall** (Z = +halfDepth) | `Math.PI` | North (into room) |
+| **East wall** (X = +halfWidth) | `Math.PI/2` | West (into room) |
+| **West wall** (X = -halfWidth) | `-Math.PI/2` | East (into room) |
+
+#### Practical Examples
+
+```javascript
+// Desk against north wall, facing south
+const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+desk.position.set(0, 0, -halfDepth + 1);
+desk.rotation.y = 0;  // Faces south (default)
+scene.add(desk);
+
+// Chair facing the desk
+const chair = Prefabs.createChair(0.5, 0.9);
+chair.position.set(0, 0, -halfDepth + 2);
+chair.rotation.y = Math.PI;  // Faces north (toward desk)
+scene.add(chair);
+
+// Filing cabinet against west wall
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(-halfWidth + 0.5, 0, 0);
+cabinet.rotation.y = -Math.PI/2;  // Faces east (into room)
+scene.add(cabinet);
+
+// Chalkboard on east wall
+const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
+chalkboard.position.set(halfWidth - 0.1, 1, 0);
+chalkboard.rotation.y = Math.PI/2;  // Faces west (into room)
+scene.add(chalkboard);
+```
+
+#### Items on Rotated Objects
+When placing items ON or IN rotated objects (like books on a rotated bookshelf), use the parent's local coordinate system:
+
+```javascript
+// Bookshelf rotated to face west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, 0);
+bookshelf.rotation.y = Math.PI/2;
+scene.add(bookshelf);
+
+// WRONG: Using world coordinates
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(halfWidth - 0.3, 1.0, 0.5);  // Will be misaligned!
+scene.add(books);
+
+// CORRECT: Using parent's local space or adjust for rotation
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(halfWidth - 0.3, 1.0, 0.5);  // World position
+books.rotation.y = Math.PI/2;  // Match parent rotation
+scene.add(books);
+
+// OR: Add to parent's local space
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(0, 1.0, 0.5);  // Relative to bookshelf center
+bookshelf.add(books);  // Inherits parent rotation
+```
+
+#### Debugging Orientation Issues
+1. **Visualize axes**: Temporarily add axis helpers to objects
+2. **Check from above**: Use browser dev tools to inspect object transforms
+3. **Console log rotations**: `console.log(object.rotation.y)` to verify angles
+4. **Test incrementally**: Rotate by 45° steps to find correct angle
+
+```javascript
+// Add temporary axis helper for debugging
+import { AxesHelper } from 'three';
+const axesHelper = new AxesHelper(1);  // Red=X, Green=Y, Blue=Z
+object.add(axesHelper);
+```
+
 ## Testing & Debugging
 
 ### Browser Console
