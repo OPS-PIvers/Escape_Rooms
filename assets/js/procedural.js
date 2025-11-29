@@ -265,7 +265,7 @@ const generators = {
     'plantsmall3': genPlantSmall,
     'radio': genRadio,
     'doorway': genDoorway,
-    'lamgroundtable': genLamp,
+    'lamproundtable': genLamp,
     'loungesofa': genCouch,
     'floor': genFloor,
     'wall': genWall
