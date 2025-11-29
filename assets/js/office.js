@@ -114,14 +114,32 @@ async function buildOfficeScene(engine) {
     desk.name = "desk";
     engine.interactables.push(desk);
 
-    // Register ALL drawers as interactable (any drawer opens the top one)
+    // Create invisible interaction meshes for drawers (any drawer opens the top one)
     if (desk.userData.drawers && desk.userData.drawers.length > 0) {
-        desk.userData.drawers.forEach(drawerGroup => {
-            drawerGroup.children.forEach(child => {
-                if (child.name && child.name.startsWith('drawer_')) {
-                    engine.interactables.push(child);
-                }
-            });
+        // For each drawer, add an invisible clickable mesh on the exterior
+        desk.userData.drawers.forEach((drawerGroup, index) => {
+            // Get drawer dimensions (assuming standard desk drawer from prefabs)
+            const drawerWidth = 1.5 * 0.4; // width * 0.4 from prefabs
+            const drawerHeight = 0.75 * 0.25; // height * 0.25 from prefabs
+
+            // Create invisible mesh covering the front face of the drawer
+            const clickMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(drawerWidth, drawerHeight, 0.01),
+                new THREE.MeshBasicMaterial({
+                    transparent: true,
+                    opacity: 0,
+                    side: THREE.DoubleSide
+                })
+            );
+            // Position it at the front of the drawer (where the visible front is)
+            const drawerDepth = 0.8 - 0.1; // desk depth - 0.1 from prefabs
+            clickMesh.position.z = drawerDepth/2;
+            clickMesh.name = `drawer_${index}_click`;
+            clickMesh.userData.drawerGroup = drawerGroup;
+
+            // Add to drawer group and make interactable
+            drawerGroup.add(clickMesh);
+            engine.interactables.push(clickMesh);
         });
 
         const topDrawer = desk.userData.drawers[2]; // Top drawer is index 2
@@ -199,7 +217,7 @@ async function buildOfficeScene(engine) {
 }
 
 // Drawer interaction handler (any drawer opens the top one)
-function handleDrawerInteraction(clickedMesh) {
+function handleDrawerInteraction(clickedMesh, engine) {
     // Get the drawer group from the clicked mesh
     const clickedDrawerGroup = clickedMesh.userData.drawerGroup;
     if (!clickedDrawerGroup) return;
@@ -213,8 +231,27 @@ function handleDrawerInteraction(clickedMesh) {
     if (!topDrawer) return;
 
     // Toggle top drawer open/closed
-    topDrawer.userData.isOpen = !topDrawer.userData.isOpen;
+    const wasOpen = topDrawer.userData.isOpen;
+    topDrawer.userData.isOpen = !wasOpen;
     topDrawer.userData.targetZ = topDrawer.userData.isOpen ? topDrawer.userData.openDistance : 0;
+
+    // Manage click mesh interactability
+    // Find the click mesh in the top drawer
+    const clickMesh = topDrawer.children.find(child => child.name && child.name.includes('_click'));
+    if (clickMesh && engine) {
+        if (topDrawer.userData.isOpen) {
+            // Drawer opening - remove click mesh from interactables so notepad can be clicked
+            const index = engine.interactables.indexOf(clickMesh);
+            if (index > -1) {
+                engine.interactables.splice(index, 1);
+            }
+        } else {
+            // Drawer closing - add click mesh back to interactables
+            if (!engine.interactables.includes(clickMesh)) {
+                engine.interactables.push(clickMesh);
+            }
+        }
+    }
 }
 
 function animateDrawers(desk, deltaTime) {
@@ -296,10 +333,10 @@ async function initOffice() {
                 }
                 return;
             }
-            // Handle drawer interactions
-            if (name && name.startsWith('drawer_')) {
-                handleDrawerInteraction(obj);
-                return; // Don't show modal for drawers
+            // Handle drawer click mesh interactions
+            if (name && name.includes('_click')) {
+                handleDrawerInteraction(obj, engine);
+                return;
             }
             // Handle other interactions via game logic
             showModal(name, {});
