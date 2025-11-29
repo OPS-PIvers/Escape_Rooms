@@ -6,7 +6,7 @@ import { RoomEngine } from './roomEngine.js';
 import { showModal } from './ui.js?v=0fc212f';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
-import * as Prefabs from './prefabs.js?v=20777ca&t=1764424763';
+import * as Prefabs from './prefabs.js?v=9432931&t=1764425005';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
@@ -125,8 +125,9 @@ async function buildOfficeScene(engine) {
 
         // Add notepad with handwritten note to drawer 2
         try {
-            const notepad = Prefabs.createNotepad(0.15, 0.005, 0.2);
-            notepad.position.set(0.05, -0.08, 0.05);
+            // Make notepad much bigger and thicker
+            const notepad = Prefabs.createNotepad(0.15, 0.03, 0.2);
+            notepad.position.set(0.05, -0.05, 0.05);
             notepad.rotation.y = Math.PI / 6; // Slight angle
             console.log('Created notepad:', notepad);
             // Make notepad interactable
@@ -139,16 +140,16 @@ async function buildOfficeScene(engine) {
             topDrawer.add(notepad);
             console.log('Added notepad to drawer 2');
 
-            // Add pens to drawer 2
+            // Add pens to drawer 2 (make them much bigger)
             const penColors = [0x0000ff, 0xff0000, 0x000000];
             for (let i = 0; i < 3; i++) {
-                const pen = Prefabs.createPen(0.12, 0.003);
+                const pen = Prefabs.createPen(0.12, 0.008);  // Increased radius from 0.003 to 0.008
                 // Change pen color
                 pen.children[0].material = new THREE.MeshStandardMaterial({
                     color: penColors[i],
                     roughness: 0.4
                 });
-                pen.position.set(-0.15 + (i * 0.04), -0.08, -0.05 + (i * 0.02));
+                pen.position.set(-0.15 + (i * 0.04), -0.05, -0.05 + (i * 0.02));
                 pen.rotation.y = Math.random() * Math.PI / 4;
                 topDrawer.add(pen);
             }
