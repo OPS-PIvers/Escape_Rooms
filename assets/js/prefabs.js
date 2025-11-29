@@ -69,7 +69,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         drawerFront.position.z = drawerDepth/2 - drawerThickness/2;
         drawerFront.castShadow = true;
-        drawerFront.name = `drawer_${i}`; // Name for interaction
+        drawerFront.name = `drawer_${i}_front`; // Name for interaction
         drawerGroup.add(drawerFront);
 
         // Bottom
@@ -79,6 +79,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         drawerBottom.position.y = -drawerHeight/2 + drawerThickness/2;
         drawerBottom.castShadow = true;
+        drawerBottom.name = `drawer_${i}_bottom`;
         drawerGroup.add(drawerBottom);
 
         // Left side
@@ -88,6 +89,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         drawerLeft.position.x = -drawerWidth/2 + drawerThickness/2;
         drawerLeft.castShadow = true;
+        drawerLeft.name = `drawer_${i}_left`;
         drawerGroup.add(drawerLeft);
 
         // Right side
@@ -97,6 +99,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         drawerRight.position.x = drawerWidth/2 - drawerThickness/2;
         drawerRight.castShadow = true;
+        drawerRight.name = `drawer_${i}_right`;
         drawerGroup.add(drawerRight);
 
         // Back
@@ -106,6 +109,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         drawerBack.position.z = -drawerDepth/2 + drawerThickness/2;
         drawerBack.castShadow = true;
+        drawerBack.name = `drawer_${i}_back`;
         drawerGroup.add(drawerBack);
 
         // Drawer handle (positioned on the front face)
@@ -124,8 +128,12 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         drawerGroup.userData.targetZ = 0; // For animation
         drawerGroup.userData.openDistance = 0.3; // How far drawer slides out
 
-        // Store reference to drawerGroup on all clickable parts
+        // Store reference to drawerGroup on ALL drawer parts for easy clicking
         drawerFront.userData.drawerGroup = drawerGroup;
+        drawerBottom.userData.drawerGroup = drawerGroup;
+        drawerLeft.userData.drawerGroup = drawerGroup;
+        drawerRight.userData.drawerGroup = drawerGroup;
+        drawerBack.userData.drawerGroup = drawerGroup;
         handle.userData.drawerGroup = drawerGroup;
 
         group.add(drawerGroup);
