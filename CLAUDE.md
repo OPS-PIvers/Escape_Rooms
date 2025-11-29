@@ -338,39 +338,117 @@ scene.add(bookshelf);
 
 #### Orientation by Wall Position
 
-| Wall Position | Rotation | Faces Direction |
-|--------------|----------|-----------------|
-| **North wall** (Z = -halfDepth) | `0` | South (into room) |
-| **South wall** (Z = +halfDepth) | `Math.PI` | North (into room) |
-| **East wall** (X = +halfWidth) | `-Math.PI/2` | West (into room) |
-| **West wall** (X = -halfWidth) | `Math.PI/2` | East (into room) |
+**Quick Reference:**
+- **North wall**: No rotation needed (`rotation.y = 0`) - objects face south by default
+- **South wall**: Rotate 180° (`rotation.y = Math.PI`) - objects face north into room
+- **East wall**: Rotate -90° (`rotation.y = -Math.PI/2`) - objects face west into room
+- **West wall**: Rotate +90° (`rotation.y = Math.PI/2`) - objects face east into room
+
+| Wall Position | Rotation | Faces Direction | Notes |
+|--------------|----------|-----------------|-------|
+| **North wall** (Z = -halfDepth) | `0` | South (into room) | Default orientation |
+| **South wall** (Z = +halfDepth) | `Math.PI` | North (into room) | 180° rotation |
+| **East wall** (X = +halfWidth) | `-Math.PI/2` | West (into room) | -90° rotation |
+| **West wall** (X = -halfWidth) | `Math.PI/2` | East (into room) | +90° rotation |
 
 #### Practical Examples
 
+**North Wall Objects** (Z = -halfDepth, rotation.y = 0):
 ```javascript
-// Desk against north wall, facing south
+// Desk against north wall, facing south (into room)
 const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
 desk.position.set(0, 0, -halfDepth + 1);
-desk.rotation.y = 0;  // Faces south (default)
+desk.rotation.y = 0;  // Faces south (default - no rotation needed)
 scene.add(desk);
 
-// Chair facing the desk
-const chair = Prefabs.createChair(0.5, 0.9);
-chair.position.set(0, 0, -halfDepth + 2);
-chair.rotation.y = Math.PI;  // Faces north (toward desk)
-scene.add(chair);
+// Bookshelf against north wall, facing south
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(-2, 0, -halfDepth + 0.3);
+bookshelf.rotation.y = 0;  // Default orientation works for north wall
+scene.add(bookshelf);
 
-// Filing cabinet against west wall
+// Chalkboard on north wall
+const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
+chalkboard.position.set(0, 1, -halfDepth + 0.1);
+chalkboard.rotation.y = 0;  // Faces south (no rotation needed)
+scene.add(chalkboard);
+```
+
+**South Wall Objects** (Z = +halfDepth, rotation.y = Math.PI):
+```javascript
+// Filing cabinet against south wall, facing north (into room)
 const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
-cabinet.position.set(-halfWidth + 0.5, 0, 0);
-cabinet.rotation.y = Math.PI/2;  // Faces east (into room)
+cabinet.position.set(-2, 0, halfDepth - 0.5);
+cabinet.rotation.y = Math.PI;  // 180° to face north
 scene.add(cabinet);
 
-// Chalkboard on east wall
+// Bookshelf against south wall, facing north
+const bookshelf = Prefabs.createBookshelf(2.0, 2.0, 0.4, 4);
+bookshelf.position.set(2, 0, halfDepth - 0.3);
+bookshelf.rotation.y = Math.PI;  // 180° to face north into room
+scene.add(bookshelf);
+
+// Sofa against south wall
+const sofa = Prefabs.createSofa(2.0, 0.9, 0.45);
+sofa.position.set(0, 0, halfDepth - 1);
+sofa.rotation.y = Math.PI;  // Faces north into room
+scene.add(sofa);
+```
+
+**East Wall Objects** (X = +halfWidth, rotation.y = -Math.PI/2):
+```javascript
+// Chalkboard on east wall, facing west (into room)
 const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
 chalkboard.position.set(halfWidth - 0.1, 1, 0);
-chalkboard.rotation.y = -Math.PI/2;  // Faces west (into room)
+chalkboard.rotation.y = -Math.PI/2;  // 90° counter-clockwise to face west
 scene.add(chalkboard);
+
+// Bookshelf against east wall, facing west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.3, 0, -2);
+bookshelf.rotation.y = -Math.PI/2;  // Faces west into room
+scene.add(bookshelf);
+
+// Filing cabinet on east wall
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(halfWidth - 0.4, 0, 2);
+cabinet.rotation.y = -Math.PI/2;  // Faces west
+scene.add(cabinet);
+```
+
+**West Wall Objects** (X = -halfWidth, rotation.y = Math.PI/2):
+```javascript
+// Filing cabinet against west wall, facing east (into room)
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(-halfWidth + 0.5, 0, 0);
+cabinet.rotation.y = Math.PI/2;  // 90° clockwise to face east
+scene.add(cabinet);
+
+// Bookshelf against west wall, facing east
+const bookshelf = Prefabs.createBookshelf(2.0, 2.0, 0.4, 4);
+bookshelf.position.set(-halfWidth + 0.3, 0, 3);
+bookshelf.rotation.y = Math.PI/2;  // Faces east into room
+scene.add(bookshelf);
+
+// Coat rack by west wall
+const coatRack = Prefabs.createCoatRack(1.8);
+coatRack.position.set(-halfWidth + 0.5, 0, -3);
+// No rotation needed - coat racks work from any angle
+scene.add(coatRack);
+```
+
+**Center Room Objects** (no wall attachment):
+```javascript
+// Coffee table in center - no rotation needed unless specific facing required
+const coffeeTable = Prefabs.createCoffeeTable(1.0, 0.35, 0.6);
+coffeeTable.position.set(0, 0, 0);
+scene.add(coffeeTable);
+
+// Chair facing north
+const chair = Prefabs.createChair(0.5, 0.9);
+chair.position.set(0, 0, 2);
+chair.rotation.y = Math.PI;  // Faces north
+scene.add(chair);
 ```
 
 #### Items on Rotated Objects
