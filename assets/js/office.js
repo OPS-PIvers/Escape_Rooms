@@ -130,9 +130,8 @@ async function buildOfficeScene(engine) {
         try {
             // Make notepad much bigger and thicker
             const notepad = Prefabs.createNotepad(0.15, 0.03, 0.2);
-            // Position notepad in front of drawer front (drawerDepth/2 = ~0.35, so use 0.36)
-            // Also raise it up so it's visible
-            notepad.position.set(0.05, 0.02, 0.36);
+            // Raise it up higher so it's above the drawer parts and easier to click
+            notepad.position.set(0.05, 0.02, 0.05);
             notepad.rotation.y = Math.PI / 6; // Slight angle
             console.log('Created notepad:', notepad);
             // Make notepad interactable
@@ -154,8 +153,8 @@ async function buildOfficeScene(engine) {
                     color: penColors[i],
                     roughness: 0.4
                 });
-                // Position pens in front of drawer, near notepad
-                pen.position.set(-0.15 + (i * 0.04), 0.01, 0.36 + (i * 0.02));
+                // Raise pens to match notepad height
+                pen.position.set(-0.15 + (i * 0.04), 0.01, -0.05 + (i * 0.02));
                 pen.rotation.y = Math.random() * Math.PI / 4;
                 topDrawer.add(pen);
             }
