@@ -251,10 +251,92 @@ function genFallback(name) {
     return group;
 }
 
+function genCoffeeTable() {
+    const group = new THREE.Group();
+    // Top
+    group.add(mesh(boxGeo, mats.woodLight, 0, 0.4, 0, 0,0,0, 1.2, 0.05, 0.8));
+    // Legs
+    const legW = 0.06;
+    const legH = 0.38;
+    const dx = 0.5, dz = 0.3;
+    group.add(mesh(boxGeo, mats.woodDark, -dx, legH/2, -dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.woodDark, dx, legH/2, -dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.woodDark, -dx, legH/2, dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.woodDark, dx, legH/2, dz, 0,0,0, legW, legH, legW));
+    return group;
+}
+
+function genMeetingTable() {
+    const group = new THREE.Group();
+    // Top
+    group.add(mesh(boxGeo, mats.woodDark, 0, 0.73, 0, 0,0,0, 2.0, 0.05, 1.2));
+    // Legs
+    const legW = 0.08;
+    const legH = 0.7;
+    const dx = 0.9, dz = 0.5;
+    group.add(mesh(boxGeo, mats.metal, -dx, legH/2, -dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.metal, dx, legH/2, -dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.metal, -dx, legH/2, dz, 0,0,0, legW, legH, legW));
+    group.add(mesh(boxGeo, mats.metal, dx, legH/2, dz, 0,0,0, legW, legH, legW));
+    return group;
+}
+
+function genLaptop() {
+    const group = new THREE.Group();
+    // Base
+    group.add(mesh(boxGeo, mats.greyPlastic, 0, 0.01, 0, 0,0,0, 0.35, 0.02, 0.25));
+    // Screen (Open)
+    group.add(mesh(boxGeo, mats.greyPlastic, 0, 0.12, -0.12, -0.3,0,0, 0.35, 0.22, 0.02));
+    // Screen display
+    group.add(mesh(boxGeo, mats.screenGlow, 0, 0.12, -0.11, -0.3,0,0, 0.32, 0.19, 0.01));
+    return group;
+}
+
+function genMug() {
+    const group = new THREE.Group();
+    // Body
+    group.add(mesh(cylGeo, mats.white, 0, 0.05, 0, 0,0,0, 0.04, 0.1, 0.04));
+    // Handle (Torus or just a box loop approximation)
+    group.add(mesh(boxGeo, mats.white, 0.05, 0.05, 0, 0,0,0, 0.03, 0.01, 0.01));
+    group.add(mesh(boxGeo, mats.white, 0.06, 0.05, 0, 0,0,0, 0.01, 0.06, 0.01));
+    group.add(mesh(boxGeo, mats.white, 0.05, 0.02, 0, 0,0,0, 0.03, 0.01, 0.01));
+    return group;
+}
+
+function genPaper() {
+    // A single sheet of paper
+    return mesh(boxGeo, mats.paper, 0, 0.001, 0, 0, (Math.random()-0.5)*0.2, 0, 0.21, 0.002, 0.297);
+}
+
+function genStackOfMagazines() {
+    const group = new THREE.Group();
+    for(let i=0; i<3; i++) {
+        const color = i%2===0 ? mats.bookRed : mats.bookBlue;
+        group.add(mesh(boxGeo, color, (Math.random()-0.5)*0.02, i*0.015, (Math.random()-0.5)*0.02, 0, (Math.random()-0.5)*0.5, 0, 0.2, 0.01, 0.28));
+    }
+    return group;
+}
+
+function genPictureFrame() {
+    const group = new THREE.Group();
+    // Frame
+    group.add(mesh(boxGeo, mats.woodDark, 0, 0.2, 0, 0,0,0, 0.3, 0.4, 0.02));
+    // Image area
+    group.add(mesh(boxGeo, mats.white, 0, 0.2, 0.015, 0,0,0, 0.25, 0.35, 0.01));
+    return group;
+}
+
 // Main Registry
 const generators = {
     'desk': genDesk,
     'chair': genChair,
+    'coffeetable': genCoffeeTable,
+    'meetingtable': genMeetingTable,
+    'laptop': genLaptop,
+    'mug': genMug,
+    'paper': genPaper,
+    'magazines': genStackOfMagazines,
+    'pictureframe': genPictureFrame,
     'computerscreen': genComputerScreen,
     'computerkeyboard': genKeyboard,
     'computermouse': genMouse,
