@@ -3,10 +3,10 @@ console.log("office.js loaded");
 
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { showModal } from './ui.js?v=267f525';
+import { showModal } from './ui.js?v=fdfc534';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
-import * as Prefabs from './prefabs.js?v=267f525';
+import * as Prefabs from './prefabs.js?v=fdfc534';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
