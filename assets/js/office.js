@@ -114,14 +114,17 @@ async function buildOfficeScene(engine) {
     desk.name = "desk";
     engine.interactables.push(desk);
 
-    // Register only the TOP drawer (index 2) as interactable
+    // Register ALL drawers as interactable (any drawer opens the top one)
     if (desk.userData.drawers && desk.userData.drawers.length > 0) {
-        const topDrawer = desk.userData.drawers[2]; // Top drawer is index 2
-        topDrawer.children.forEach(child => {
-            if (child.name && child.name.startsWith('drawer_')) {
-                engine.interactables.push(child);
-            }
+        desk.userData.drawers.forEach(drawerGroup => {
+            drawerGroup.children.forEach(child => {
+                if (child.name && child.name.startsWith('drawer_')) {
+                    engine.interactables.push(child);
+                }
+            });
         });
+
+        const topDrawer = desk.userData.drawers[2]; // Top drawer is index 2
 
         // Add notepad with handwritten note to drawer 2
         try {
@@ -195,15 +198,23 @@ async function buildOfficeScene(engine) {
     return { engine, desk };
 }
 
-// Drawer interaction handler (only top drawer is interactive)
+// Drawer interaction handler (any drawer opens the top one)
 function handleDrawerInteraction(clickedMesh) {
     // Get the drawer group from the clicked mesh
-    const drawerGroup = clickedMesh.userData.drawerGroup;
-    if (!drawerGroup) return;
+    const clickedDrawerGroup = clickedMesh.userData.drawerGroup;
+    if (!clickedDrawerGroup) return;
 
-    // Toggle drawer open/closed
-    drawerGroup.userData.isOpen = !drawerGroup.userData.isOpen;
-    drawerGroup.userData.targetZ = drawerGroup.userData.isOpen ? drawerGroup.userData.openDistance : 0;
+    // Find the desk (parent of the drawer group)
+    const desk = clickedDrawerGroup.parent;
+    if (!desk || !desk.userData.drawers) return;
+
+    // Always target the top drawer (index 2)
+    const topDrawer = desk.userData.drawers[2];
+    if (!topDrawer) return;
+
+    // Toggle top drawer open/closed
+    topDrawer.userData.isOpen = !topDrawer.userData.isOpen;
+    topDrawer.userData.targetZ = topDrawer.userData.isOpen ? topDrawer.userData.openDistance : 0;
 }
 
 function animateDrawers(desk, deltaTime) {
@@ -275,7 +286,14 @@ async function initOffice() {
         onInteract: (name, obj) => {
             // Handle notepad interaction (check BEFORE drawer)
             if (name === 'notepad') {
-                showNotepadModal();
+                // Check if the drawer containing the notepad is open
+                // Notepad paper (obj) -> Notepad Group -> Drawer Group
+                const notepadGroup = obj.parent;
+                const drawerGroup = notepadGroup ? notepadGroup.parent : null;
+
+                if (drawerGroup && drawerGroup.userData.isOpen) {
+                    showNotepadModal();
+                }
                 return;
             }
             // Handle drawer interactions
