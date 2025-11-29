@@ -3,7 +3,7 @@ console.log("classroom.js loaded");
 
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { loadModel } from './modelLoader.js';
+import { createObject } from './objectCreator.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT } from './constants.js';
@@ -108,7 +108,7 @@ async function buildClassroomScene(engine) {
     // ===== OBJECTS CLEARED - Add objects here one at a time =====
 
     // Example:
-    // const desk = await loadModel('assets/models/desk.glb');
+    // const desk = await createObject('desk');
     // if (desk) {
     //     desk.position.set(-3, 0, halfDepth - 1.5);
     //     desk.rotation.y = Math.PI;

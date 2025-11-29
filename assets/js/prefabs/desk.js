@@ -1,40 +1,40 @@
 import * as THREE from 'three';
-import { loadModel } from '../modelLoader.js';
+import { createObject } from '../objectCreator.js';
 
 export async function createDesk() {
     const group = new THREE.Group();
 
     // 1. The Desk
-    const desk = await loadModel('assets/models/desk.glb');
-    if (!desk) return null; // Failed to load essential part
+    const desk = await createObject('desk');
+    if (!desk) return null;
     
-    desk.position.set(0, 0, 0); // Grounded
+    desk.position.set(0, 0, 0);
     group.add(desk);
 
     // 2. The Chair
-    const chair = await loadModel('assets/models/chair.glb');
+    const chair = await createObject('chair');
     if (chair) {
-        chair.position.set(0, 0, 0.6); // Pulled out slightly
-        chair.rotation.y = Math.PI; // Facing desk
+        chair.position.set(0, 0, 0.6);
+        chair.rotation.y = Math.PI;
         group.add(chair);
     }
 
     // 3. Computer Setup
-    const screen = await loadModel('assets/models/computerScreen.glb');
+    const screen = await createObject('computerScreen');
     if (screen) {
-        screen.position.set(0, 0.75, -0.2); // On top of desk (approx height 0.75)
+        screen.position.set(0, 0.75, -0.2);
         group.add(screen);
     }
 
-    const keyboard = await loadModel('assets/models/computerKeyboard.glb');
+    const keyboard = await createObject('computerKeyboard');
     if (keyboard) {
         keyboard.position.set(0, 0.75, 0.15);
         group.add(keyboard);
     }
 
-    const mouse = await loadModel('assets/models/computerMouse.glb');
+    const mouse = await createObject('computerMouse');
     if (mouse) {
-        mouse.position.set(0.35, 0.75, 0.15); // To the right
+        mouse.position.set(0.35, 0.75, 0.15);
         group.add(mouse);
     }
 
