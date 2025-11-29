@@ -107,24 +107,27 @@ async function buildOfficeScene(engine) {
 
     // ===== OBJECTS =====
 
-    // Desk with computer setup
+    // Executive Desk Area (back left corner)
     const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
-    desk.position.set(-halfWidth + 2, 0, -halfDepth + 2);
-    desk.rotation.y = Math.PI / 4;
+    desk.position.set(-halfWidth + 1.5, 0, -halfDepth + 1.5);
+    desk.rotation.y = Math.PI / 4; // Angled toward room
     desk.name = "desk";
     engine.interactables.push(desk);
     scene.add(desk);
 
-    // Chair
-    const chair = Prefabs.createChair(0.5, 0.9);
-    chair.position.set(halfWidth - 2, 0, halfDepth - 2);
-    chair.rotation.y = -Math.PI / 4;
-    scene.add(chair);
+    // Desk Chair (facing the desk)
+    const deskChair = Prefabs.createChair(0.5, 0.9);
+    deskChair.position.set(-halfWidth + 2.3, 0, -halfDepth + 2.3);
+    deskChair.rotation.y = Math.PI / 4 + Math.PI; // Facing desk
+    scene.add(deskChair);
 
-    // Plant
-    const plant = Prefabs.createPlant(0.15, 0.4);
-    plant.position.set(halfWidth - 1, 0, -halfDepth + 1);
-    scene.add(plant);
+    // Computer on desk
+    const computer = Prefabs.createComputer(0.4, 0.3);
+    computer.position.set(-halfWidth + 1.3, DESK_SURFACE_Y, -halfDepth + 1.3);
+    computer.rotation.y = Math.PI / 4; // Screen faces chair
+    computer.children[0].name = "computer"; // Make screen interactable
+    engine.interactables.push(computer.children[0]);
+    scene.add(computer);
 
     console.log(`Office loaded: ${engine.interactables.length} interactable objects`);
 }
