@@ -287,9 +287,11 @@ async function initOffice() {
             // Handle notepad interaction (check BEFORE drawer)
             if (name === 'notepad') {
                 // Check if the drawer containing the notepad is open
-                // Notepad is a child of the drawer group (drawer 2)
-                const parentDrawer = obj.parent;
-                if (parentDrawer && parentDrawer.userData.isOpen) {
+                // Notepad paper (obj) -> Notepad Group -> Drawer Group
+                const notepadGroup = obj.parent;
+                const drawerGroup = notepadGroup ? notepadGroup.parent : null;
+
+                if (drawerGroup && drawerGroup.userData.isOpen) {
                     showNotepadModal();
                 }
                 return;
