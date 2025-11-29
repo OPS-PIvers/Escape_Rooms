@@ -3,10 +3,10 @@ console.log("office.js loaded");
 
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { showModal } from './ui.js?v=fdfc534';
+import { showModal } from './ui.js?v=0fc212f';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
-import * as Prefabs from './prefabs.js?v=fdfc534';
+import * as Prefabs from './prefabs.js?v=0fc212f';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
@@ -114,15 +114,13 @@ async function buildOfficeScene(engine) {
     desk.name = "desk";
     engine.interactables.push(desk);
 
-    // Register each drawer mesh and handle as interactable
-    if (desk.userData.drawers) {
-        desk.userData.drawers.forEach(drawerGroup => {
-            // Add both the drawer body and handle as interactables
-            drawerGroup.children.forEach(child => {
-                if (child.name && child.name.startsWith('drawer_')) {
-                    engine.interactables.push(child);
-                }
-            });
+    // Register only the TOP drawer (index 2) as interactable
+    if (desk.userData.drawers && desk.userData.drawers.length > 0) {
+        const topDrawer = desk.userData.drawers[2]; // Top drawer is index 2
+        topDrawer.children.forEach(child => {
+            if (child.name && child.name.startsWith('drawer_')) {
+                engine.interactables.push(child);
+            }
         });
     }
 
@@ -160,26 +158,15 @@ async function buildOfficeScene(engine) {
     return { engine, desk };
 }
 
-// Drawer state management
-let currentlyOpenDrawer = null;
-
+// Drawer interaction handler (only top drawer is interactive)
 function handleDrawerInteraction(clickedMesh) {
     // Get the drawer group from the clicked mesh
     const drawerGroup = clickedMesh.userData.drawerGroup;
     if (!drawerGroup) return;
 
-    // Close currently open drawer if it's different
-    if (currentlyOpenDrawer && currentlyOpenDrawer !== drawerGroup) {
-        currentlyOpenDrawer.userData.isOpen = false;
-        currentlyOpenDrawer.userData.targetZ = 0;
-    }
-
-    // Toggle clicked drawer
+    // Toggle drawer open/closed
     drawerGroup.userData.isOpen = !drawerGroup.userData.isOpen;
     drawerGroup.userData.targetZ = drawerGroup.userData.isOpen ? drawerGroup.userData.openDistance : 0;
-
-    // Update currently open drawer reference
-    currentlyOpenDrawer = drawerGroup.userData.isOpen ? drawerGroup : null;
 }
 
 function animateDrawers(desk, deltaTime) {
