@@ -332,7 +332,7 @@ scene.add(bookshelf);
 // CORRECT: Bookshelf parallel to east wall, facing west
 const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
 bookshelf.position.set(halfWidth - 0.5, 0, z);  // Against east wall
-bookshelf.rotation.y = Math.PI / 2;  // Rotate to face WEST into room
+bookshelf.rotation.y = -Math.PI / 2;  // Rotate to face WEST into room
 scene.add(bookshelf);
 ```
 
@@ -340,10 +340,10 @@ scene.add(bookshelf);
 
 | Wall Position | Rotation | Faces Direction |
 |--------------|----------|-----------------|
-| **North wall** (Z = -halfDepth) | `0` or `0` | South (into room) |
+| **North wall** (Z = -halfDepth) | `0` | South (into room) |
 | **South wall** (Z = +halfDepth) | `Math.PI` | North (into room) |
-| **East wall** (X = +halfWidth) | `Math.PI/2` | West (into room) |
-| **West wall** (X = -halfWidth) | `-Math.PI/2` | East (into room) |
+| **East wall** (X = +halfWidth) | `-Math.PI/2` | West (into room) |
+| **West wall** (X = -halfWidth) | `Math.PI/2` | East (into room) |
 
 #### Practical Examples
 
@@ -363,13 +363,13 @@ scene.add(chair);
 // Filing cabinet against west wall
 const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
 cabinet.position.set(-halfWidth + 0.5, 0, 0);
-cabinet.rotation.y = -Math.PI/2;  // Faces east (into room)
+cabinet.rotation.y = Math.PI/2;  // Faces east (into room)
 scene.add(cabinet);
 
 // Chalkboard on east wall
 const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
 chalkboard.position.set(halfWidth - 0.1, 1, 0);
-chalkboard.rotation.y = Math.PI/2;  // Faces west (into room)
+chalkboard.rotation.y = -Math.PI/2;  // Faces west (into room)
 scene.add(chalkboard);
 ```
 
@@ -380,7 +380,7 @@ When placing items ON or IN rotated objects (like books on a rotated bookshelf),
 // Bookshelf rotated to face west
 const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
 bookshelf.position.set(halfWidth - 0.5, 0, 0);
-bookshelf.rotation.y = Math.PI/2;
+bookshelf.rotation.y = -Math.PI/2;
 scene.add(bookshelf);
 
 // WRONG: Using world coordinates
@@ -391,7 +391,7 @@ scene.add(books);
 // CORRECT: Using parent's local space or adjust for rotation
 const books = Prefabs.createBooks(5, 0.15);
 books.position.set(halfWidth - 0.3, 1.0, 0.5);  // World position
-books.rotation.y = Math.PI/2;  // Match parent rotation
+books.rotation.y = -Math.PI/2;  // Match parent rotation
 scene.add(books);
 
 // OR: Add to parent's local space

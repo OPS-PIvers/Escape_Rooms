@@ -238,13 +238,13 @@ async function buildOfficeScene(engine) {
             // Create bookshelf and add to pivot
             const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
             bookshelf.position.set(0, 0, config.width/2); // Offset from pivot point
-            bookshelf.rotation.y = Math.PI / 2; // Rotate to face west
+            bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             secretBookshelfPivot.add(bookshelf);
         } else {
             // Normal static bookshelf
             const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
             bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
-            bookshelf.rotation.y = Math.PI / 2; // Rotate to face west
+            bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             scene.add(bookshelf);
         }
 
@@ -283,7 +283,7 @@ async function buildOfficeScene(engine) {
             const bookY = shelfSpacing * 2 + 0.15;
             const bookX = -(shelfDepth/2 + 0.02); // Stick out from shelf front (negative X because rotated)
             triggerBook.position.set(bookX, bookY, bookZ);
-            triggerBook.rotation.y = Math.PI / 2; // Rotate to match bookshelf
+            triggerBook.rotation.y = -Math.PI / 2; // Rotate to match bookshelf
             triggerBook.castShadow = true;
             triggerBook.name = "secret_book";
             triggerBook.userData.isSecretTrigger = true;
@@ -293,7 +293,7 @@ async function buildOfficeScene(engine) {
             // Add regular books to the secret bookshelf
             const books2 = Prefabs.createBooks(6, 0.15);
             books2.position.set(0, shelfSpacing * 1 + 0.05, -0.5);
-            books2.rotation.y = Math.PI / 2;
+            books2.rotation.y = -Math.PI / 2;
             books2.name = "library_books_2";
             engine.interactables.push(books2);
             secretBookshelfPivot.add(books2);
@@ -359,7 +359,7 @@ async function buildOfficeScene(engine) {
             // Books on shelf 3
             const books6 = Prefabs.createBooks(7, 0.15);
             books6.position.set(0, shelfSpacing * 3 + 0.05, -0.6);
-            books6.rotation.y = Math.PI / 2;
+            books6.rotation.y = -Math.PI / 2;
             books6.name = "library_books_6";
             engine.interactables.push(books6);
             secretBookshelfPivot.add(books6);
