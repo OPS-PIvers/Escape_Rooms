@@ -824,3 +824,75 @@ export function createChalkboard(width = 4.0, height = 2.0) {
 
     return group;
 }
+
+export function createNotepad(width = 0.15, height = 0.005, depth = 0.2) {
+    const group = new THREE.Group();
+
+    // Notepad cover/backing (slightly bigger)
+    const cover = new THREE.Mesh(
+        new THREE.BoxGeometry(width + 0.005, height, depth + 0.005),
+        new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.6 })
+    );
+    cover.castShadow = true;
+    group.add(cover);
+
+    // Paper pages (stack of thin white sheets)
+    const paper = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height * 0.8, depth - 0.01),
+        new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.8 })
+    );
+    paper.position.y = height * 0.4;
+    paper.name = "notepad";
+    paper.castShadow = true;
+    group.add(paper);
+
+    // Spiral binding (left edge)
+    const bindingMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7 });
+    for (let i = 0; i < 8; i++) {
+        const coil = new THREE.Mesh(
+            new THREE.TorusGeometry(0.005, 0.002, 8, 8),
+            bindingMaterial
+        );
+        coil.rotation.y = Math.PI / 2;
+        coil.position.set(
+            -width/2,
+            height * 0.4,
+            -depth/2 + 0.02 + (i * (depth - 0.04) / 7)
+        );
+        group.add(coil);
+    }
+
+    return group;
+}
+
+export function createPen(length = 0.12, radius = 0.003) {
+    const group = new THREE.Group();
+
+    // Pen body
+    const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, length, 8),
+        new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.4 })
+    );
+    body.rotation.z = Math.PI / 2;
+    body.castShadow = true;
+    group.add(body);
+
+    // Pen tip (darker)
+    const tip = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius * 0.5, radius * 0.3, length * 0.1, 8),
+        new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6 })
+    );
+    tip.rotation.z = Math.PI / 2;
+    tip.position.x = length / 2 + (length * 0.05);
+    group.add(tip);
+
+    // Pen clip
+    const clip = new THREE.Mesh(
+        new THREE.BoxGeometry(length * 0.15, radius * 4, radius * 0.5),
+        new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 })
+    );
+    clip.position.set(-length * 0.35, radius * 2, 0);
+    group.add(clip);
+
+    return group;
+}

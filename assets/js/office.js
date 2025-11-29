@@ -6,7 +6,7 @@ import { RoomEngine } from './roomEngine.js';
 import { showModal } from './ui.js?v=0fc212f';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
-import * as Prefabs from './prefabs.js?v=0fc212f';
+import * as Prefabs from './prefabs.js?v=20777ca&t=1764424763';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
@@ -122,6 +122,40 @@ async function buildOfficeScene(engine) {
                 engine.interactables.push(child);
             }
         });
+
+        // Add notepad with handwritten note to drawer 2
+        try {
+            const notepad = Prefabs.createNotepad(0.15, 0.005, 0.2);
+            notepad.position.set(0.05, -0.08, 0.05);
+            notepad.rotation.y = Math.PI / 6; // Slight angle
+            console.log('Created notepad:', notepad);
+            // Make notepad interactable
+            notepad.children.forEach(child => {
+                if (child.name === 'notepad') {
+                    engine.interactables.push(child);
+                    console.log('Added notepad to interactables');
+                }
+            });
+            topDrawer.add(notepad);
+            console.log('Added notepad to drawer 2');
+
+            // Add pens to drawer 2
+            const penColors = [0x0000ff, 0xff0000, 0x000000];
+            for (let i = 0; i < 3; i++) {
+                const pen = Prefabs.createPen(0.12, 0.003);
+                // Change pen color
+                pen.children[0].material = new THREE.MeshStandardMaterial({
+                    color: penColors[i],
+                    roughness: 0.4
+                });
+                pen.position.set(-0.15 + (i * 0.04), -0.08, -0.05 + (i * 0.02));
+                pen.rotation.y = Math.random() * Math.PI / 4;
+                topDrawer.add(pen);
+            }
+            console.log('Added 3 pens to drawer 2');
+        } catch (error) {
+            console.error('Error adding notepad/pens to drawer:', error);
+        }
     }
 
     scene.add(desk);
@@ -185,6 +219,45 @@ function animateDrawers(desk, deltaTime) {
     });
 }
 
+// Show notepad modal with handwritten note
+function showNotepadModal() {
+    // Use showModal from ui.js but customize the content
+    showModal('notepad_custom', {});
+
+    // Override the modal content with our custom notepad display
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+
+    modalTitle.textContent = "NOTEPAD";
+    modalContent.innerHTML = `
+        <div style="
+            background: #f5f5dc;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #1a1a1a;
+            line-height: 1.8;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        ">
+            <div style="
+                font-family: 'Brush Script MT', cursive, 'Comic Sans MS', cursive;
+                font-size: 18px;
+                color: #1a3a5a;
+                transform: rotate(-1deg);
+            ">
+                <p style="margin: 5px 0;">Remember:</p>
+                <p style="margin: 5px 0; margin-left: 15px;">- Check filing cabinet</p>
+                <p style="margin: 5px 0; margin-left: 15px;">- Call Sarah about project</p>
+                <p style="margin: 5px 0; margin-left: 15px;">- Safe combo: year MN became state</p>
+                <p style="margin: 15px 0 5px 0; font-style: italic; font-size: 16px;">
+                    "The past holds the key..."
+                </p>
+            </div>
+        </div>
+    `;
+}
+
 // Initialize the office
 async function initOffice() {
     const engine = new RoomEngine({
@@ -201,6 +274,11 @@ async function initOffice() {
             if (name && name.startsWith('drawer_')) {
                 handleDrawerInteraction(obj);
                 return; // Don't show modal for drawers
+            }
+            // Handle notepad interaction
+            if (name === 'notepad') {
+                showNotepadModal();
+                return;
             }
             // Handle other interactions via game logic
             showModal(name, {});
