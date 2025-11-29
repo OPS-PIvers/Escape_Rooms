@@ -59,12 +59,13 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             0
         );
 
-        // Drawer body
+        // Drawer body (this is what gets clicked)
         const drawer = new THREE.Mesh(
             new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerDepth),
             drawerMaterial
         );
         drawer.castShadow = true;
+        drawer.name = `drawer_${i}`; // Name the mesh for interaction
         drawerGroup.add(drawer);
 
         // Drawer handle
@@ -74,14 +75,18 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
         );
         handle.rotation.z = Math.PI / 2;
         handle.position.set(0, 0, depth/2 - 0.03);
+        handle.name = `drawer_${i}_handle`; // Also make handle clickable
         drawerGroup.add(handle);
 
-        // Make drawer interactable
-        drawerGroup.name = `drawer_${i}`;
+        // Store metadata on the group for animation
         drawerGroup.userData.isOpen = false;
         drawerGroup.userData.drawerIndex = i;
         drawerGroup.userData.targetZ = 0; // For animation
         drawerGroup.userData.openDistance = 0.3; // How far drawer slides out
+
+        // Store reference to mesh for easy access
+        drawer.userData.drawerGroup = drawerGroup;
+        handle.userData.drawerGroup = drawerGroup;
 
         group.add(drawerGroup);
         group.userData.drawers.push(drawerGroup);
