@@ -210,10 +210,293 @@ async function buildOfficeScene(engine) {
     mouse.rotation.y = Math.PI / 4; // Aligned with setup
     scene.add(mouse);
 
+    // ===== LIBRARY ON EAST WALL =====
+    // Create multiple bookshelves spanning the entire east wall
+    const shelfDepth = 0.4;
+    const shelfHeight = 2.0;
+    const numShelves = 4; // Number of shelves per bookshelf unit
+    const shelfPositions = [
+        { z: -4.5, width: 2.5 },
+        { z: -1.5, width: 2.5 },
+        { z: 1.5, width: 2.5 },
+        { z: 4.5, width: 2.5 }
+    ];
+
+    // Secret bookshelf door variables
+    let secretBookshelfPivot = null;
+    let secretBookshelfOpen = false;
+
+    shelfPositions.forEach((config, idx) => {
+        // Bookshelf 2 (idx === 1) is the SECRET DOOR
+        if (idx === 1) {
+            // Create pivot point for swinging bookshelf
+            secretBookshelfPivot = new THREE.Group();
+            // Position pivot at the LEFT edge of the bookshelf (where hinge would be)
+            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3 - config.width/2, 0, config.z);
+            scene.add(secretBookshelfPivot);
+
+            // Create bookshelf and add to pivot
+            const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
+            bookshelf.position.set(config.width/2, 0, 0); // Offset from pivot point
+            secretBookshelfPivot.add(bookshelf);
+        } else {
+            // Normal static bookshelf
+            const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
+            bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
+            scene.add(bookshelf);
+        }
+
+        // Populate shelves with interactive items
+        const shelfSpacing = shelfHeight / numShelves;
+
+        // Bottom shelf (shelf 0) - Books and decorations
+        if (idx === 0) {
+            const books1 = Prefabs.createBooks(7, 0.15);
+            books1.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.8, shelfSpacing * 0 + 0.1, config.z - 0.3);
+            books1.name = "library_books_1";
+            engine.interactables.push(books1);
+            scene.add(books1);
+
+            const plant1 = Prefabs.createPlant(0.08, 0.3);
+            plant1.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 0 + 0.05, config.z + 0.4);
+            plant1.children.forEach(child => {
+                if (child.name === 'globe') child.name = 'library_plant_1';
+            });
+            plant1.name = "library_plant_1";
+            engine.interactables.push(plant1);
+            scene.add(plant1);
+        }
+
+        // Shelf 1 - SECRET BOOKSHELF with trigger book
+        if (idx === 1) {
+            // Create special RED trigger book
+            const triggerBook = new THREE.Mesh(
+                new THREE.BoxGeometry(0.15, 0.25, 0.03),
+                new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.8 })
+            );
+            // Position it on shelf 2 (middle shelf) sticking out slightly
+            const bookX = config.width/2 - 0.8;
+            const bookY = shelfSpacing * 2 + 0.15;
+            const bookZ = shelfDepth/2 + 0.02; // Stick out from shelf front
+            triggerBook.position.set(bookX, bookY, bookZ);
+            triggerBook.castShadow = true;
+            triggerBook.name = "secret_book";
+            triggerBook.userData.isSecretTrigger = true;
+            secretBookshelfPivot.add(triggerBook);
+            engine.interactables.push(triggerBook);
+
+            // Add regular books to the secret bookshelf
+            const books2 = Prefabs.createBooks(6, 0.15);
+            books2.position.set(config.width/2 - 0.5, shelfSpacing * 1 + 0.05, 0);
+            books2.name = "library_books_2";
+            engine.interactables.push(books2);
+            secretBookshelfPivot.add(books2);
+
+            const globe = Prefabs.createGlobe(0.15);
+            globe.position.set(config.width/2 + 0.4, shelfSpacing * 1 + 0.05, 0);
+            globe.children.forEach(child => {
+                if (child.name === 'globe') {
+                    engine.interactables.push(child);
+                }
+            });
+            secretBookshelfPivot.add(globe);
+        }
+
+        // Shelf 2 - Books and small lamp
+        if (idx === 2) {
+            const books3 = Prefabs.createBooks(8, 0.15);
+            books3.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.7, shelfSpacing * 2 + 0.05, config.z - 0.2);
+            books3.name = "library_books_3";
+            engine.interactables.push(books3);
+            scene.add(books3);
+
+            const lamp = Prefabs.createLamp('desk');
+            lamp.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.7, shelfSpacing * 2 + 0.05, config.z + 0.5);
+            lamp.name = "library_lamp";
+            engine.interactables.push(lamp);
+            scene.add(lamp);
+        }
+
+        // Shelf 3 - Books and decorative items
+        if (idx === 3) {
+            const books4 = Prefabs.createBooks(5, 0.15);
+            books4.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.4, shelfSpacing * 3 + 0.05, config.z - 0.6);
+            books4.name = "library_books_4";
+            engine.interactables.push(books4);
+            scene.add(books4);
+
+            const plant2 = Prefabs.createPlant(0.07, 0.25);
+            plant2.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.5, shelfSpacing * 3 + 0.05, config.z + 0.2);
+            plant2.name = "library_plant_2";
+            engine.interactables.push(plant2);
+            scene.add(plant2);
+        }
+
+        // Add varied items to other shelves
+        if (idx === 0) {
+            // Additional books on shelf 2
+            const books5 = Prefabs.createBooks(6, 0.15);
+            books5.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.2, shelfSpacing * 2 + 0.05, config.z + 0.1);
+            books5.name = "library_books_5";
+            engine.interactables.push(books5);
+            scene.add(books5);
+
+            // Briefcase on shelf 1
+            const briefcase = Prefabs.createBriefcase(0.4, 0.12, 0.3);
+            briefcase.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 1 + 0.08, config.z - 0.3);
+            briefcase.name = "library_briefcase";
+            engine.interactables.push(briefcase);
+            scene.add(briefcase);
+        }
+
+        if (idx === 1) {
+            // Books on shelf 3
+            const books6 = Prefabs.createBooks(7, 0.15);
+            books6.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.6, shelfSpacing * 3 + 0.05, config.z - 0.4);
+            books6.name = "library_books_6";
+            engine.interactables.push(books6);
+            scene.add(books6);
+
+            // Small plant on shelf 2
+            const plant3 = Prefabs.createPlant(0.06, 0.2);
+            plant3.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.8, shelfSpacing * 2 + 0.05, config.z + 0.3);
+            plant3.name = "library_plant_3";
+            engine.interactables.push(plant3);
+            scene.add(plant3);
+        }
+
+        if (idx === 2) {
+            // Books on bottom shelf
+            const books7 = Prefabs.createBooks(9, 0.15);
+            books7.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.3, shelfSpacing * 0 + 0.1, config.z - 0.5);
+            books7.name = "library_books_7";
+            engine.interactables.push(books7);
+            scene.add(books7);
+
+            // Another globe on shelf 3
+            const globe2 = Prefabs.createGlobe(0.12);
+            globe2.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.6, shelfSpacing * 3 + 0.05, config.z + 0.4);
+            globe2.children.forEach(child => {
+                if (child.name === 'globe') {
+                    child.name = 'library_globe_2';
+                    engine.interactables.push(child);
+                }
+            });
+            scene.add(globe2);
+        }
+
+        if (idx === 3) {
+            // Books on shelf 1
+            const books8 = Prefabs.createBooks(8, 0.15);
+            books8.position.set(halfWidth - shelfDepth/2 - 0.3 - 0.7, shelfSpacing * 1 + 0.05, config.z - 0.2);
+            books8.name = "library_books_8";
+            engine.interactables.push(books8);
+            scene.add(books8);
+
+            // Books on shelf 2
+            const books9 = Prefabs.createBooks(6, 0.15);
+            books9.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.3, shelfSpacing * 2 + 0.05, config.z + 0.4);
+            books9.name = "library_books_9";
+            engine.interactables.push(books9);
+            scene.add(books9);
+
+            // Decorative item on bottom shelf
+            const plant4 = Prefabs.createPlant(0.08, 0.25);
+            plant4.position.set(halfWidth - shelfDepth/2 - 0.3 + 0.7, shelfSpacing * 0 + 0.05, config.z + 0.5);
+            plant4.name = "library_plant_4";
+            engine.interactables.push(plant4);
+            scene.add(plant4);
+        }
+    });
+
+    // ===== HIDDEN ROOM BEHIND SECRET BOOKSHELF =====
+    // Create a small secret room behind the bookshelf (idx === 1, z = -1.5)
+    const hiddenRoomWidth = 3.0;
+    const hiddenRoomDepth = 2.5;
+    const hiddenRoomX = halfWidth + hiddenRoomWidth/2 + 0.2; // Beyond the east wall
+    const hiddenRoomZ = -1.5; // Same Z as secret bookshelf
+
+    const hiddenRoomMaterial = new THREE.MeshStandardMaterial({
+        color: 0x8B7355,
+        roughness: 0.9,
+        side: THREE.BackSide // Interior walls
+    });
+
+    // Hidden room floor
+    const hiddenFloor = new THREE.Mesh(
+        new THREE.PlaneGeometry(hiddenRoomWidth, hiddenRoomDepth),
+        materials.floor
+    );
+    hiddenFloor.rotation.x = -Math.PI / 2;
+    hiddenFloor.position.set(hiddenRoomX, 0, hiddenRoomZ);
+    hiddenFloor.receiveShadow = true;
+    scene.add(hiddenFloor);
+
+    // Hidden room back wall (east side)
+    const hiddenBackWall = new THREE.Mesh(
+        new THREE.BoxGeometry(hiddenRoomWidth, WALL_HEIGHT, WALL_THICKNESS),
+        hiddenRoomMaterial
+    );
+    hiddenBackWall.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ);
+    hiddenBackWall.rotation.y = Math.PI / 2;
+    hiddenBackWall.castShadow = true;
+    hiddenBackWall.receiveShadow = true;
+    scene.add(hiddenBackWall);
+
+    // Hidden room side walls (north and south)
+    const hiddenSideWall1 = new THREE.Mesh(
+        new THREE.BoxGeometry(hiddenRoomDepth, WALL_HEIGHT, WALL_THICKNESS),
+        hiddenRoomMaterial
+    );
+    hiddenSideWall1.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ + hiddenRoomDepth/2);
+    hiddenSideWall1.castShadow = true;
+    hiddenSideWall1.receiveShadow = true;
+    scene.add(hiddenSideWall1);
+
+    const hiddenSideWall2 = new THREE.Mesh(
+        new THREE.BoxGeometry(hiddenRoomDepth, WALL_HEIGHT, WALL_THICKNESS),
+        hiddenRoomMaterial
+    );
+    hiddenSideWall2.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ - hiddenRoomDepth/2);
+    hiddenSideWall2.castShadow = true;
+    hiddenSideWall2.receiveShadow = true;
+    scene.add(hiddenSideWall2);
+
+    // Hidden room ceiling
+    const hiddenCeiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(hiddenRoomWidth, hiddenRoomDepth),
+        materials.ceiling
+    );
+    hiddenCeiling.rotation.x = Math.PI / 2;
+    hiddenCeiling.position.set(hiddenRoomX, WALL_HEIGHT, hiddenRoomZ);
+    scene.add(hiddenCeiling);
+
+    // Add the SAFE to the hidden room
+    const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
+    safe.position.set(hiddenRoomX + 0.8, 0, hiddenRoomZ); // Against back wall
+    safe.children[0].name = "safe";
+    engine.interactables.push(safe.children[0]);
+    scene.add(safe);
+
+    // Add a light in the hidden room
+    const hiddenRoomLight = new THREE.PointLight(0xffaa66, 0.8, 6);
+    hiddenRoomLight.position.set(hiddenRoomX, WALL_HEIGHT - 0.5, hiddenRoomZ);
+    hiddenRoomLight.castShadow = true;
+    scene.add(hiddenRoomLight);
+
     console.log(`Office loaded: ${engine.interactables.length} interactable objects`);
 
-    // Return engine and desk for drawer animation
-    return { engine, desk };
+    // Return engine, desk, and secret bookshelf for animation
+    return {
+        engine,
+        desk,
+        secretBookshelfPivot,
+        getSecretBookshelfState: () => secretBookshelfOpen,
+        toggleSecretBookshelf: () => {
+            secretBookshelfOpen = !secretBookshelfOpen;
+            return secretBookshelfOpen;
+        }
+    };
 }
 
 // Drawer interaction handler (any drawer opens the top one)
@@ -270,6 +553,21 @@ function animateDrawers(desk, deltaTime) {
     });
 }
 
+// Animate secret bookshelf door
+function animateSecretBookshelf(pivot, isOpen, deltaTime) {
+    if (!pivot) return;
+
+    const targetRotation = isOpen ? -Math.PI / 2 : 0; // 90 degrees when open
+    const speed = 2.0; // Animation speed
+    const diff = targetRotation - pivot.rotation.y;
+
+    if (Math.abs(diff) > 0.001) {
+        pivot.rotation.y += diff * speed * deltaTime;
+    } else {
+        pivot.rotation.y = targetRotation;
+    }
+}
+
 // Show notepad modal with handwritten note
 function showNotepadModal() {
     // Use showModal from ui.js but customize the content
@@ -311,6 +609,9 @@ function showNotepadModal() {
 
 // Initialize the office
 async function initOffice() {
+    // Office scene data (will be set after building scene)
+    let officeData = null;
+
     const engine = new RoomEngine({
         roomWidth: OFFICE_WIDTH,
         roomDepth: OFFICE_DEPTH,
@@ -321,6 +622,13 @@ async function initOffice() {
         cameraX: 0,
         cameraZ: 3,
         onInteract: (name, obj) => {
+            // Handle secret book trigger
+            if (name === 'secret_book' && officeData) {
+                const isOpen = officeData.toggleSecretBookshelf();
+                console.log(`Secret bookshelf ${isOpen ? 'opening' : 'closing'}...`);
+                showModal(name, {});
+                return;
+            }
             // Handle notepad interaction (check BEFORE drawer)
             if (name === 'notepad') {
                 // Check if the drawer containing the notepad is open
@@ -344,7 +652,8 @@ async function initOffice() {
     });
 
     // Build the office scene
-    const { desk } = await buildOfficeScene(engine);
+    officeData = await buildOfficeScene(engine);
+    const { desk, secretBookshelfPivot, getSecretBookshelfState } = officeData;
 
     // Create door and timer (since we're not using procedural room)
     engine.createDoor();
@@ -353,12 +662,14 @@ async function initOffice() {
     // Initialize game logic (puzzles, clues, etc.)
     initGame();
 
-    // Add drawer animation to the render loop
+    // Add drawer and secret bookshelf animation to the render loop
     const originalAnimate = engine.animate.bind(engine);
     engine.animate = function(time) {
         originalAnimate(time);
         // Animate drawers (deltaTime is approximately 1/60 for 60fps)
         animateDrawers(desk, 1/60);
+        // Animate secret bookshelf
+        animateSecretBookshelf(secretBookshelfPivot, getSecretBookshelfState(), 1/60);
     };
 
     // Start the engine
@@ -367,6 +678,7 @@ async function initOffice() {
     // Expose for debugging
     window.engine = engine;
     window.desk = desk;
+    window.secretBookshelf = secretBookshelfPivot;
 }
 
 // Start
