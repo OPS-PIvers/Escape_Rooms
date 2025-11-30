@@ -126,9 +126,8 @@ export class TouchControls {
         e.preventDefault();
         e.stopPropagation();
 
-        // Don't trigger interaction if modal is open
-        const modal = document.getElementById('clueModal');
-        if (modal && window.getComputedStyle(modal).display !== 'none') {
+        // Don't trigger interaction if overlay is visible
+        if (this._isOverlayVisible()) {
             return;
         }
 
@@ -140,14 +139,24 @@ export class TouchControls {
         this.updateDimensionsFromCSS();
     }
 
-    onTouchStart(event) {
-        // Don't interfere if modal or instructions are open
+    /**
+     * Check if any overlay (modal or instructions) is currently visible
+     * Uses computed styles to ensure accurate detection of CSS-based visibility
+     * @returns {boolean} True if any blocking overlay is visible
+     */
+    _isOverlayVisible() {
         const modal = document.getElementById('clueModal');
         const instructions = document.getElementById('instructions');
+
         const isModalOpen = modal && window.getComputedStyle(modal).display !== 'none';
         const isInstructionsOpen = instructions && window.getComputedStyle(instructions).display !== 'none';
 
-        if (isModalOpen || isInstructionsOpen) {
+        return isModalOpen || isInstructionsOpen;
+    }
+
+    onTouchStart(event) {
+        // Don't interfere if any overlay is visible
+        if (this._isOverlayVisible()) {
             return;
         }
 
@@ -187,13 +196,8 @@ export class TouchControls {
     }
 
     onTouchMove(event) {
-        // Don't interfere if modal or instructions are open
-        const modal = document.getElementById('clueModal');
-        const instructions = document.getElementById('instructions');
-        const isModalOpen = modal && window.getComputedStyle(modal).display !== 'none';
-        const isInstructionsOpen = instructions && window.getComputedStyle(instructions).display !== 'none';
-
-        if (isModalOpen || isInstructionsOpen) {
+        // Don't interfere if any overlay is visible
+        if (this._isOverlayVisible()) {
             return;
         }
 
@@ -228,11 +232,8 @@ export class TouchControls {
     }
 
     onTouchEnd(event) {
-        // Check if modal or instructions are open for tap interaction prevention
-        const modal = document.getElementById('clueModal');
-        const instructions = document.getElementById('instructions');
-        const isModalOpen = (modal && window.getComputedStyle(modal).display !== 'none') ||
-                           (instructions && window.getComputedStyle(instructions).display !== 'none');
+        // Check if any overlay is visible for tap interaction prevention
+        const isOverlayVisible = this._isOverlayVisible();
 
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
@@ -252,8 +253,8 @@ export class TouchControls {
                 // End camera look control
                 const touchData = this.touches.get(touch.identifier);
 
-                // Check if this was a tap (minimal movement) and modal is NOT open
-                if (touchData && !isModalOpen) {
+                // Check if this was a tap (minimal movement) and overlay is NOT visible
+                if (touchData && !isOverlayVisible) {
                     const dx = Math.abs(touch.clientX - touchData.startX);
                     const dy = Math.abs(touch.clientY - touchData.startY);
                     const distance = Math.sqrt(dx * dx + dy * dy);
