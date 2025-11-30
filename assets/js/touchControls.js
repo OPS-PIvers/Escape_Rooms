@@ -125,6 +125,13 @@ export class TouchControls {
     handleInteractTouch(e) {
         e.preventDefault();
         e.stopPropagation();
+
+        // Don't trigger interaction if modal is open
+        const modal = document.getElementById('clueModal');
+        if (modal && modal.style.display !== 'none') {
+            return;
+        }
+
         this.handleCenterScreenInteract();
     }
 
@@ -136,7 +143,7 @@ export class TouchControls {
     onTouchStart(event) {
         // Don't interfere if modal is open
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display === 'block') {
+        if (modal && modal.style.display !== 'none') {
             return;
         }
 
@@ -145,9 +152,12 @@ export class TouchControls {
             const x = touch.clientX;
             const y = touch.clientY;
 
-            // Check if touch is on UI element
+            // Check if touch is on UI element or modal
             const target = touch.target;
-            if (target.closest('#mobile-joystick') || target.closest('#mobile-interact-btn')) {
+            if (target.closest('#mobile-joystick') ||
+                target.closest('#mobile-interact-btn') ||
+                target.closest('#clueModal') ||
+                target.closest('#victoryModal')) {
                 continue; // Let UI handle it
             }
 
@@ -174,7 +184,7 @@ export class TouchControls {
     onTouchMove(event) {
         // Don't interfere if modal is open
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display === 'block') {
+        if (modal && modal.style.display !== 'none') {
             return;
         }
 
@@ -209,6 +219,10 @@ export class TouchControls {
     }
 
     onTouchEnd(event) {
+        // Check if modal is open for tap interaction prevention
+        const modal = document.getElementById('clueModal');
+        const isModalOpen = modal && modal.style.display !== 'none';
+
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
 
@@ -227,8 +241,8 @@ export class TouchControls {
                 // End camera look control
                 const touchData = this.touches.get(touch.identifier);
 
-                // Check if this was a tap (minimal movement)
-                if (touchData) {
+                // Check if this was a tap (minimal movement) and modal is NOT open
+                if (touchData && !isModalOpen) {
                     const dx = Math.abs(touch.clientX - touchData.startX);
                     const dy = Math.abs(touch.clientY - touchData.startY);
                     const distance = Math.sqrt(dx * dx + dy * dy);
