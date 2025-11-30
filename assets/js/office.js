@@ -491,7 +491,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(hiddenRoomWidth, WALL_HEIGHT, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenBackWall.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ);
+    hiddenBackWall.position.set(hiddenRoomX + hiddenRoomWidth/2, WALL_HEIGHT/2, hiddenRoomZ);
     hiddenBackWall.rotation.y = Math.PI / 2;
     hiddenBackWall.castShadow = true;
     hiddenBackWall.receiveShadow = true;
@@ -527,7 +527,10 @@ async function buildOfficeScene(engine) {
 
     // Add the SAFE to the hidden room
     const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
-    safe.position.set(hiddenRoomX + 0.8, 0, hiddenRoomZ); // Against back wall
+    // Position safe toward back of hidden room, but visible through doorway
+    const backWallX = hiddenRoomX + hiddenRoomWidth/2;
+    const safeX = backWallX - 1.0; // 1.0 unit from back wall for visibility
+    safe.position.set(safeX, 0, hiddenRoomZ);
     // Add larger hitbox for easier clicking
     const safeHitbox = addInvisibleHitbox(safe, {width: 1.0, height: 1.2, depth: 1.0}, {x: 0, y: 0.5, z: 0}, "safe");
     engine.interactables.push(safeHitbox);
