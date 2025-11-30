@@ -98,17 +98,6 @@ async function buildOfficeScene(engine) {
     eastWallTop.receiveShadow = true;
     scene.add(eastWallTop);
 
-    // Bottom part of east wall (below opening) - shorter for visual balance
-    const eastWallBottom = new THREE.Mesh(
-        new THREE.BoxGeometry(OFFICE_DEPTH, 0.3, WALL_THICKNESS),
-        materials.wall
-    );
-    eastWallBottom.position.set(halfWidth, 0.15, 0);
-    eastWallBottom.rotation.y = Math.PI/2;
-    eastWallBottom.castShadow = true;
-    eastWallBottom.receiveShadow = true;
-    scene.add(eastWallBottom);
-
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
     const doorH = 2.2;
