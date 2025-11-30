@@ -7,6 +7,7 @@ import { showModal } from './ui.js?v=0fc212f';
 import { initGame } from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
 import * as Prefabs from './prefabs.js?v=1b03dd5&t=1764425183';
+import { addInvisibleHitbox } from './prefabs.js?v=1b03dd5&t=1764425183';
 
 // Room Configuration
 const OFFICE_WIDTH = 12;
@@ -37,81 +38,90 @@ function populateBookshelf(bookshelf, engine, options = {}) {
     // Shelf 0 (bottom) - Books (left), more books (center), plant (right)
     const books1a = Prefabs.createBooks(7);
     books1a.position.set(-width * 0.35, shelfSpacing * 0 + 0.08, 0);
-    books1a.name = options.booksPrefix ? `${options.booksPrefix}_1a` : "bookshelf_books_1a";
-    items.push(books1a);
+    const books1aName = options.booksPrefix ? `${options.booksPrefix}_1a` : "bookshelf_books_1a";
+    // Add larger hitbox for easier clicking
+    const hitbox1a = addInvisibleHitbox(books1a, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books1aName);
+    items.push(hitbox1a);
     bookshelf.add(books1a);
 
     const books1b = Prefabs.createBooks(5);
     books1b.position.set(-width * 0.05, shelfSpacing * 0 + 0.08, 0);
-    books1b.name = options.booksPrefix ? `${options.booksPrefix}_1b` : "bookshelf_books_1b";
-    items.push(books1b);
+    const books1bName = options.booksPrefix ? `${options.booksPrefix}_1b` : "bookshelf_books_1b";
+    const hitbox1b = addInvisibleHitbox(books1b, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books1bName);
+    items.push(hitbox1b);
     bookshelf.add(books1b);
 
     const plant1 = Prefabs.createPlant(0.08, 0.25);
     plant1.position.set(width * 0.35, shelfSpacing * 0 + 0.05, 0);
-    plant1.name = options.plantPrefix ? `${options.plantPrefix}_1` : "bookshelf_plant_1";
-    items.push(plant1);
+    const plant1Name = options.plantPrefix ? `${options.plantPrefix}_1` : "bookshelf_plant_1";
+    const hitbox1plant = addInvisibleHitbox(plant1, {width: 0.3, height: 0.4, depth: 0.3}, {x: 0, y: 0.15, z: 0}, plant1Name);
+    items.push(hitbox1plant);
     bookshelf.add(plant1);
 
     // Shelf 1 - Books (left), briefcase (center), globe (right)
     const books2 = Prefabs.createBooks(8);
     books2.position.set(-width * 0.35, shelfSpacing * 1 + 0.08, 0);
-    books2.name = options.booksPrefix ? `${options.booksPrefix}_2` : "bookshelf_books_2";
-    items.push(books2);
+    const books2Name = options.booksPrefix ? `${options.booksPrefix}_2` : "bookshelf_books_2";
+    const hitbox2 = addInvisibleHitbox(books2, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books2Name);
+    items.push(hitbox2);
     bookshelf.add(books2);
 
     const briefcase = Prefabs.createBriefcase(0.35, 0.1, 0.25);
     briefcase.position.set(width * 0.0, shelfSpacing * 1 + 0.06, 0);
-    briefcase.name = options.briefcasePrefix ? options.briefcasePrefix : "bookshelf_briefcase";
-    items.push(briefcase);
+    const briefcaseName = options.briefcasePrefix ? options.briefcasePrefix : "bookshelf_briefcase";
+    const hitboxBriefcase = addInvisibleHitbox(briefcase, {width: 0.5, height: 0.3, depth: 0.4}, {x: 0, y: 0.1, z: 0}, briefcaseName);
+    items.push(hitboxBriefcase);
     bookshelf.add(briefcase);
 
     const globe = Prefabs.createGlobe(0.12);
     globe.position.set(width * 0.38, shelfSpacing * 1 + 0.05, 0);
-    globe.children.forEach(child => {
-        if (child.name === 'globe') {
-            child.name = options.globePrefix ? `${options.globePrefix}_1` : "bookshelf_globe";
-            items.push(child);
-        }
-    });
+    const globeName = options.globePrefix ? `${options.globePrefix}_1` : "bookshelf_globe";
+    const hitboxGlobe = addInvisibleHitbox(globe, {width: 0.35, height: 0.4, depth: 0.35}, {x: 0, y: 0.15, z: 0}, globeName);
+    items.push(hitboxGlobe);
     bookshelf.add(globe);
 
     // Shelf 2 - Books (left), books (center), lamp (right)
     const books3a = Prefabs.createBooks(6);
     books3a.position.set(-width * 0.35, shelfSpacing * 2 + 0.08, 0);
-    books3a.name = options.booksPrefix ? `${options.booksPrefix}_3a` : "bookshelf_books_3a";
-    items.push(books3a);
+    const books3aName = options.booksPrefix ? `${options.booksPrefix}_3a` : "bookshelf_books_3a";
+    const hitbox3a = addInvisibleHitbox(books3a, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books3aName);
+    items.push(hitbox3a);
     bookshelf.add(books3a);
 
     const books3b = Prefabs.createBooks(7);
     books3b.position.set(-width * 0.05, shelfSpacing * 2 + 0.08, 0);
-    books3b.name = options.booksPrefix ? `${options.booksPrefix}_3b` : "bookshelf_books_3b";
-    items.push(books3b);
+    const books3bName = options.booksPrefix ? `${options.booksPrefix}_3b` : "bookshelf_books_3b";
+    const hitbox3b = addInvisibleHitbox(books3b, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books3bName);
+    items.push(hitbox3b);
     bookshelf.add(books3b);
 
     const lamp = Prefabs.createLamp('desk');
     lamp.position.set(width * 0.38, shelfSpacing * 2 + 0.05, 0);
-    lamp.name = options.lampPrefix ? options.lampPrefix : "bookshelf_lamp";
-    items.push(lamp);
+    const lampName = options.lampPrefix ? options.lampPrefix : "bookshelf_lamp";
+    const hitboxLamp = addInvisibleHitbox(lamp, {width: 0.3, height: 0.5, depth: 0.3}, {x: 0, y: 0.2, z: 0}, lampName);
+    items.push(hitboxLamp);
     bookshelf.add(lamp);
 
     // Shelf 3 (top) - Books (left), small plant (center), books (right)
     const books4a = Prefabs.createBooks(6);
     books4a.position.set(-width * 0.35, shelfSpacing * 3 + 0.08, 0);
-    books4a.name = options.booksPrefix ? `${options.booksPrefix}_4a` : "bookshelf_books_4a";
-    items.push(books4a);
+    const books4aName = options.booksPrefix ? `${options.booksPrefix}_4a` : "bookshelf_books_4a";
+    const hitbox4a = addInvisibleHitbox(books4a, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books4aName);
+    items.push(hitbox4a);
     bookshelf.add(books4a);
 
     const plant2 = Prefabs.createPlant(0.06, 0.18);
     plant2.position.set(width * 0.0, shelfSpacing * 3 + 0.05, 0);
-    plant2.name = options.plantPrefix ? `${options.plantPrefix}_2` : "bookshelf_plant_2";
-    items.push(plant2);
+    const plant2Name = options.plantPrefix ? `${options.plantPrefix}_2` : "bookshelf_plant_2";
+    const hitbox2plant = addInvisibleHitbox(plant2, {width: 0.3, height: 0.35, depth: 0.3}, {x: 0, y: 0.12, z: 0}, plant2Name);
+    items.push(hitbox2plant);
     bookshelf.add(plant2);
 
     const books4b = Prefabs.createBooks(5);
     books4b.position.set(width * 0.3, shelfSpacing * 3 + 0.08, 0);
-    books4b.name = options.booksPrefix ? `${options.booksPrefix}_4b` : "bookshelf_books_4b";
-    items.push(books4b);
+    const books4bName = options.booksPrefix ? `${options.booksPrefix}_4b` : "bookshelf_books_4b";
+    const hitbox4b = addInvisibleHitbox(books4b, {width: 0.5, height: 0.4, depth: 0.3}, {x: 0, y: 0.1, z: 0}, books4bName);
+    items.push(hitbox4b);
     bookshelf.add(books4b);
 
     // Add all items to interactables
@@ -210,8 +220,9 @@ async function buildOfficeScene(engine) {
     const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
     desk.position.set(-halfWidth + 1.5, 0, -halfDepth + 1.5);
     desk.rotation.y = Math.PI / 4; // Angled toward room
-    desk.name = "desk";
-    engine.interactables.push(desk);
+    // Add larger hitbox for easier clicking
+    const deskHitbox = addInvisibleHitbox(desk, {width: 1.8, height: 0.9, depth: 1.0}, {x: 0, y: 0.4, z: 0}, "desk");
+    engine.interactables.push(deskHitbox);
 
     // Create invisible interaction meshes for drawers (any drawer opens the top one)
     if (desk.userData.drawers && desk.userData.drawers.length > 0) {
@@ -221,9 +232,9 @@ async function buildOfficeScene(engine) {
             const drawerWidth = 1.5 * 0.4; // width * 0.4 from prefabs
             const drawerHeight = 0.75 * 0.25; // height * 0.25 from prefabs
 
-            // Create invisible mesh covering the front face of the drawer
+            // Create invisible mesh covering the front face of the drawer - MUCH LARGER for easier clicking
             const clickMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(drawerWidth, drawerHeight, 0.01),
+                new THREE.BoxGeometry(drawerWidth * 1.3, drawerHeight * 1.5, 0.15),
                 new THREE.MeshBasicMaterial({
                     transparent: true,
                     opacity: 0,
@@ -232,7 +243,7 @@ async function buildOfficeScene(engine) {
             );
             // Position it at the front of the drawer (where the visible front is)
             const drawerDepth = 0.8 - 0.1; // desk depth - 0.1 from prefabs
-            clickMesh.position.z = drawerDepth/2;
+            clickMesh.position.z = drawerDepth/2 + 0.05;
             clickMesh.name = `drawer_${index}_click`;
             clickMesh.userData.drawerGroup = drawerGroup;
 
@@ -251,13 +262,10 @@ async function buildOfficeScene(engine) {
             notepad.position.set(0.05, 0.02, 0.05);
             notepad.rotation.y = Math.PI / 6; // Slight angle
             console.log('Created notepad:', notepad);
-            // Make notepad interactable
-            notepad.children.forEach(child => {
-                if (child.name === 'notepad') {
-                    engine.interactables.push(child);
-                    console.log('Added notepad to interactables');
-                }
-            });
+            // Add larger hitbox for easier clicking
+            const notepadHitbox = addInvisibleHitbox(notepad, {width: 0.25, height: 0.1, depth: 0.3}, {x: 0, y: 0.05, z: 0}, "notepad");
+            engine.interactables.push(notepadHitbox);
+            console.log('Added notepad to interactables with hitbox');
             topDrawer.add(notepad);
             console.log('Added notepad to drawer 2');
 
@@ -273,11 +281,12 @@ async function buildOfficeScene(engine) {
                 // Raise pens to match notepad height
                 pen.position.set(-0.15 + (i * 0.04), 0.01, -0.05 + (i * 0.02));
                 pen.rotation.y = Math.random() * Math.PI / 4;
-                pen.name = `pen_${i}`;
-                engine.interactables.push(pen);
+                // Add larger hitbox for easier clicking (pens are tiny!)
+                const penHitbox = addInvisibleHitbox(pen, {width: 0.15, height: 0.08, depth: 0.08}, {x: 0, y: 0.04, z: 0}, `pen_${i}`);
+                engine.interactables.push(penHitbox);
                 topDrawer.add(pen);
             }
-            console.log('Added 3 pens to drawer 2');
+            console.log('Added 3 pens to drawer 2 with hitboxes');
         } catch (error) {
             console.error('Error adding notepad/pens to drawer:', error);
         }
@@ -289,32 +298,36 @@ async function buildOfficeScene(engine) {
     const deskChair = Prefabs.createChair(0.5, 0.9);
     deskChair.position.set(-halfWidth + 2.3, 0, -halfDepth + 2.3);
     deskChair.rotation.y = Math.PI / 4 + Math.PI; // Facing desk
-    deskChair.name = "chair";
-    engine.interactables.push(deskChair);
+    // Add larger hitbox for easier clicking
+    const chairHitbox = addInvisibleHitbox(deskChair, {width: 0.7, height: 1.1, depth: 0.7}, {x: 0, y: 0.45, z: 0}, "chair");
+    engine.interactables.push(chairHitbox);
     scene.add(deskChair);
 
     // Computer on desk (scaled bigger and moved forward toward chair)
     const computer = Prefabs.createComputer(0.5, 0.4);
     computer.position.set(-halfWidth + 1.5, DESK_SURFACE_Y, -halfDepth + 1.3);
     computer.rotation.y = Math.PI / 4; // Screen faces chair
-    computer.children[0].name = "computer"; // Make screen interactable
-    engine.interactables.push(computer.children[0]);
+    // Add larger hitbox for easier clicking
+    const computerHitbox = addInvisibleHitbox(computer, {width: 0.6, height: 0.5, depth: 0.3}, {x: 0, y: 0.2, z: 0}, "computer");
+    engine.interactables.push(computerHitbox);
     scene.add(computer);
 
     // Keyboard on desk (in front of monitor)
     const keyboard = Prefabs.createKeyboard(0.4, 0.15);
     keyboard.position.set(-halfWidth + 1.7, DESK_SURFACE_Y, -halfDepth + 1.5);
     keyboard.rotation.y = Math.PI / 4; // Aligned with monitor
-    keyboard.name = "keyboard";
-    engine.interactables.push(keyboard);
+    // Add larger hitbox
+    const keyboardHitbox = addInvisibleHitbox(keyboard, {width: 0.5, height: 0.15, depth: 0.25}, {x: 0, y: 0.05, z: 0}, "keyboard");
+    engine.interactables.push(keyboardHitbox);
     scene.add(keyboard);
 
     // Mouse on desk (to the right of keyboard)
     const mouse = Prefabs.createMouse();
     mouse.position.set(-halfWidth + 1.9, DESK_SURFACE_Y, -halfDepth + 1.3);
     mouse.rotation.y = Math.PI / 4; // Aligned with setup
-    mouse.name = "mouse";
-    engine.interactables.push(mouse);
+    // Add larger hitbox for easier clicking (mice are tiny!)
+    const mouseHitbox = addInvisibleHitbox(mouse, {width: 0.2, height: 0.15, depth: 0.2}, {x: 0, y: 0.05, z: 0}, "mouse");
+    engine.interactables.push(mouseHitbox);
     scene.add(mouse);
 
     // ===== LIBRARY ON EAST WALL =====
@@ -370,10 +383,11 @@ async function buildOfficeScene(engine) {
             );
             triggerBook.position.set(config.width * 0.1, shelfSpacing * 2 + 0.15, shelfDepth * 0.3);
             triggerBook.castShadow = true;
-            triggerBook.name = "secret_book";
             triggerBook.userData.isSecretTrigger = true;
+            // Add larger hitbox for easier clicking
+            const secretBookHitbox = addInvisibleHitbox(triggerBook, {width: 0.3, height: 0.4, depth: 0.2}, {x: 0, y: 0.05, z: 0}, "secret_book");
             bookshelf.add(triggerBook);
-            engine.interactables.push(triggerBook);
+            engine.interactables.push(secretBookHitbox);
         } else {
             // Normal static bookshelf
             bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
@@ -460,8 +474,9 @@ async function buildOfficeScene(engine) {
     // Add the SAFE to the hidden room
     const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
     safe.position.set(hiddenRoomX + 0.8, 0, hiddenRoomZ); // Against back wall
-    safe.children[0].name = "safe";
-    engine.interactables.push(safe.children[0]);
+    // Add larger hitbox for easier clicking
+    const safeHitbox = addInvisibleHitbox(safe, {width: 1.0, height: 1.2, depth: 1.0}, {x: 0, y: 0.5, z: 0}, "safe");
+    engine.interactables.push(safeHitbox);
     scene.add(safe);
 
     // Add a light in the hidden room
