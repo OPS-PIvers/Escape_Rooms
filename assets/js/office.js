@@ -67,8 +67,7 @@ async function buildOfficeScene(engine) {
         { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
         // Left wall (West) - Solid
         { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
-        // Right wall (East) - Solid
-        { width: OFFICE_DEPTH, pos: [halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
+        // Right wall (East) - Will be split to create opening for secret door (handled below)
     ];
 
     walls.forEach(wall => {
@@ -82,6 +81,33 @@ async function buildOfficeScene(engine) {
         mesh.receiveShadow = true;
         scene.add(mesh);
     });
+
+    // East wall (Right) - With opening for secret bookshelf door
+    // Opening is centered at z = -1.5, height 2.4 units
+    const secretDoorOpeningZ = -1.5;
+    const secretDoorOpeningHeight = 2.4; // Opens to show bookshelf
+
+    // Top part of east wall (above opening)
+    const eastWallTop = new THREE.Mesh(
+        new THREE.BoxGeometry(OFFICE_DEPTH, WALL_HEIGHT - secretDoorOpeningHeight, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallTop.position.set(halfWidth, WALL_HEIGHT - (WALL_HEIGHT - secretDoorOpeningHeight)/2, 0);
+    eastWallTop.rotation.y = Math.PI/2;
+    eastWallTop.castShadow = true;
+    eastWallTop.receiveShadow = true;
+    scene.add(eastWallTop);
+
+    // Bottom part of east wall (below opening) - shorter for visual balance
+    const eastWallBottom = new THREE.Mesh(
+        new THREE.BoxGeometry(OFFICE_DEPTH, 0.3, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallBottom.position.set(halfWidth, 0.15, 0);
+    eastWallBottom.rotation.y = Math.PI/2;
+    eastWallBottom.castShadow = true;
+    eastWallBottom.receiveShadow = true;
+    scene.add(eastWallBottom);
 
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
@@ -633,6 +659,9 @@ async function initOffice() {
     // Initialize game logic (puzzles, clues, etc.)
     initGame();
 
+    // Store original room bounds
+    const originalBounds = { ...engine.roomBounds };
+
     // Add drawer and secret bookshelf animation to the render loop
     const originalAnimate = engine.animate.bind(engine);
     engine.animate = function(time) {
@@ -641,6 +670,16 @@ async function initOffice() {
         animateDrawers(desk, 1/60);
         // Animate secret bookshelf
         animateSecretBookshelf(secretBookshelfPivot, getSecretBookshelfState(), 1/60);
+
+        // Dynamically adjust room bounds when secret bookshelf is open
+        // This allows the player to access the hidden room beyond the east wall
+        if (getSecretBookshelfState()) {
+            // Expand east boundary to allow access to hidden room
+            engine.roomBounds.maxX = 8.5; // Hidden room extends to ~7.7, add buffer
+        } else {
+            // Restore original bounds
+            engine.roomBounds.maxX = originalBounds.maxX;
+        }
     };
 
     // Start the engine
