@@ -89,7 +89,7 @@ async function buildOfficeScene(engine) {
     const eastOpeningZMin = eastOpeningZ - eastOpeningWidth / 2; // -3.0
     const eastOpeningZMax = eastOpeningZ + eastOpeningWidth / 2; // 0.0
 
-    // North section of east wall (above opening)
+    // North section of east wall (runs from z = -6 to z = -3)
     const eastWallNorth = new THREE.Mesh(
         new THREE.BoxGeometry(eastOpeningZMin - (-halfDepth), WALL_HEIGHT, WALL_THICKNESS),
         materials.wall
@@ -99,11 +99,12 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMin + (-halfDepth)) / 2 // Center between -6 and -3
     );
+    eastWallNorth.rotation.y = Math.PI / 2; // Face west into room
     eastWallNorth.castShadow = true;
     eastWallNorth.receiveShadow = true;
     scene.add(eastWallNorth);
 
-    // South section of east wall (below opening)
+    // South section of east wall (runs from z = 0 to z = 6)
     const eastWallSouth = new THREE.Mesh(
         new THREE.BoxGeometry(halfDepth - eastOpeningZMax, WALL_HEIGHT, WALL_THICKNESS),
         materials.wall
@@ -113,6 +114,7 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMax + halfDepth) / 2 // Center between 0 and 6
     );
+    eastWallSouth.rotation.y = Math.PI / 2; // Face west into room
     eastWallSouth.castShadow = true;
     eastWallSouth.receiveShadow = true;
     scene.add(eastWallSouth);
