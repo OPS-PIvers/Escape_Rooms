@@ -8,7 +8,7 @@ export class TouchControls {
     static JOYSTICK_MAX_DISTANCE = 50;
     static JOYSTICK_DEADZONE = 15;
     static LOOK_SENSITIVITY = 0.003;
-    static TAP_THRESHOLD = 10;
+    static TAP_THRESHOLD = 20;  // Increased from 10 to make tapping easier
 
     // Read dimensional values from CSS custom properties
     static getCSSValue(property) {
@@ -313,9 +313,9 @@ export class TouchControls {
             y: -(y / window.innerHeight) * 2 + 1
         };
 
-        // Perform raycast - use recursive to detect nested objects
+        // Perform raycast - use recursive: false to detect only registered interactables
         this.raycaster.setFromCamera(mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, true);
+        const intersects = this.raycaster.intersectObjects(this.interactables, false);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;
@@ -327,8 +327,8 @@ export class TouchControls {
         // Raycast from center of screen (like pressing Space)
         const centerMouse = { x: 0, y: 0 };
         this.raycaster.setFromCamera(centerMouse, this.camera);
-        // Use recursive to detect nested objects
-        const intersects = this.raycaster.intersectObjects(this.interactables, true);
+        // Use recursive: false to detect only registered interactables
+        const intersects = this.raycaster.intersectObjects(this.interactables, false);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;

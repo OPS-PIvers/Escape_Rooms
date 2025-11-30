@@ -435,9 +435,16 @@ export class RoomEngine {
         });
 
         // Touch controls
-        const handleTouchInteract = () => {
-            if (!isInteracting) {
-                this.interact();
+        const handleTouchInteract = (touchObject) => {
+            if (!isInteracting && touchObject) {
+                // Use the object from touch raycast, don't do another raycast
+                if (this.config.onInteract) {
+                    this.config.onInteract(touchObject.name, touchObject);
+                }
+                // Default door interaction
+                if (touchObject.name === "door" && this.doorPivot) {
+                    this.toggleDoor();
+                }
             }
         };
         this.touchControls = new TouchControls(this.camera, this.raycaster, this.interactables, handleTouchInteract);
@@ -453,8 +460,9 @@ export class RoomEngine {
 
     interact() {
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        // Enable recursive raycasting to detect nested objects
-        const intersects = this.raycaster.intersectObjects(this.interactables, true);
+        // Use recursive: false to only detect objects directly in interactables array
+        // This prevents parent objects from blocking child objects
+        const intersects = this.raycaster.intersectObjects(this.interactables, false);
         if (intersects.length > 0) {
             const obj = intersects[0].object;
 
