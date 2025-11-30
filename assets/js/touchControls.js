@@ -141,9 +141,11 @@ export class TouchControls {
     }
 
     onTouchStart(event) {
-        // Don't interfere if modal is open
+        // Don't interfere if modal or instructions are open
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display !== 'none') {
+        const instructions = document.getElementById('instructions');
+        if ((modal && modal.style.display !== 'none') ||
+            (instructions && instructions.style.display !== 'none')) {
             return;
         }
 
@@ -157,7 +159,8 @@ export class TouchControls {
             if (target.closest('#mobile-joystick') ||
                 target.closest('#mobile-interact-btn') ||
                 target.closest('#clueModal') ||
-                target.closest('#victoryModal')) {
+                target.closest('#victoryModal') ||
+                target.closest('#instructions')) {
                 continue; // Let UI handle it
             }
 
@@ -182,9 +185,11 @@ export class TouchControls {
     }
 
     onTouchMove(event) {
-        // Don't interfere if modal is open
+        // Don't interfere if modal or instructions are open
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display !== 'none') {
+        const instructions = document.getElementById('instructions');
+        if ((modal && modal.style.display !== 'none') ||
+            (instructions && instructions.style.display !== 'none')) {
             return;
         }
 
@@ -219,9 +224,11 @@ export class TouchControls {
     }
 
     onTouchEnd(event) {
-        // Check if modal is open for tap interaction prevention
+        // Check if modal or instructions are open for tap interaction prevention
         const modal = document.getElementById('clueModal');
-        const isModalOpen = modal && modal.style.display !== 'none';
+        const instructions = document.getElementById('instructions');
+        const isModalOpen = (modal && modal.style.display !== 'none') ||
+                           (instructions && instructions.style.display !== 'none');
 
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
