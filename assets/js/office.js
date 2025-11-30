@@ -82,21 +82,8 @@ async function buildOfficeScene(engine) {
         scene.add(mesh);
     });
 
-    // East wall (Right) - With opening for secret bookshelf door
-    // Opening is centered at z = -1.5, height 2.4 units
-    const secretDoorOpeningZ = -1.5;
-    const secretDoorOpeningHeight = 2.4; // Opens to show bookshelf
-
-    // Top part of east wall (above opening)
-    const eastWallTop = new THREE.Mesh(
-        new THREE.BoxGeometry(OFFICE_DEPTH, WALL_HEIGHT - secretDoorOpeningHeight, WALL_THICKNESS),
-        materials.wall
-    );
-    eastWallTop.position.set(halfWidth, WALL_HEIGHT - (WALL_HEIGHT - secretDoorOpeningHeight)/2, 0);
-    eastWallTop.rotation.y = Math.PI/2;
-    eastWallTop.castShadow = true;
-    eastWallTop.receiveShadow = true;
-    scene.add(eastWallTop);
+    // East wall (Right) - Now has a large open passage for secret bookshelf
+    // No wall added; the opening naturally exists at the east side
 
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
