@@ -34,28 +34,40 @@ function populateBookshelf(bookshelf, engine, options = {}) {
     const shelfSpacing = height / shelves;
     const items = [];
 
-    // Shelf 0 (bottom) - Books on left, plant on right
-    const books1 = Prefabs.createBooks(6, 0.15);
-    books1.position.set(-width * 0.3, shelfSpacing * 0 + 0.08, 0);
-    books1.name = options.booksPrefix ? `${options.booksPrefix}_1` : "bookshelf_books_1";
-    items.push(books1);
-    bookshelf.add(books1);
+    // Shelf 0 (bottom) - Books (left), more books (center), plant (right)
+    const books1a = Prefabs.createBooks(7, 0.15);
+    books1a.position.set(-width * 0.35, shelfSpacing * 0 + 0.08, 0);
+    books1a.name = options.booksPrefix ? `${options.booksPrefix}_1a` : "bookshelf_books_1a";
+    items.push(books1a);
+    bookshelf.add(books1a);
+
+    const books1b = Prefabs.createBooks(5, 0.15);
+    books1b.position.set(-width * 0.05, shelfSpacing * 0 + 0.08, 0);
+    books1b.name = options.booksPrefix ? `${options.booksPrefix}_1b` : "bookshelf_books_1b";
+    items.push(books1b);
+    bookshelf.add(books1b);
 
     const plant1 = Prefabs.createPlant(0.08, 0.25);
-    plant1.position.set(width * 0.3, shelfSpacing * 0 + 0.05, 0);
+    plant1.position.set(width * 0.35, shelfSpacing * 0 + 0.05, 0);
     plant1.name = options.plantPrefix ? `${options.plantPrefix}_1` : "bookshelf_plant_1";
     items.push(plant1);
     bookshelf.add(plant1);
 
-    // Shelf 1 - Books and globe
-    const books2 = Prefabs.createBooks(7, 0.15);
-    books2.position.set(-width * 0.25, shelfSpacing * 1 + 0.08, 0);
+    // Shelf 1 - Books (left), briefcase (center), globe (right)
+    const books2 = Prefabs.createBooks(8, 0.15);
+    books2.position.set(-width * 0.35, shelfSpacing * 1 + 0.08, 0);
     books2.name = options.booksPrefix ? `${options.booksPrefix}_2` : "bookshelf_books_2";
     items.push(books2);
     bookshelf.add(books2);
 
+    const briefcase = Prefabs.createBriefcase(0.35, 0.1, 0.25);
+    briefcase.position.set(width * 0.0, shelfSpacing * 1 + 0.06, 0);
+    briefcase.name = options.briefcasePrefix ? options.briefcasePrefix : "bookshelf_briefcase";
+    items.push(briefcase);
+    bookshelf.add(briefcase);
+
     const globe = Prefabs.createGlobe(0.12);
-    globe.position.set(width * 0.35, shelfSpacing * 1 + 0.05, 0);
+    globe.position.set(width * 0.38, shelfSpacing * 1 + 0.05, 0);
     globe.children.forEach(child => {
         if (child.name === 'globe') {
             child.name = options.globePrefix ? `${options.globePrefix}_1` : "bookshelf_globe";
@@ -64,31 +76,43 @@ function populateBookshelf(bookshelf, engine, options = {}) {
     });
     bookshelf.add(globe);
 
-    // Shelf 2 - Books and lamp
-    const books3 = Prefabs.createBooks(8, 0.15);
-    books3.position.set(-width * 0.3, shelfSpacing * 2 + 0.08, 0);
-    books3.name = options.booksPrefix ? `${options.booksPrefix}_3` : "bookshelf_books_3";
-    items.push(books3);
-    bookshelf.add(books3);
+    // Shelf 2 - Books (left), books (center), lamp (right)
+    const books3a = Prefabs.createBooks(6, 0.15);
+    books3a.position.set(-width * 0.35, shelfSpacing * 2 + 0.08, 0);
+    books3a.name = options.booksPrefix ? `${options.booksPrefix}_3a` : "bookshelf_books_3a";
+    items.push(books3a);
+    bookshelf.add(books3a);
+
+    const books3b = Prefabs.createBooks(7, 0.15);
+    books3b.position.set(-width * 0.05, shelfSpacing * 2 + 0.08, 0);
+    books3b.name = options.booksPrefix ? `${options.booksPrefix}_3b` : "bookshelf_books_3b";
+    items.push(books3b);
+    bookshelf.add(books3b);
 
     const lamp = Prefabs.createLamp('desk');
-    lamp.position.set(width * 0.35, shelfSpacing * 2 + 0.05, 0);
+    lamp.position.set(width * 0.38, shelfSpacing * 2 + 0.05, 0);
     lamp.name = options.lampPrefix ? options.lampPrefix : "bookshelf_lamp";
     items.push(lamp);
     bookshelf.add(lamp);
 
-    // Shelf 3 (top) - Books and plant
-    const books4 = Prefabs.createBooks(5, 0.15);
-    books4.position.set(-width * 0.2, shelfSpacing * 3 + 0.08, 0);
-    books4.name = options.booksPrefix ? `${options.booksPrefix}_4` : "bookshelf_books_4";
-    items.push(books4);
-    bookshelf.add(books4);
+    // Shelf 3 (top) - Books (left), small plant (center), books (right)
+    const books4a = Prefabs.createBooks(6, 0.15);
+    books4a.position.set(-width * 0.35, shelfSpacing * 3 + 0.08, 0);
+    books4a.name = options.booksPrefix ? `${options.booksPrefix}_4a` : "bookshelf_books_4a";
+    items.push(books4a);
+    bookshelf.add(books4a);
 
-    const plant2 = Prefabs.createPlant(0.07, 0.2);
-    plant2.position.set(width * 0.3, shelfSpacing * 3 + 0.05, 0);
+    const plant2 = Prefabs.createPlant(0.06, 0.18);
+    plant2.position.set(width * 0.0, shelfSpacing * 3 + 0.05, 0);
     plant2.name = options.plantPrefix ? `${options.plantPrefix}_2` : "bookshelf_plant_2";
     items.push(plant2);
     bookshelf.add(plant2);
+
+    const books4b = Prefabs.createBooks(5, 0.15);
+    books4b.position.set(width * 0.3, shelfSpacing * 3 + 0.08, 0);
+    books4b.name = options.booksPrefix ? `${options.booksPrefix}_4b` : "bookshelf_books_4b";
+    items.push(books4b);
+    bookshelf.add(books4b);
 
     // Add all items to interactables
     items.forEach(item => engine.interactables.push(item));
