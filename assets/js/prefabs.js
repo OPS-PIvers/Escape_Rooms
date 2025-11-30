@@ -494,6 +494,14 @@ export function createGlobe(radius = 0.2) {
     globe.castShadow = true;
     group.add(globe);
 
+    // Add larger invisible hitbox for easier interaction
+    const hitbox = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 2, 16, 16),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = 0.025 + radius;
+    group.add(hitbox);
+
     return group;
 }
 
@@ -556,24 +564,52 @@ export function createClock(radius = 0.3) {
     return group;
 }
 
-export function createBooks(count = 5, stackHeight = 0.15) {
+export function createBooks(count = 5) {
     const group = new THREE.Group();
-    const colors = [0x8B0000, 0x00008B, 0x006400, 0x8B4513, 0x4B0082];
+    const colors = [0x8B0000, 0x00008B, 0x006400, 0x8B4513, 0x4B0082, 0x800080, 0x2F4F4F, 0x8B4500];
+
+    // Books now stand VERTICALLY (spine out) like in a real library
+    const bookHeight = 0.25; // Height of book (vertical dimension)
+    const bookDepth = 0.18;  // Depth of book (front to back)
+    let xOffset = 0;
 
     for (let i = 0; i < count; i++) {
+        // Varying spine widths for realism
+        const spineWidth = 0.025 + Math.random() * 0.035; // Random width 0.025-0.06
+
         const book = new THREE.Mesh(
-            new THREE.BoxGeometry(0.15, 0.03, 0.2),
+            new THREE.BoxGeometry(spineWidth, bookHeight, bookDepth),
             new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.8 })
         );
+
+        // Position books side by side along X axis
         book.position.set(
-            (Math.random() - 0.5) * 0.1,
-            i * 0.03,
-            (Math.random() - 0.5) * 0.1
+            xOffset,
+            bookHeight / 2, // Center at half height so base is at y=0
+            (Math.random() - 0.5) * 0.02 // Slight random depth variation
         );
-        book.rotation.y = (Math.random() - 0.5) * 0.3;
+
+        // Slight random tilt for realism
+        book.rotation.z = (Math.random() - 0.5) * 0.15;
+        book.rotation.y = (Math.random() - 0.5) * 0.1;
+
         book.castShadow = true;
         group.add(book);
+
+        xOffset += spineWidth; // Move to next book position
     }
+
+    // Add a larger invisible hitbox for easier interaction
+    const totalWidth = xOffset;
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(totalWidth * 1.5, bookHeight * 1.5, bookDepth * 1.5),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.set(totalWidth / 2 - xOffset / 2, bookHeight / 2, 0);
+    group.add(hitbox);
+
+    // Center the group
+    group.position.x = -totalWidth / 2;
 
     return group;
 }
@@ -616,6 +652,14 @@ export function createPlant(potRadius = 0.1, plantHeight = 0.4) {
         group.add(leaf);
     }
 
+    // Add larger invisible hitbox for easier interaction
+    const hitbox = new THREE.Mesh(
+        new THREE.CylinderGeometry(potRadius * 3, potRadius * 2.5, potRadius * 1.5 + plantHeight, 8),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = (potRadius * 1.5 + plantHeight) / 2;
+    group.add(hitbox);
+
     return group;
 }
 
@@ -647,6 +691,14 @@ export function createLamp(type = 'desk') {
         shade.position.y = 0.475;
         shade.rotation.x = Math.PI;
         group.add(shade);
+
+        // Add larger invisible hitbox for desk lamp
+        const hitbox = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.25, 0.25, 0.55, 8),
+            new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitbox.position.y = 0.275;
+        group.add(hitbox);
     } else {
         // Floor lamp
         const pole = new THREE.Mesh(
@@ -672,6 +724,14 @@ export function createLamp(type = 'desk') {
         shade.position.y = 1.725;
         shade.rotation.x = Math.PI;
         group.add(shade);
+
+        // Add larger invisible hitbox for floor lamp
+        const hitbox = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.4, 0.4, 1.85, 8),
+            new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitbox.position.y = 0.925;
+        group.add(hitbox);
     }
 
     return group;
@@ -710,6 +770,14 @@ export function createBriefcase(width = 0.6, height = 0.15, depth = 0.4) {
         latch.position.set(x, 0, depth/2 + 0.01);
         group.add(latch);
     });
+
+    // Add larger invisible hitbox for easier interaction
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 1.5, height * 3, depth * 1.5),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = height / 2;
+    group.add(hitbox);
 
     return group;
 }
