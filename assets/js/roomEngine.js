@@ -453,7 +453,8 @@ export class RoomEngine {
 
     interact() {
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, false);
+        // Enable recursive raycasting to detect nested objects
+        const intersects = this.raycaster.intersectObjects(this.interactables, true);
         if (intersects.length > 0) {
             const obj = intersects[0].object;
 
@@ -537,7 +538,8 @@ export class RoomEngine {
         if (!isInteracting) {
             // Crosshair highlight
             this.raycaster.setFromCamera(this.mouse, this.camera);
-            const intersects = this.raycaster.intersectObjects(this.interactables, false);
+            // Enable recursive raycasting to detect nested objects
+            const intersects = this.raycaster.intersectObjects(this.interactables, true);
             if (this.crosshair) {
                 if (intersects.length > 0) {
                     this.crosshair.classList.add('active');

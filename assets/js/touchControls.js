@@ -287,9 +287,9 @@ export class TouchControls {
             y: -(y / window.innerHeight) * 2 + 1
         };
 
-        // Perform raycast
+        // Perform raycast - use recursive to detect nested objects
         this.raycaster.setFromCamera(mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, false);
+        const intersects = this.raycaster.intersectObjects(this.interactables, true);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;
@@ -301,7 +301,8 @@ export class TouchControls {
         // Raycast from center of screen (like pressing Space)
         const centerMouse = { x: 0, y: 0 };
         this.raycaster.setFromCamera(centerMouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, false);
+        // Use recursive to detect nested objects
+        const intersects = this.raycaster.intersectObjects(this.interactables, true);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;
