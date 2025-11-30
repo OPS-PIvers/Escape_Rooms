@@ -36,15 +36,18 @@ function populateBookshelf(bookshelf, engine, options = {}) {
 
     // Populate each shelf with multiple book clusters to create a library feel
     for (let shelfIdx = 0; shelfIdx < shelves; shelfIdx++) {
-        const shelfY = shelfSpacing * shelfIdx + 0.08;
+        const shelfThickness = 0.03; // From prefabs.js createBookshelf
+        const shelfY = shelfSpacing * shelfIdx + shelfThickness / 2; // Position books on top of shelf
 
-        // Create 5 book clusters across each shelf for a full library look
+        // Create 7 book clusters across each shelf for fuller library look with less gaps
         const bookClusterPositions = [
-            { x: -width * 0.40, count: 6 },
-            { x: -width * 0.20, count: 7 },
+            { x: -width * 0.42, count: 6 },
+            { x: -width * 0.28, count: 7 },
+            { x: -width * 0.14, count: 6 },
             { x: 0, count: 8 },
-            { x: width * 0.20, count: 7 },
-            { x: width * 0.38, count: 6 }
+            { x: width * 0.14, count: 6 },
+            { x: width * 0.28, count: 7 },
+            { x: width * 0.42, count: 6 }
         ];
 
         bookClusterPositions.forEach((config, idx) => {
@@ -307,12 +310,15 @@ async function buildOfficeScene(engine) {
             });
 
             // Add special RED trigger book on shelf 2 (middle shelf)
+            // Position it to stick out prominently beyond the book clusters
             const shelfSpacing = shelfHeight / numShelves;
+            const shelfThickness = 0.03;
             const triggerBook = new THREE.Mesh(
-                new THREE.BoxGeometry(0.15, 0.25, 0.03),
+                new THREE.BoxGeometry(0.15, 0.25, 0.05), // Slightly thicker for better visibility
                 new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.8 })
             );
-            triggerBook.position.set(config.width * 0.1, shelfSpacing * 2 + 0.15, shelfDepth * 0.3);
+            // Position at shelf 2, sticking out significantly (Z = 0.3 is well beyond hitboxes at 0.135)
+            triggerBook.position.set(config.width * 0.1, shelfSpacing * 2 + shelfThickness / 2, 0.3);
             triggerBook.castShadow = true;
             triggerBook.name = "secret_book";
             triggerBook.userData.isSecretTrigger = true;
