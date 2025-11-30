@@ -128,7 +128,7 @@ export class TouchControls {
 
         // Don't trigger interaction if modal is open
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display !== 'none') {
+        if (modal && window.getComputedStyle(modal).display !== 'none') {
             return;
         }
 
@@ -144,8 +144,10 @@ export class TouchControls {
         // Don't interfere if modal or instructions are open
         const modal = document.getElementById('clueModal');
         const instructions = document.getElementById('instructions');
-        if ((modal && modal.style.display !== 'none') ||
-            (instructions && instructions.style.display !== 'none')) {
+        const isModalOpen = modal && window.getComputedStyle(modal).display !== 'none';
+        const isInstructionsOpen = instructions && window.getComputedStyle(instructions).display !== 'none';
+
+        if (isModalOpen || isInstructionsOpen) {
             return;
         }
 
@@ -188,8 +190,10 @@ export class TouchControls {
         // Don't interfere if modal or instructions are open
         const modal = document.getElementById('clueModal');
         const instructions = document.getElementById('instructions');
-        if ((modal && modal.style.display !== 'none') ||
-            (instructions && instructions.style.display !== 'none')) {
+        const isModalOpen = modal && window.getComputedStyle(modal).display !== 'none';
+        const isInstructionsOpen = instructions && window.getComputedStyle(instructions).display !== 'none';
+
+        if (isModalOpen || isInstructionsOpen) {
             return;
         }
 
@@ -227,8 +231,8 @@ export class TouchControls {
         // Check if modal or instructions are open for tap interaction prevention
         const modal = document.getElementById('clueModal');
         const instructions = document.getElementById('instructions');
-        const isModalOpen = (modal && modal.style.display !== 'none') ||
-                           (instructions && instructions.style.display !== 'none');
+        const isModalOpen = (modal && window.getComputedStyle(modal).display !== 'none') ||
+                           (instructions && window.getComputedStyle(instructions).display !== 'none');
 
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
