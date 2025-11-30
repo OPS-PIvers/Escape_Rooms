@@ -21,6 +21,81 @@ const materials = {
     safe: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8, roughness: 0.3 })
 };
 
+// Helper function to populate a bookshelf with items using local coordinates
+function populateBookshelf(bookshelf, engine, options = {}) {
+    const { width, height, depth, shelves } = {
+        width: 2.5,
+        height: 2.0,
+        depth: 0.4,
+        shelves: 4,
+        ...options
+    };
+
+    const shelfSpacing = height / shelves;
+    const items = [];
+
+    // Shelf 0 (bottom) - Books on left, plant on right
+    const books1 = Prefabs.createBooks(6, 0.15);
+    books1.position.set(-width * 0.3, shelfSpacing * 0 + 0.08, 0);
+    books1.name = options.booksPrefix ? `${options.booksPrefix}_1` : "bookshelf_books_1";
+    items.push(books1);
+    bookshelf.add(books1);
+
+    const plant1 = Prefabs.createPlant(0.08, 0.25);
+    plant1.position.set(width * 0.3, shelfSpacing * 0 + 0.05, 0);
+    plant1.name = options.plantPrefix ? `${options.plantPrefix}_1` : "bookshelf_plant_1";
+    items.push(plant1);
+    bookshelf.add(plant1);
+
+    // Shelf 1 - Books and globe
+    const books2 = Prefabs.createBooks(7, 0.15);
+    books2.position.set(-width * 0.25, shelfSpacing * 1 + 0.08, 0);
+    books2.name = options.booksPrefix ? `${options.booksPrefix}_2` : "bookshelf_books_2";
+    items.push(books2);
+    bookshelf.add(books2);
+
+    const globe = Prefabs.createGlobe(0.12);
+    globe.position.set(width * 0.35, shelfSpacing * 1 + 0.05, 0);
+    globe.children.forEach(child => {
+        if (child.name === 'globe') {
+            child.name = options.globePrefix ? `${options.globePrefix}_1` : "bookshelf_globe";
+            items.push(child);
+        }
+    });
+    bookshelf.add(globe);
+
+    // Shelf 2 - Books and lamp
+    const books3 = Prefabs.createBooks(8, 0.15);
+    books3.position.set(-width * 0.3, shelfSpacing * 2 + 0.08, 0);
+    books3.name = options.booksPrefix ? `${options.booksPrefix}_3` : "bookshelf_books_3";
+    items.push(books3);
+    bookshelf.add(books3);
+
+    const lamp = Prefabs.createLamp('desk');
+    lamp.position.set(width * 0.35, shelfSpacing * 2 + 0.05, 0);
+    lamp.name = options.lampPrefix ? options.lampPrefix : "bookshelf_lamp";
+    items.push(lamp);
+    bookshelf.add(lamp);
+
+    // Shelf 3 (top) - Books and plant
+    const books4 = Prefabs.createBooks(5, 0.15);
+    books4.position.set(-width * 0.2, shelfSpacing * 3 + 0.08, 0);
+    books4.name = options.booksPrefix ? `${options.booksPrefix}_4` : "bookshelf_books_4";
+    items.push(books4);
+    bookshelf.add(books4);
+
+    const plant2 = Prefabs.createPlant(0.07, 0.2);
+    plant2.position.set(width * 0.3, shelfSpacing * 3 + 0.05, 0);
+    plant2.name = options.plantPrefix ? `${options.plantPrefix}_2` : "bookshelf_plant_2";
+    items.push(plant2);
+    bookshelf.add(plant2);
+
+    // Add all items to interactables
+    items.forEach(item => engine.interactables.push(item));
+
+    return items;
+}
+
 // Build the office scene
 async function buildOfficeScene(engine) {
     const scene = engine.scene;
@@ -227,6 +302,8 @@ async function buildOfficeScene(engine) {
     let secretBookshelfOpen = false;
 
     shelfPositions.forEach((config, idx) => {
+        let bookshelf;
+
         // Bookshelf 2 (idx === 1) is the SECRET DOOR
         if (idx === 1) {
             // Create pivot point for swinging bookshelf
@@ -236,183 +313,53 @@ async function buildOfficeScene(engine) {
             scene.add(secretBookshelfPivot);
 
             // Create bookshelf and add to pivot
-            const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
+            bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
             bookshelf.position.set(0, 0, config.width/2); // Offset from pivot point
             bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             secretBookshelfPivot.add(bookshelf);
-        } else {
-            // Normal static bookshelf
-            const bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
-            bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
-            bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
-            scene.add(bookshelf);
-        }
 
-        // Populate shelves with interactive items
-        const shelfSpacing = shelfHeight / numShelves;
-        const baseX = halfWidth - shelfDepth/2 - 0.3;
-
-        // Bottom shelf (shelf 0) - Books and decorations
-        if (idx === 0) {
-            const books1 = Prefabs.createBooks(7, 0.15);
-            books1.position.set(baseX, shelfSpacing * 0 + 0.1, config.z - 0.8);
-            books1.name = "library_books_1";
-            engine.interactables.push(books1);
-            scene.add(books1);
-
-            const plant1 = Prefabs.createPlant(0.08, 0.3);
-            plant1.position.set(baseX, shelfSpacing * 0 + 0.05, config.z + 0.6);
-            plant1.children.forEach(child => {
-                if (child.name === 'globe') child.name = 'library_plant_1';
+            // Populate with standard items
+            populateBookshelf(bookshelf, engine, {
+                width: config.width,
+                height: shelfHeight,
+                depth: shelfDepth,
+                shelves: numShelves,
+                booksPrefix: `library_books_secret`,
+                plantPrefix: `library_plant_secret`,
+                globePrefix: `library_globe_secret`,
+                lampPrefix: `library_lamp_secret`
             });
-            plant1.name = "library_plant_1";
-            engine.interactables.push(plant1);
-            scene.add(plant1);
-        }
 
-        // Shelf 1 - SECRET BOOKSHELF with trigger book
-        if (idx === 1) {
-            // Create special RED trigger book
+            // Add special RED trigger book on shelf 2 (middle shelf)
+            const shelfSpacing = shelfHeight / numShelves;
             const triggerBook = new THREE.Mesh(
                 new THREE.BoxGeometry(0.15, 0.25, 0.03),
                 new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.8 })
             );
-            // Position it on shelf 2 (middle shelf) sticking out slightly
-            // In the pivot's local space, accounting for the bookshelf rotation
-            const bookZ = -0.8; // Along the shelf length
-            const bookY = shelfSpacing * 2 + 0.15;
-            const bookX = -(shelfDepth/2 + 0.02); // Stick out from shelf front (negative X because rotated)
-            triggerBook.position.set(bookX, bookY, bookZ);
-            triggerBook.rotation.y = -Math.PI / 2; // Rotate to match bookshelf
+            triggerBook.position.set(config.width * 0.1, shelfSpacing * 2 + 0.15, shelfDepth * 0.3);
             triggerBook.castShadow = true;
             triggerBook.name = "secret_book";
             triggerBook.userData.isSecretTrigger = true;
-            secretBookshelfPivot.add(triggerBook);
+            bookshelf.add(triggerBook);
             engine.interactables.push(triggerBook);
+        } else {
+            // Normal static bookshelf
+            bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
+            bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
+            bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
+            scene.add(bookshelf);
 
-            // Add regular books to the secret bookshelf
-            const books2 = Prefabs.createBooks(6, 0.15);
-            books2.position.set(0, shelfSpacing * 1 + 0.05, -0.5);
-            books2.rotation.y = -Math.PI / 2;
-            books2.name = "library_books_2";
-            engine.interactables.push(books2);
-            secretBookshelfPivot.add(books2);
-
-            const globe = Prefabs.createGlobe(0.15);
-            globe.position.set(0, shelfSpacing * 1 + 0.05, 0.4);
-            globe.children.forEach(child => {
-                if (child.name === 'globe') {
-                    engine.interactables.push(child);
-                }
+            // Populate with standard items
+            populateBookshelf(bookshelf, engine, {
+                width: config.width,
+                height: shelfHeight,
+                depth: shelfDepth,
+                shelves: numShelves,
+                booksPrefix: `library_books_${idx}`,
+                plantPrefix: `library_plant_${idx}`,
+                globePrefix: `library_globe_${idx}`,
+                lampPrefix: `library_lamp_${idx}`
             });
-            secretBookshelfPivot.add(globe);
-        }
-
-        // Shelf 2 - Books and small lamp
-        if (idx === 2) {
-            const books3 = Prefabs.createBooks(8, 0.15);
-            books3.position.set(baseX, shelfSpacing * 2 + 0.05, config.z - 0.7);
-            books3.name = "library_books_3";
-            engine.interactables.push(books3);
-            scene.add(books3);
-
-            const lamp = Prefabs.createLamp('desk');
-            lamp.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.7);
-            lamp.name = "library_lamp";
-            engine.interactables.push(lamp);
-            scene.add(lamp);
-        }
-
-        // Shelf 3 - Books and decorative items
-        if (idx === 3) {
-            const books4 = Prefabs.createBooks(5, 0.15);
-            books4.position.set(baseX, shelfSpacing * 3 + 0.05, config.z - 0.4);
-            books4.name = "library_books_4";
-            engine.interactables.push(books4);
-            scene.add(books4);
-
-            const plant2 = Prefabs.createPlant(0.07, 0.25);
-            plant2.position.set(baseX, shelfSpacing * 3 + 0.05, config.z + 0.5);
-            plant2.name = "library_plant_2";
-            engine.interactables.push(plant2);
-            scene.add(plant2);
-        }
-
-        // Add varied items to other shelves
-        if (idx === 0) {
-            // Additional books on shelf 2
-            const books5 = Prefabs.createBooks(6, 0.15);
-            books5.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.2);
-            books5.name = "library_books_5";
-            engine.interactables.push(books5);
-            scene.add(books5);
-
-            // Briefcase on shelf 1
-            const briefcase = Prefabs.createBriefcase(0.4, 0.12, 0.3);
-            briefcase.position.set(baseX, shelfSpacing * 1 + 0.08, config.z - 0.6);
-            briefcase.name = "library_briefcase";
-            engine.interactables.push(briefcase);
-            scene.add(briefcase);
-        }
-
-        if (idx === 1) {
-            // Books on shelf 3
-            const books6 = Prefabs.createBooks(7, 0.15);
-            books6.position.set(0, shelfSpacing * 3 + 0.05, -0.6);
-            books6.rotation.y = -Math.PI / 2;
-            books6.name = "library_books_6";
-            engine.interactables.push(books6);
-            secretBookshelfPivot.add(books6);
-
-            // Small plant on shelf 2
-            const plant3 = Prefabs.createPlant(0.06, 0.2);
-            plant3.position.set(0, shelfSpacing * 2 + 0.05, 0.8);
-            plant3.name = "library_plant_3";
-            engine.interactables.push(plant3);
-            secretBookshelfPivot.add(plant3);
-        }
-
-        if (idx === 2) {
-            // Books on bottom shelf
-            const books7 = Prefabs.createBooks(9, 0.15);
-            books7.position.set(baseX, shelfSpacing * 0 + 0.1, config.z - 0.3);
-            books7.name = "library_books_7";
-            engine.interactables.push(books7);
-            scene.add(books7);
-
-            // Another globe on shelf 3
-            const globe2 = Prefabs.createGlobe(0.12);
-            globe2.position.set(baseX, shelfSpacing * 3 + 0.05, config.z + 0.6);
-            globe2.children.forEach(child => {
-                if (child.name === 'globe') {
-                    child.name = 'library_globe_2';
-                    engine.interactables.push(child);
-                }
-            });
-            scene.add(globe2);
-        }
-
-        if (idx === 3) {
-            // Books on shelf 1
-            const books8 = Prefabs.createBooks(8, 0.15);
-            books8.position.set(baseX, shelfSpacing * 1 + 0.05, config.z - 0.7);
-            books8.name = "library_books_8";
-            engine.interactables.push(books8);
-            scene.add(books8);
-
-            // Books on shelf 2
-            const books9 = Prefabs.createBooks(6, 0.15);
-            books9.position.set(baseX, shelfSpacing * 2 + 0.05, config.z + 0.3);
-            books9.name = "library_books_9";
-            engine.interactables.push(books9);
-            scene.add(books9);
-
-            // Decorative item on bottom shelf
-            const plant4 = Prefabs.createPlant(0.08, 0.25);
-            plant4.position.set(baseX, shelfSpacing * 0 + 0.05, config.z + 0.7);
-            plant4.name = "library_plant_4";
-            engine.interactables.push(plant4);
-            scene.add(plant4);
         }
     });
 
