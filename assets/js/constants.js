@@ -115,27 +115,14 @@ export const CLASSROOM_DESK_GAP_Z = 2;
 export const LOCATIONS = [
     "computer", "filing_cabinet_1", "filing_cabinet_2", "filing_cabinet_3", "papers",
     "briefcase", "mug", "hat", "lamp",
-    "globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
+    "globe", "secret_globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
     "picture", "desk_lamp", "cardboard_box", "fire_extinguisher",
     "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
     "keyboard", "mouse", "open_book", "chair",
     "pen_0", "pen_1", "pen_2",
-    // Bookshelf items (main bookshelf)
-    "bookshelf_books_1a", "bookshelf_books_1b", "bookshelf_books_2",
-    "bookshelf_books_3a", "bookshelf_books_3b", "bookshelf_books_4a", "bookshelf_books_4b",
-    "bookshelf_plant_1", "bookshelf_plant_2", "bookshelf_briefcase",
-    "bookshelf_globe", "bookshelf_lamp",
-    // Library bookshelf items (4 bookshelves on east wall)
-    "library_books_0_1a", "library_books_0_1b", "library_books_0_2",
-    "library_books_0_3a", "library_books_0_3b", "library_books_0_4a", "library_books_0_4b",
-    "library_plant_0_1", "library_plant_0_2", "library_globe_0_1", "library_lamp_0",
-    "library_books_secret_1a", "library_books_secret_1b", "library_books_secret_2",
-    "library_books_secret_3a", "library_books_secret_3b", "library_books_secret_4a", "library_books_secret_4b",
-    "library_plant_secret_1", "library_plant_secret_2", "library_globe_secret_1", "library_lamp_secret",
-    "library_books_2_1a", "library_books_2_1b", "library_books_2_2",
-    "library_books_2_3a", "library_books_2_3b", "library_books_2_4a", "library_books_2_4b",
-    "library_plant_2_1", "library_plant_2_2", "library_globe_2_1", "library_lamp_2",
-    "library_books_3_1a", "library_books_3_1b", "library_books_3_2",
-    "library_books_3_3a", "library_books_3_3b", "library_books_3_4a", "library_books_3_4b",
-    "library_plant_3_1", "library_plant_3_2", "library_globe_3_1", "library_lamp_3"
+    // Library bookshelf shelf rows (4 bookshelves × 4 shelves each = 16 interactive zones)
+    "bookshelf_0_shelf_0", "bookshelf_0_shelf_1", "bookshelf_0_shelf_2", "bookshelf_0_shelf_3",
+    "secret_bookshelf_shelf_0", "secret_bookshelf_shelf_1", "secret_bookshelf_shelf_2", "secret_bookshelf_shelf_3",
+    "bookshelf_2_shelf_0", "bookshelf_2_shelf_1", "bookshelf_2_shelf_2", "bookshelf_2_shelf_3",
+    "bookshelf_3_shelf_0", "bookshelf_3_shelf_1", "bookshelf_3_shelf_2", "bookshelf_3_shelf_3"
 ];

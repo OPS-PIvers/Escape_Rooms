@@ -21,50 +21,18 @@ const materials = {
     safe: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8, roughness: 0.3 })
 };
 
-// Helper function to populate a bookshelf with items using local coordinates
-function populateBookshelf(bookshelf, engine, options = {}) {
-    const { width, height, depth, shelves } = {
-        width: 2.5,
-        height: 2.0,
-        depth: 0.4,
-        shelves: 4,
-        ...options
-    };
-
-    const shelfSpacing = height / shelves;
-    const items = [];
-
-    // Populate each shelf with multiple book clusters to create a library feel
-    for (let shelfIdx = 0; shelfIdx < shelves; shelfIdx++) {
-        const shelfThickness = 0.03; // From prefabs.js createBookshelf
-        const shelfY = shelfSpacing * shelfIdx + shelfThickness / 2; // Position books on top of shelf
-
-        // Create 7 book clusters across each shelf for fuller library look with less gaps
-        const bookClusterPositions = [
-            { x: -width * 0.42, count: 6 },
-            { x: -width * 0.28, count: 7 },
-            { x: -width * 0.14, count: 6 },
-            { x: 0, count: 8 },
-            { x: width * 0.14, count: 6 },
-            { x: width * 0.28, count: 7 },
-            { x: width * 0.42, count: 6 }
-        ];
-
-        bookClusterPositions.forEach((config, idx) => {
-            const books = Prefabs.createBooks(config.count);
-            books.position.set(config.x, shelfY, 0);
-            books.name = options.booksPrefix
-                ? `${options.booksPrefix}_${shelfIdx}_${idx}`
-                : `bookshelf_books_${shelfIdx}_${idx}`;
-            items.push(books);
-            bookshelf.add(books);
+// Helper function to register bookshelf shelf rows as interactables
+function registerBookshelfInteractables(bookshelf, engine, prefix = "bookshelf") {
+    if (bookshelf.userData.shelfRows) {
+        bookshelf.userData.shelfRows.forEach((shelfRow, idx) => {
+            // Find the hitbox in this shelf row and register it
+            const hitbox = shelfRow.children.find(child => child.name && child.name.includes('hitbox'));
+            if (hitbox) {
+                hitbox.name = `${prefix}_shelf_${idx}`;
+                engine.interactables.push(hitbox);
+            }
         });
     }
-
-    // Add all items to interactables
-    items.forEach(item => engine.interactables.push(item));
-
-    return items;
 }
 
 // Build the office scene
@@ -264,16 +232,31 @@ async function buildOfficeScene(engine) {
     engine.interactables.push(mouse);
     scene.add(mouse);
 
+    // Globe on desk (SECRET DOOR TRIGGER)
+    const globe = Prefabs.createGlobe(0.15);
+    globe.position.set(-halfWidth + 0.9, DESK_SURFACE_Y, -halfDepth + 1.0);
+    globe.rotation.y = Math.PI / 6;
+    // Find the globe sphere and make it the trigger
+    const globeSphere = globe.children.find(child => child.name === "globe");
+    if (globeSphere) {
+        globeSphere.name = "secret_globe";
+        globeSphere.userData.isSecretTrigger = true;
+        engine.interactables.push(globeSphere);
+    }
+    scene.add(globe);
+
     // ===== LIBRARY ON EAST WALL =====
     // Create multiple bookshelves spanning the entire east wall
+    // Each bookshelf is 3 units wide, 4 bookshelves fit perfectly in 12-unit room
+    const shelfWidth = 3.0;
     const shelfDepth = 0.4;
     const shelfHeight = 2.0;
-    const numShelves = 4; // Number of shelves per bookshelf unit
+    const numShelves = 4; // Number of shelf rows per bookshelf unit
     const shelfPositions = [
-        { z: -4.5, width: 2.5 },
-        { z: -1.5, width: 2.5 },
-        { z: 1.5, width: 2.5 },
-        { z: 4.5, width: 2.5 }
+        { z: -4.5 },
+        { z: -1.5 },
+        { z: 1.5 },
+        { z: 4.5 }
     ];
 
     // Secret bookshelf door variables
@@ -288,60 +271,26 @@ async function buildOfficeScene(engine) {
             // Create pivot point for swinging bookshelf
             secretBookshelfPivot = new THREE.Group();
             // Position pivot at the back edge of the bookshelf (where hinge would be, against the wall)
-            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z - config.width/2);
+            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z - shelfWidth/2);
             scene.add(secretBookshelfPivot);
 
-            // Create bookshelf and add to pivot
-            bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
-            bookshelf.position.set(0, 0, config.width/2); // Offset from pivot point
+            // Create bookshelf with pre-populated books and add to pivot
+            bookshelf = Prefabs.createBookshelf(shelfWidth, shelfHeight, shelfDepth, numShelves);
+            bookshelf.position.set(0, 0, shelfWidth/2); // Offset from pivot point
             bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             secretBookshelfPivot.add(bookshelf);
 
-            // Populate with standard items
-            populateBookshelf(bookshelf, engine, {
-                width: config.width,
-                height: shelfHeight,
-                depth: shelfDepth,
-                shelves: numShelves,
-                booksPrefix: `library_books_secret`,
-                plantPrefix: `library_plant_secret`,
-                globePrefix: `library_globe_secret`,
-                lampPrefix: `library_lamp_secret`
-            });
-
-            // Add special RED trigger book on shelf 2 (middle shelf)
-            // Position it to stick out prominently beyond the book clusters
-            const shelfSpacing = shelfHeight / numShelves;
-            const shelfThickness = 0.03;
-            const triggerBook = new THREE.Mesh(
-                new THREE.BoxGeometry(0.15, 0.25, 0.05), // Slightly thicker for better visibility
-                new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.8 })
-            );
-            // Position at shelf 2, sticking out significantly (Z = 0.3 is well beyond hitboxes at 0.135)
-            triggerBook.position.set(config.width * 0.1, shelfSpacing * 2 + shelfThickness / 2, 0.3);
-            triggerBook.castShadow = true;
-            triggerBook.name = "secret_book";
-            triggerBook.userData.isSecretTrigger = true;
-            bookshelf.add(triggerBook);
-            engine.interactables.push(triggerBook);
+            // Register shelf rows as interactables
+            registerBookshelfInteractables(bookshelf, engine, "secret_bookshelf");
         } else {
-            // Normal static bookshelf
-            bookshelf = Prefabs.createBookshelf(config.width, shelfHeight, shelfDepth, numShelves);
+            // Normal static bookshelf with pre-populated books
+            bookshelf = Prefabs.createBookshelf(shelfWidth, shelfHeight, shelfDepth, numShelves);
             bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
             bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             scene.add(bookshelf);
 
-            // Populate with standard items
-            populateBookshelf(bookshelf, engine, {
-                width: config.width,
-                height: shelfHeight,
-                depth: shelfDepth,
-                shelves: numShelves,
-                booksPrefix: `library_books_${idx}`,
-                plantPrefix: `library_plant_${idx}`,
-                globePrefix: `library_globe_${idx}`,
-                lampPrefix: `library_lamp_${idx}`
-            });
+            // Register shelf rows as interactables
+            registerBookshelfInteractables(bookshelf, engine, `bookshelf_${idx}`);
         }
     });
 
@@ -560,8 +509,8 @@ async function initOffice() {
         cameraX: 0,
         cameraZ: 3,
         onInteract: (name, obj) => {
-            // Handle secret book trigger
-            if (name === 'secret_book' && officeData) {
+            // Handle secret globe trigger (opens secret bookshelf door)
+            if (name === 'secret_globe' && officeData) {
                 const isOpen = officeData.toggleSecretBookshelf();
                 console.log(`Secret bookshelf ${isOpen ? 'opening' : 'closing'}...`);
                 showModal(name, {});

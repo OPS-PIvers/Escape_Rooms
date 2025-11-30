@@ -184,16 +184,30 @@ export function createChair(seatHeight = 0.5, backHeight = 0.9) {
     return group;
 }
 
-export function createBookshelf(width = 1.0, height = 2.0, depth = 0.4, shelves = 4) {
+export function createBookshelf(width = 3.0, height = 2.0, depth = 0.4, shelves = 4) {
     const group = new THREE.Group();
     const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8 });
 
+    // Precise dimensions for perfect fit
+    const sideThickness = 0.05;
+    const backThickness = 0.02;
+    const shelfThickness = 0.03;
+
+    // Calculate exact interior dimensions for book placement
+    const interiorWidth = width - (2 * sideThickness); // 3.0 - 0.1 = 2.9
+    const interiorDepth = depth - backThickness;
+
+    // Book dimensions
+    const bookColors = [0x8B0000, 0x00008B, 0x006400, 0x8B4513, 0x4B0082, 0x800080, 0x2F4F4F, 0x8B4500];
+    const bookHeight = 0.25;
+    const bookDepth = 0.18;
+
     // Back panel
     const back = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, 0.02),
+        new THREE.BoxGeometry(width, height, backThickness),
         woodMaterial
     );
-    back.position.set(0, height/2, -depth/2);
+    back.position.set(0, height/2, -depth/2 + backThickness/2);
     back.castShadow = true;
     back.receiveShadow = true;
     group.add(back);
@@ -201,24 +215,91 @@ export function createBookshelf(width = 1.0, height = 2.0, depth = 0.4, shelves 
     // Sides
     [width/2, -width/2].forEach(x => {
         const side = new THREE.Mesh(
-            new THREE.BoxGeometry(0.05, height, depth),
+            new THREE.BoxGeometry(sideThickness, height, depth),
             woodMaterial
         );
-        side.position.set(x - (x > 0 ? 0.025 : -0.025), height/2, 0);
+        side.position.set(x - (x > 0 ? sideThickness/2 : -sideThickness/2), height/2, 0);
         side.castShadow = true;
         group.add(side);
     });
 
     // Shelves (including top and bottom)
+    const shelfSpacing = height / shelves;
     for (let i = 0; i <= shelves; i++) {
         const shelf = new THREE.Mesh(
-            new THREE.BoxGeometry(width - 0.1, 0.03, depth),
+            new THREE.BoxGeometry(interiorWidth, shelfThickness, depth),
             woodMaterial
         );
-        shelf.position.set(0, (height / shelves) * i, 0);
+        shelf.position.set(0, shelfSpacing * i, 0);
         shelf.castShadow = true;
         shelf.receiveShadow = true;
         group.add(shelf);
+    }
+
+    // Create pre-populated books for each shelf row (interactive groups)
+    // Each shelf row is one clickable zone
+    group.userData.shelfRows = [];
+
+    for (let shelfIdx = 0; shelfIdx < shelves; shelfIdx++) {
+        // Create a group for this shelf row (for interaction)
+        const shelfRowGroup = new THREE.Group();
+        shelfRowGroup.name = `shelf_row_${shelfIdx}`;
+
+        // Position at shelf height (on top of shelf)
+        const shelfY = shelfSpacing * shelfIdx + shelfThickness;
+        shelfRowGroup.position.y = shelfY;
+
+        // Calculate number of books to fill the shelf exactly
+        // Using varied spine widths for realism
+        const booksPerRow = 60 + Math.floor(Math.random() * 10); // 60-70 books
+        const bookSpacing = interiorWidth / booksPerRow;
+        let xOffset = -interiorWidth / 2;
+
+        for (let bookIdx = 0; bookIdx < booksPerRow; bookIdx++) {
+            // Varying spine widths for realism (but calculated to fit exactly)
+            const spineWidth = bookSpacing * (0.85 + Math.random() * 0.3); // 85%-115% of average
+
+            const book = new THREE.Mesh(
+                new THREE.BoxGeometry(spineWidth, bookHeight, bookDepth),
+                new THREE.MeshStandardMaterial({
+                    color: bookColors[(shelfIdx * booksPerRow + bookIdx) % bookColors.length],
+                    roughness: 0.8
+                })
+            );
+
+            // Position book on shelf
+            book.position.set(
+                xOffset + bookSpacing/2,
+                bookHeight / 2,
+                -depth/2 + backThickness + bookDepth/2 + 0.02 // Just in front of back panel
+            );
+
+            // Slight random tilt for realism
+            book.rotation.z = (Math.random() - 0.5) * 0.12;
+            book.rotation.y = (Math.random() - 0.5) * 0.08;
+            book.rotation.x = (Math.random() - 0.5) * 0.05;
+
+            book.castShadow = true;
+            shelfRowGroup.add(book);
+
+            xOffset += bookSpacing;
+        }
+
+        // Add invisible hitbox for easier interaction with shelf row
+        const hitbox = new THREE.Mesh(
+            new THREE.BoxGeometry(interiorWidth, bookHeight * 1.2, bookDepth * 1.3),
+            new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitbox.position.set(
+            0,
+            bookHeight / 2,
+            -depth/2 + backThickness + bookDepth/2 + 0.02
+        );
+        hitbox.name = `shelf_row_${shelfIdx}_hitbox`;
+        shelfRowGroup.add(hitbox);
+
+        group.add(shelfRowGroup);
+        group.userData.shelfRows.push(shelfRowGroup);
     }
 
     return group;
