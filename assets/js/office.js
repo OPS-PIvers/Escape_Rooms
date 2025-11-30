@@ -99,7 +99,7 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMin + (-halfDepth)) / 2 // Center between -6 and -3
     );
-    eastWallNorth.rotation.y = Math.PI / 2; // Face west into room
+    eastWallNorth.rotation.y = Math.PI; // Face west into room
     eastWallNorth.castShadow = true;
     eastWallNorth.receiveShadow = true;
     scene.add(eastWallNorth);
@@ -114,7 +114,7 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMax + halfDepth) / 2 // Center between 0 and 6
     );
-    eastWallSouth.rotation.y = Math.PI / 2; // Face west into room
+    eastWallSouth.rotation.y = Math.PI; // Face west into room
     eastWallSouth.castShadow = true;
     eastWallSouth.receiveShadow = true;
     scene.add(eastWallSouth);
