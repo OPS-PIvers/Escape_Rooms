@@ -97,7 +97,7 @@ async function buildOfficeScene(engine) {
 
     // North section of east wall (runs from z = -6 to z = -3)
     const eastWallNorth = new THREE.Mesh(
-        new THREE.BoxGeometry(eastOpeningZMin - (-halfDepth), WALL_HEIGHT, WALL_THICKNESS),
+        new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, eastOpeningZMin - (-halfDepth)),
         materials.wall
     );
     eastWallNorth.position.set(
@@ -105,14 +105,14 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMin + (-halfDepth)) / 2 // Center between -6 and -3
     );
-    eastWallNorth.rotation.y = -Math.PI / 2; // Face inward (North-South alignment)
+    // No rotation needed as geometry is defined along Z-axis
     eastWallNorth.castShadow = true;
     eastWallNorth.receiveShadow = true;
     scene.add(eastWallNorth);
 
     // South section of east wall (runs from z = 0 to z = 6)
     const eastWallSouth = new THREE.Mesh(
-        new THREE.BoxGeometry(halfDepth - eastOpeningZMax, WALL_HEIGHT, WALL_THICKNESS),
+        new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, halfDepth - eastOpeningZMax),
         materials.wall
     );
     eastWallSouth.position.set(
@@ -120,14 +120,14 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMax + halfDepth) / 2 // Center between 0 and 6
     );
-    eastWallSouth.rotation.y = -Math.PI / 2; // Face inward (North-South alignment)
+    // No rotation needed as geometry is defined along Z-axis
     eastWallSouth.castShadow = true;
     eastWallSouth.receiveShadow = true;
     scene.add(eastWallSouth);
 
     // Lintel above secret bookshelf (to form doorway)
     const eastWallLintel = new THREE.Mesh(
-        new THREE.BoxGeometry(eastOpeningWidth, WALL_HEIGHT - shelfHeight, WALL_THICKNESS),
+        new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT - shelfHeight, eastOpeningWidth),
         materials.wall
     );
     eastWallLintel.position.set(
@@ -135,7 +135,7 @@ async function buildOfficeScene(engine) {
         shelfHeight + (WALL_HEIGHT - shelfHeight) / 2,
         eastOpeningZ
     );
-    eastWallLintel.rotation.y = -Math.PI / 2;
+    // No rotation needed as geometry is defined along Z-axis
     eastWallLintel.castShadow = true;
     eastWallLintel.receiveShadow = true;
     scene.add(eastWallLintel);
