@@ -458,10 +458,10 @@ async function buildOfficeScene(engine) {
     hiddenCeiling.position.set(hiddenRoomX, hiddenRoomHeight, hiddenRoomZ);
     scene.add(hiddenCeiling);
 
-    // Add the SAFE to the hidden room
+    // Add the SAFE to the hidden room (inside, against the back wall)
     const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
-    safe.position.set(hiddenRoomX + 0.8, 0, hiddenRoomZ); // Against back wall
-    safe.rotation.y = -Math.PI / 2; // Rotate 90 degrees clockwise
+    safe.position.set(hiddenRoomX - 0.8, 0, hiddenRoomZ); // Inside room, against back wall (the bookshelf)
+    safe.rotation.y = -Math.PI / 2; // Face west (into the room)
     safe.children[0].name = "safe";
     engine.interactables.push(safe.children[0]);
     scene.add(safe);
