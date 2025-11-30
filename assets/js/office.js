@@ -82,8 +82,40 @@ async function buildOfficeScene(engine) {
         scene.add(mesh);
     });
 
-    // East wall (Right) - Now has a large open passage for secret bookshelf
-    // No wall added; the opening naturally exists at the east side
+    // East wall (Right) - Solid wall with opening for secret bookshelf door
+    // Secret bookshelf is at z = -1.5, width 3.0, so opening spans z = -3.0 to z = 0.0
+    const eastOpeningZ = -1.5;
+    const eastOpeningWidth = 3.0;
+    const eastOpeningZMin = eastOpeningZ - eastOpeningWidth / 2; // -3.0
+    const eastOpeningZMax = eastOpeningZ + eastOpeningWidth / 2; // 0.0
+
+    // North section of east wall (above opening)
+    const eastWallNorth = new THREE.Mesh(
+        new THREE.BoxGeometry(eastOpeningZMin - (-halfDepth), WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallNorth.position.set(
+        halfWidth,
+        WALL_HEIGHT / 2,
+        (eastOpeningZMin + (-halfDepth)) / 2 // Center between -6 and -3
+    );
+    eastWallNorth.castShadow = true;
+    eastWallNorth.receiveShadow = true;
+    scene.add(eastWallNorth);
+
+    // South section of east wall (below opening)
+    const eastWallSouth = new THREE.Mesh(
+        new THREE.BoxGeometry(halfDepth - eastOpeningZMax, WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallSouth.position.set(
+        halfWidth,
+        WALL_HEIGHT / 2,
+        (eastOpeningZMax + halfDepth) / 2 // Center between 0 and 6
+    );
+    eastWallSouth.castShadow = true;
+    eastWallSouth.receiveShadow = true;
+    scene.add(eastWallSouth);
 
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
