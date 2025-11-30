@@ -125,6 +125,12 @@ export class TouchControls {
     handleInteractTouch(e) {
         e.preventDefault();
         e.stopPropagation();
+
+        // Don't trigger interaction if overlay is visible
+        if (this._isOverlayVisible()) {
+            return;
+        }
+
         this.handleCenterScreenInteract();
     }
 
@@ -133,10 +139,24 @@ export class TouchControls {
         this.updateDimensionsFromCSS();
     }
 
-    onTouchStart(event) {
-        // Don't interfere if modal is open
+    /**
+     * Check if any overlay (modal or instructions) is currently visible
+     * Uses computed styles to ensure accurate detection of CSS-based visibility
+     * @returns {boolean} True if any blocking overlay is visible
+     */
+    _isOverlayVisible() {
         const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display === 'block') {
+        const instructions = document.getElementById('instructions');
+
+        const isModalOpen = modal && window.getComputedStyle(modal).display !== 'none';
+        const isInstructionsOpen = instructions && window.getComputedStyle(instructions).display !== 'none';
+
+        return isModalOpen || isInstructionsOpen;
+    }
+
+    onTouchStart(event) {
+        // Don't interfere if any overlay is visible
+        if (this._isOverlayVisible()) {
             return;
         }
 
@@ -145,9 +165,13 @@ export class TouchControls {
             const x = touch.clientX;
             const y = touch.clientY;
 
-            // Check if touch is on UI element
+            // Check if touch is on UI element or modal
             const target = touch.target;
-            if (target.closest('#mobile-joystick') || target.closest('#mobile-interact-btn')) {
+            if (target.closest('#mobile-joystick') ||
+                target.closest('#mobile-interact-btn') ||
+                target.closest('#clueModal') ||
+                target.closest('#victoryModal') ||
+                target.closest('#instructions')) {
                 continue; // Let UI handle it
             }
 
@@ -172,9 +196,8 @@ export class TouchControls {
     }
 
     onTouchMove(event) {
-        // Don't interfere if modal is open
-        const modal = document.getElementById('clueModal');
-        if (modal && modal.style.display === 'block') {
+        // Don't interfere if any overlay is visible
+        if (this._isOverlayVisible()) {
             return;
         }
 
@@ -209,6 +232,9 @@ export class TouchControls {
     }
 
     onTouchEnd(event) {
+        // Check if any overlay is visible for tap interaction prevention
+        const isOverlayVisible = this._isOverlayVisible();
+
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
 
@@ -227,8 +253,8 @@ export class TouchControls {
                 // End camera look control
                 const touchData = this.touches.get(touch.identifier);
 
-                // Check if this was a tap (minimal movement)
-                if (touchData) {
+                // Check if this was a tap (minimal movement) and overlay is NOT visible
+                if (touchData && !isOverlayVisible) {
                     const dx = Math.abs(touch.clientX - touchData.startX);
                     const dy = Math.abs(touch.clientY - touchData.startY);
                     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -287,9 +313,9 @@ export class TouchControls {
             y: -(y / window.innerHeight) * 2 + 1
         };
 
-        // Perform raycast
+        // Perform raycast - use recursive to detect nested objects
         this.raycaster.setFromCamera(mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, false);
+        const intersects = this.raycaster.intersectObjects(this.interactables, true);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;
@@ -301,7 +327,8 @@ export class TouchControls {
         // Raycast from center of screen (like pressing Space)
         const centerMouse = { x: 0, y: 0 };
         this.raycaster.setFromCamera(centerMouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.interactables, false);
+        // Use recursive to detect nested objects
+        const intersects = this.raycaster.intersectObjects(this.interactables, true);
 
         if (intersects.length > 0 && this.onInteract) {
             const object = intersects[0].object;

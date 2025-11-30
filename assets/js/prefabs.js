@@ -964,3 +964,66 @@ export function createPen(length = 0.12, radius = 0.003) {
 
     return group;
 }
+
+// ===== UTILITY FUNCTIONS =====
+
+/**
+ * Adds an invisible hitbox to an object to make it easier to interact with.
+ * This is especially useful for small objects like books, pens, plants, etc.
+ *
+ * @param {THREE.Object3D} object - The object to add a hitbox to
+ * @param {Object} size - Size of the hitbox {width, height, depth}
+ * @param {Object} offset - Position offset for the hitbox {x, y, z}
+ * @param {string} name - Name for the hitbox (for interaction)
+ * @returns {THREE.Mesh} The invisible hitbox mesh
+ */
+export function addInvisibleHitbox(object, size = {width: 0.3, height: 0.3, depth: 0.3}, offset = {x: 0, y: 0, z: 0}, name = null) {
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(size.width, size.height, size.depth),
+        new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide
+        })
+    );
+
+    hitbox.position.set(offset.x, offset.y, offset.z);
+
+    if (name) {
+        hitbox.name = name;
+    }
+
+    // Make the hitbox a child of the object
+    object.add(hitbox);
+
+    return hitbox;
+}
+
+/**
+ * Creates an interactable wrapper for small objects.
+ * The wrapper includes the original object plus a larger invisible hitbox.
+ *
+ * @param {THREE.Object3D} object - The small object to wrap
+ * @param {string} name - Name for interaction
+ * @param {Object} hitboxSize - Optional size override for hitbox
+ * @returns {Object} Object with .group (the wrapper) and .hitbox (the invisible mesh to add to interactables)
+ */
+export function createInteractableWrapper(object, name, hitboxSize = null) {
+    const group = new THREE.Group();
+    group.add(object);
+
+    // Default hitbox size - generous for easy clicking
+    const defaultSize = {
+        width: 0.4,
+        height: 0.4,
+        depth: 0.4
+    };
+
+    const size = hitboxSize || defaultSize;
+    const hitbox = addInvisibleHitbox(group, size, {x: 0, y: 0, z: 0}, name);
+
+    return {
+        group: group,
+        hitbox: hitbox
+    };
+}

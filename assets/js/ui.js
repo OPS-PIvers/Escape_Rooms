@@ -22,7 +22,25 @@ const modalContent = document.getElementById('modalContent');
 const optionsContainer = document.getElementById('optionsContainer');
 const modalFeedback = document.getElementById('modalFeedback');
 const closeBtn = document.getElementById('closeModalBtn');
-closeBtn.addEventListener('click', closeModal);
+
+// Prevent modal clicks from propagating to game elements
+modal.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+modal.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+}, { passive: false });
+
+modal.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+}, { passive: false });
+
+// Close button handler
+closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeModal();
+});
 
 export function closeModal() {
     isInteracting = false;
