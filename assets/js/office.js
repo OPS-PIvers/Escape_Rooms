@@ -43,6 +43,12 @@ async function buildOfficeScene(engine) {
 
     // ===== ROOM STRUCTURE (Procedural) =====
 
+    // Define shelf dimensions early for wall construction
+    const shelfWidth = 3.0;
+    const shelfDepth = 0.4;
+    const shelfHeight = 2.0;
+    const numShelves = 4; // Number of shelf rows per bookshelf unit
+
     // Floor
     const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(OFFICE_WIDTH, OFFICE_DEPTH),
@@ -85,7 +91,7 @@ async function buildOfficeScene(engine) {
     // East wall (Right) - Solid wall with opening for secret bookshelf door
     // Secret bookshelf is at z = -1.5, width 3.0, so opening spans z = -3.0 to z = 0.0
     const eastOpeningZ = -1.5;
-    const eastOpeningWidth = 3.0;
+    const eastOpeningWidth = shelfWidth; // 3.0
     const eastOpeningZMin = eastOpeningZ - eastOpeningWidth / 2; // -3.0
     const eastOpeningZMax = eastOpeningZ + eastOpeningWidth / 2; // 0.0
 
@@ -99,7 +105,7 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMin + (-halfDepth)) / 2 // Center between -6 and -3
     );
-    eastWallNorth.rotation.y = Math.PI; // Face west into room
+    eastWallNorth.rotation.y = -Math.PI / 2; // Face inward (North-South alignment)
     eastWallNorth.castShadow = true;
     eastWallNorth.receiveShadow = true;
     scene.add(eastWallNorth);
@@ -114,10 +120,25 @@ async function buildOfficeScene(engine) {
         WALL_HEIGHT / 2,
         (eastOpeningZMax + halfDepth) / 2 // Center between 0 and 6
     );
-    eastWallSouth.rotation.y = Math.PI; // Face west into room
+    eastWallSouth.rotation.y = -Math.PI / 2; // Face inward (North-South alignment)
     eastWallSouth.castShadow = true;
     eastWallSouth.receiveShadow = true;
     scene.add(eastWallSouth);
+
+    // Lintel above secret bookshelf (to form doorway)
+    const eastWallLintel = new THREE.Mesh(
+        new THREE.BoxGeometry(eastOpeningWidth, WALL_HEIGHT - shelfHeight, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallLintel.position.set(
+        halfWidth,
+        shelfHeight + (WALL_HEIGHT - shelfHeight) / 2,
+        eastOpeningZ
+    );
+    eastWallLintel.rotation.y = -Math.PI / 2;
+    eastWallLintel.castShadow = true;
+    eastWallLintel.receiveShadow = true;
+    scene.add(eastWallLintel);
 
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
@@ -359,10 +380,7 @@ async function buildOfficeScene(engine) {
     // ===== LIBRARY ON EAST WALL =====
     // Create multiple bookshelves spanning the entire east wall
     // Each bookshelf is 3 units wide, 4 bookshelves fit perfectly in 12-unit room
-    const shelfWidth = 3.0;
-    const shelfDepth = 0.4;
-    const shelfHeight = 2.0;
-    const numShelves = 4; // Number of shelf rows per bookshelf unit
+    // (Shelf dimensions defined at start of function)
     const shelfPositions = [
         { z: -4.5 },
         { z: -1.5 },
