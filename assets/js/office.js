@@ -262,10 +262,10 @@ async function buildOfficeScene(engine) {
     engine.interactables.push(sofa);
     scene.add(sofa);
 
-    // Armchair (angled toward sofa and TV)
+    // Armchair (east side of coffee table, angled toward sofa and TV)
     const armchair = Prefabs.createArmchair(0.9, 0.9, 0.45);
-    armchair.position.set(sittingAreaX - 1.2, 0, sittingAreaZ + 0.5);
-    armchair.rotation.y = Math.PI / 4; // Angled toward TV
+    armchair.position.set(sittingAreaX + 1.2, 0, sittingAreaZ - 0.5);
+    armchair.rotation.y = -Math.PI / 2; // Rotated 135° clockwise from original
     armchair.name = "armchair";
     engine.interactables.push(armchair);
     scene.add(armchair);
@@ -290,9 +290,9 @@ async function buildOfficeScene(engine) {
     }
     scene.add(tvStand);
 
-    // Floor Lamp (beside armchair)
+    // Floor Lamp (beside armchair on east side)
     const floorLamp = Prefabs.createLamp('floor');
-    floorLamp.position.set(sittingAreaX - 1.8, 0, sittingAreaZ + 1.0);
+    floorLamp.position.set(sittingAreaX + 1.8, 0, sittingAreaZ - 1.0);
     floorLamp.name = "floor_lamp";
     engine.interactables.push(floorLamp);
     scene.add(floorLamp);
