@@ -34,85 +34,29 @@ function populateBookshelf(bookshelf, engine, options = {}) {
     const shelfSpacing = height / shelves;
     const items = [];
 
-    // Shelf 0 (bottom) - Books (left), more books (center), plant (right)
-    const books1a = Prefabs.createBooks(7);
-    books1a.position.set(-width * 0.35, shelfSpacing * 0 + 0.08, 0);
-    books1a.name = options.booksPrefix ? `${options.booksPrefix}_1a` : "bookshelf_books_1a";
-    items.push(books1a);
-    bookshelf.add(books1a);
+    // Populate each shelf with multiple book clusters to create a library feel
+    for (let shelfIdx = 0; shelfIdx < shelves; shelfIdx++) {
+        const shelfY = shelfSpacing * shelfIdx + 0.08;
 
-    const books1b = Prefabs.createBooks(5);
-    books1b.position.set(-width * 0.05, shelfSpacing * 0 + 0.08, 0);
-    books1b.name = options.booksPrefix ? `${options.booksPrefix}_1b` : "bookshelf_books_1b";
-    items.push(books1b);
-    bookshelf.add(books1b);
+        // Create 5 book clusters across each shelf for a full library look
+        const bookClusterPositions = [
+            { x: -width * 0.40, count: 6 },
+            { x: -width * 0.20, count: 7 },
+            { x: 0, count: 8 },
+            { x: width * 0.20, count: 7 },
+            { x: width * 0.38, count: 6 }
+        ];
 
-    const plant1 = Prefabs.createPlant(0.08, 0.25);
-    plant1.position.set(width * 0.35, shelfSpacing * 0 + 0.05, 0);
-    plant1.name = options.plantPrefix ? `${options.plantPrefix}_1` : "bookshelf_plant_1";
-    items.push(plant1);
-    bookshelf.add(plant1);
-
-    // Shelf 1 - Books (left), briefcase (center), globe (right)
-    const books2 = Prefabs.createBooks(8);
-    books2.position.set(-width * 0.35, shelfSpacing * 1 + 0.08, 0);
-    books2.name = options.booksPrefix ? `${options.booksPrefix}_2` : "bookshelf_books_2";
-    items.push(books2);
-    bookshelf.add(books2);
-
-    const briefcase = Prefabs.createBriefcase(0.35, 0.1, 0.25);
-    briefcase.position.set(width * 0.0, shelfSpacing * 1 + 0.06, 0);
-    briefcase.name = options.briefcasePrefix ? options.briefcasePrefix : "bookshelf_briefcase";
-    items.push(briefcase);
-    bookshelf.add(briefcase);
-
-    const globe = Prefabs.createGlobe(0.12);
-    globe.position.set(width * 0.38, shelfSpacing * 1 + 0.05, 0);
-    globe.children.forEach(child => {
-        if (child.name === 'globe') {
-            child.name = options.globePrefix ? `${options.globePrefix}_1` : "bookshelf_globe";
-            items.push(child);
-        }
-    });
-    bookshelf.add(globe);
-
-    // Shelf 2 - Books (left), books (center), lamp (right)
-    const books3a = Prefabs.createBooks(6);
-    books3a.position.set(-width * 0.35, shelfSpacing * 2 + 0.08, 0);
-    books3a.name = options.booksPrefix ? `${options.booksPrefix}_3a` : "bookshelf_books_3a";
-    items.push(books3a);
-    bookshelf.add(books3a);
-
-    const books3b = Prefabs.createBooks(7);
-    books3b.position.set(-width * 0.05, shelfSpacing * 2 + 0.08, 0);
-    books3b.name = options.booksPrefix ? `${options.booksPrefix}_3b` : "bookshelf_books_3b";
-    items.push(books3b);
-    bookshelf.add(books3b);
-
-    const lamp = Prefabs.createLamp('desk');
-    lamp.position.set(width * 0.38, shelfSpacing * 2 + 0.05, 0);
-    lamp.name = options.lampPrefix ? options.lampPrefix : "bookshelf_lamp";
-    items.push(lamp);
-    bookshelf.add(lamp);
-
-    // Shelf 3 (top) - Books (left), small plant (center), books (right)
-    const books4a = Prefabs.createBooks(6);
-    books4a.position.set(-width * 0.35, shelfSpacing * 3 + 0.08, 0);
-    books4a.name = options.booksPrefix ? `${options.booksPrefix}_4a` : "bookshelf_books_4a";
-    items.push(books4a);
-    bookshelf.add(books4a);
-
-    const plant2 = Prefabs.createPlant(0.06, 0.18);
-    plant2.position.set(width * 0.0, shelfSpacing * 3 + 0.05, 0);
-    plant2.name = options.plantPrefix ? `${options.plantPrefix}_2` : "bookshelf_plant_2";
-    items.push(plant2);
-    bookshelf.add(plant2);
-
-    const books4b = Prefabs.createBooks(5);
-    books4b.position.set(width * 0.3, shelfSpacing * 3 + 0.08, 0);
-    books4b.name = options.booksPrefix ? `${options.booksPrefix}_4b` : "bookshelf_books_4b";
-    items.push(books4b);
-    bookshelf.add(books4b);
+        bookClusterPositions.forEach((config, idx) => {
+            const books = Prefabs.createBooks(config.count);
+            books.position.set(config.x, shelfY, 0);
+            books.name = options.booksPrefix
+                ? `${options.booksPrefix}_${shelfIdx}_${idx}`
+                : `bookshelf_books_${shelfIdx}_${idx}`;
+            items.push(books);
+            bookshelf.add(books);
+        });
+    }
 
     // Add all items to interactables
     items.forEach(item => engine.interactables.push(item));
@@ -401,6 +345,7 @@ async function buildOfficeScene(engine) {
     const hiddenRoomDepth = 2.5;
     const hiddenRoomX = halfWidth + hiddenRoomWidth/2 + 0.2; // Beyond the east wall
     const hiddenRoomZ = -1.5; // Same Z as secret bookshelf
+    const hiddenRoomHeight = shelfHeight; // Match bookshelf height
 
     const hiddenRoomMaterial = new THREE.MeshStandardMaterial({
         color: 0x8B7355,
@@ -420,10 +365,10 @@ async function buildOfficeScene(engine) {
 
     // Hidden room back wall (east side)
     const hiddenBackWall = new THREE.Mesh(
-        new THREE.BoxGeometry(hiddenRoomWidth, WALL_HEIGHT, WALL_THICKNESS),
+        new THREE.BoxGeometry(hiddenRoomWidth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenBackWall.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ);
+    hiddenBackWall.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ);
     hiddenBackWall.rotation.y = Math.PI / 2;
     hiddenBackWall.castShadow = true;
     hiddenBackWall.receiveShadow = true;
@@ -431,19 +376,19 @@ async function buildOfficeScene(engine) {
 
     // Hidden room side walls (north and south)
     const hiddenSideWall1 = new THREE.Mesh(
-        new THREE.BoxGeometry(hiddenRoomDepth, WALL_HEIGHT, WALL_THICKNESS),
+        new THREE.BoxGeometry(hiddenRoomDepth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenSideWall1.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ + hiddenRoomDepth/2);
+    hiddenSideWall1.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ + hiddenRoomDepth/2);
     hiddenSideWall1.castShadow = true;
     hiddenSideWall1.receiveShadow = true;
     scene.add(hiddenSideWall1);
 
     const hiddenSideWall2 = new THREE.Mesh(
-        new THREE.BoxGeometry(hiddenRoomDepth, WALL_HEIGHT, WALL_THICKNESS),
+        new THREE.BoxGeometry(hiddenRoomDepth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenSideWall2.position.set(hiddenRoomX, WALL_HEIGHT/2, hiddenRoomZ - hiddenRoomDepth/2);
+    hiddenSideWall2.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ - hiddenRoomDepth/2);
     hiddenSideWall2.castShadow = true;
     hiddenSideWall2.receiveShadow = true;
     scene.add(hiddenSideWall2);
@@ -454,19 +399,20 @@ async function buildOfficeScene(engine) {
         materials.ceiling
     );
     hiddenCeiling.rotation.x = Math.PI / 2;
-    hiddenCeiling.position.set(hiddenRoomX, WALL_HEIGHT, hiddenRoomZ);
+    hiddenCeiling.position.set(hiddenRoomX, hiddenRoomHeight, hiddenRoomZ);
     scene.add(hiddenCeiling);
 
     // Add the SAFE to the hidden room
     const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
     safe.position.set(hiddenRoomX + 0.8, 0, hiddenRoomZ); // Against back wall
+    safe.rotation.y = -Math.PI / 2; // Rotate 90 degrees clockwise
     safe.children[0].name = "safe";
     engine.interactables.push(safe.children[0]);
     scene.add(safe);
 
     // Add a light in the hidden room
     const hiddenRoomLight = new THREE.PointLight(0xffaa66, 0.8, 6);
-    hiddenRoomLight.position.set(hiddenRoomX, WALL_HEIGHT - 0.5, hiddenRoomZ);
+    hiddenRoomLight.position.set(hiddenRoomX, hiddenRoomHeight - 0.5, hiddenRoomZ);
     hiddenRoomLight.castShadow = true;
     scene.add(hiddenRoomLight);
 
