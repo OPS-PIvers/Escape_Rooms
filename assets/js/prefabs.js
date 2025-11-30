@@ -435,6 +435,114 @@ export function createCoffeeTable(width = 1.0, height = 0.35, depth = 0.6) {
     return group;
 }
 
+export function createArmchair(width = 0.9, depth = 0.9, seatHeight = 0.45) {
+    const group = new THREE.Group();
+    const fabricMaterial = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.9 });
+    const cushionMaterial = new THREE.MeshStandardMaterial({ color: 0x6b5a4a, roughness: 0.85 });
+
+    // Seat cushion
+    const seat = new THREE.Mesh(
+        new THREE.BoxGeometry(width - 0.2, 0.15, depth - 0.2),
+        cushionMaterial
+    );
+    seat.position.y = seatHeight;
+    seat.castShadow = true;
+    group.add(seat);
+
+    // Backrest
+    const back = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.7, 0.15),
+        fabricMaterial
+    );
+    back.position.set(0, seatHeight + 0.45, -depth/2 + 0.075);
+    back.castShadow = true;
+    group.add(back);
+
+    // Armrests
+    [-width/2 + 0.1, width/2 - 0.1].forEach(x => {
+        const arm = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.5, depth - 0.2),
+            fabricMaterial
+        );
+        arm.position.set(x, seatHeight + 0.15, 0);
+        arm.castShadow = true;
+        group.add(arm);
+    });
+
+    // Base/frame (slightly visible under seat)
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.1, depth),
+        new THREE.MeshStandardMaterial({ color: 0x3a2a1a })
+    );
+    base.position.y = seatHeight - 0.1;
+    base.castShadow = true;
+    group.add(base);
+
+    // Legs (simple)
+    const legGeometry = new THREE.CylinderGeometry(0.04, 0.04, seatHeight - 0.15);
+    const legMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2a1a });
+    const legPositions = [
+        [width/2 - 0.15, (seatHeight - 0.15)/2, depth/2 - 0.15],
+        [width/2 - 0.15, (seatHeight - 0.15)/2, -depth/2 + 0.15],
+        [-width/2 + 0.15, (seatHeight - 0.15)/2, depth/2 - 0.15],
+        [-width/2 + 0.15, (seatHeight - 0.15)/2, -depth/2 + 0.15]
+    ];
+
+    legPositions.forEach(pos => {
+        const leg = new THREE.Mesh(legGeometry, legMaterial);
+        leg.position.set(...pos);
+        group.add(leg);
+    });
+
+    return group;
+}
+
+export function createRug(width = 2.5, depth = 2.0) {
+    const group = new THREE.Group();
+    const rugMaterial = new THREE.MeshStandardMaterial({
+        color: 0x8B4726,
+        roughness: 0.95
+    });
+
+    // Main rug body
+    const rug = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.02, depth),
+        rugMaterial
+    );
+    rug.position.y = 0.01;
+    rug.receiveShadow = true;
+    group.add(rug);
+
+    // Decorative border pattern
+    const borderMaterial = new THREE.MeshStandardMaterial({
+        color: 0x6a3819,
+        roughness: 0.95
+    });
+
+    const borderThickness = 0.15;
+    // Top and bottom borders
+    [depth/2 - borderThickness/2, -depth/2 + borderThickness/2].forEach(z => {
+        const border = new THREE.Mesh(
+            new THREE.BoxGeometry(width, 0.025, borderThickness),
+            borderMaterial
+        );
+        border.position.set(0, 0.015, z);
+        group.add(border);
+    });
+
+    // Left and right borders
+    [-width/2 + borderThickness/2, width/2 - borderThickness/2].forEach(x => {
+        const border = new THREE.Mesh(
+            new THREE.BoxGeometry(borderThickness, 0.025, depth - 2 * borderThickness),
+            borderMaterial
+        );
+        border.position.set(x, 0.015, 0);
+        group.add(border);
+    });
+
+    return group;
+}
+
 // ===== OFFICE EQUIPMENT =====
 
 export function createComputer(screenWidth = 0.4, screenHeight = 0.3) {
@@ -970,6 +1078,180 @@ export function createChalkboard(width = 4.0, height = 2.0) {
     );
     tray.position.set(0, -height/2 - 0.05, 0.05);
     group.add(tray);
+
+    return group;
+}
+
+export function createTVStand(screenWidth = 1.2, screenHeight = 0.7, standWidth = 1.5) {
+    const group = new THREE.Group();
+
+    // TV Stand/Cabinet
+    const standHeight = 0.5;
+    const standDepth = 0.4;
+    const standMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.6 });
+
+    const stand = new THREE.Mesh(
+        new THREE.BoxGeometry(standWidth, standHeight, standDepth),
+        standMaterial
+    );
+    stand.position.y = standHeight / 2;
+    stand.castShadow = true;
+    group.add(stand);
+
+    // TV Screen (mounted on top of stand)
+    const tvThickness = 0.08;
+    const screen = new THREE.Mesh(
+        new THREE.BoxGeometry(screenWidth, screenHeight, tvThickness),
+        new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.2 })
+    );
+    screen.position.set(0, standHeight + screenHeight / 2 + 0.05, 0);
+    screen.castShadow = true;
+    screen.name = "tv_screen";
+    group.add(screen);
+
+    // TV Frame
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3 });
+    const frameThickness = 0.05;
+
+    // Top/Bottom frame
+    [screenHeight/2, -screenHeight/2].forEach(y => {
+        const frame = new THREE.Mesh(
+            new THREE.BoxGeometry(screenWidth + frameThickness * 2, frameThickness, tvThickness),
+            frameMaterial
+        );
+        frame.position.set(0, standHeight + screenHeight / 2 + 0.05 + y, 0);
+        group.add(frame);
+    });
+
+    // Left/Right frame
+    [-screenWidth/2 - frameThickness/2, screenWidth/2 + frameThickness/2].forEach(x => {
+        const frame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameThickness, screenHeight, tvThickness),
+            frameMaterial
+        );
+        frame.position.set(x, standHeight + screenHeight / 2 + 0.05, 0);
+        group.add(frame);
+    });
+
+    return group;
+}
+
+export function createCoffeeCup(radius = 0.04, height = 0.1) {
+    const group = new THREE.Group();
+    const cupMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.6 });
+
+    // Cup body
+    const cup = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius * 0.9, radius * 0.8, height, 16),
+        cupMaterial
+    );
+    cup.position.y = height / 2;
+    cup.castShadow = true;
+    group.add(cup);
+
+    // Coffee inside
+    const coffee = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius * 0.85, radius * 0.85, 0.01, 16),
+        new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.4 })
+    );
+    coffee.position.y = height * 0.9;
+    group.add(coffee);
+
+    // Handle
+    const handleGeometry = new THREE.TorusGeometry(radius * 0.6, radius * 0.15, 8, 12, Math.PI);
+    const handle = new THREE.Mesh(
+        handleGeometry,
+        cupMaterial
+    );
+    handle.rotation.z = -Math.PI / 2;
+    handle.rotation.y = Math.PI / 2;
+    handle.position.set(radius * 0.9, height * 0.6, 0);
+    handle.castShadow = true;
+    group.add(handle);
+
+    return group;
+}
+
+export function createNewspaper(width = 0.3, height = 0.4) {
+    const group = new THREE.Group();
+    const paperMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.9 });
+
+    // Folded newspaper (two pages)
+    const page1 = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.002, height),
+        paperMaterial
+    );
+    page1.position.set(-width * 0.25, 0.001, 0);
+    page1.rotation.y = -0.2; // Slight angle
+    page1.castShadow = true;
+    page1.receiveShadow = true;
+    group.add(page1);
+
+    const page2 = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.002, height),
+        paperMaterial
+    );
+    page2.position.set(width * 0.25, 0.001, 0);
+    page2.rotation.y = 0.2; // Slight angle
+    page2.castShadow = true;
+    page2.receiveShadow = true;
+    group.add(page2);
+
+    // Text lines (simple black rectangles to simulate text)
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
+    for (let i = 0; i < 8; i++) {
+        const line = new THREE.Mesh(
+            new THREE.BoxGeometry(width * 0.8, 0.003, height * 0.05),
+            textMaterial
+        );
+        line.position.set(0, 0.003, -height * 0.3 + i * height * 0.08);
+        page1.add(line);
+    }
+
+    return group;
+}
+
+export function createRemote(length = 0.15, width = 0.05) {
+    const group = new THREE.Group();
+    const remoteMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5 });
+
+    // Remote body
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.015, length),
+        remoteMaterial
+    );
+    body.position.y = 0.0075;
+    body.castShadow = true;
+    group.add(body);
+
+    // Buttons (simple colored squares)
+    const buttonMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.3 });
+    const buttonSize = width * 0.15;
+
+    // Create a grid of buttons
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 2; col++) {
+            const button = new THREE.Mesh(
+                new THREE.BoxGeometry(buttonSize, 0.003, buttonSize),
+                buttonMaterial
+            );
+            button.position.set(
+                -width * 0.2 + col * width * 0.4,
+                0.017,
+                -length * 0.3 + row * length * 0.18
+            );
+            group.add(button);
+        }
+    }
+
+    // Power button (red)
+    const powerButton = new THREE.Mesh(
+        new THREE.CylinderGeometry(buttonSize * 0.5, buttonSize * 0.5, 0.003, 12),
+        new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.3 })
+    );
+    powerButton.rotation.x = Math.PI / 2;
+    powerButton.position.set(0, 0.017, length * 0.35);
+    group.add(powerButton);
 
     return group;
 }

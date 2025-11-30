@@ -120,6 +120,9 @@ export const LOCATIONS = [
     "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
     "keyboard", "mouse", "open_book", "chair",
     "pen_0", "pen_1", "pen_2",
+    // Sitting area (southwest corner)
+    "sofa", "armchair", "coffee_table", "tv", "floor_lamp",
+    "coffee_cup", "newspaper", "remote",
     // Library bookshelf shelf rows (4 bookshelves × 4 shelves each = 16 interactive zones)
     "bookshelf_0_shelf_0", "bookshelf_0_shelf_1", "bookshelf_0_shelf_2", "bookshelf_0_shelf_3",
     "secret_bookshelf_shelf_0", "secret_bookshelf_shelf_1", "secret_bookshelf_shelf_2", "secret_bookshelf_shelf_3",

@@ -245,6 +245,81 @@ async function buildOfficeScene(engine) {
     }
     scene.add(globe);
 
+    // ===== SITTING AREA (Southwest Corner) =====
+    const sittingAreaX = -halfWidth + 2.5;
+    const sittingAreaZ = halfDepth - 2.5;
+
+    // Rug (foundation of the sitting area)
+    const rug = Prefabs.createRug(3.0, 2.5);
+    rug.position.set(sittingAreaX, 0, sittingAreaZ);
+    scene.add(rug);
+
+    // Sofa (against south wall, facing north)
+    const sofa = Prefabs.createSofa(2.0, 0.9, 0.45);
+    sofa.position.set(sittingAreaX, 0, halfDepth - 1.2);
+    sofa.rotation.y = Math.PI; // Face north into room
+    sofa.name = "sofa";
+    engine.interactables.push(sofa);
+    scene.add(sofa);
+
+    // Armchair (angled toward sofa and TV)
+    const armchair = Prefabs.createArmchair(0.9, 0.9, 0.45);
+    armchair.position.set(sittingAreaX - 1.2, 0, sittingAreaZ + 0.5);
+    armchair.rotation.y = Math.PI / 4; // Angled toward TV
+    armchair.name = "armchair";
+    engine.interactables.push(armchair);
+    scene.add(armchair);
+
+    // Coffee Table (in front of sofa)
+    const coffeeTableHeight = 0.35;
+    const coffeeTable = Prefabs.createCoffeeTable(1.0, coffeeTableHeight, 0.6);
+    coffeeTable.position.set(sittingAreaX, 0, sittingAreaZ);
+    coffeeTable.name = "coffee_table";
+    engine.interactables.push(coffeeTable);
+    scene.add(coffeeTable);
+
+    // TV Stand with TV (against west wall, facing east)
+    const tvStand = Prefabs.createTVStand(1.2, 0.7, 1.5);
+    tvStand.position.set(-halfWidth + 0.5, 0, sittingAreaZ);
+    tvStand.rotation.y = Math.PI / 2; // Face east into room
+    // Find and register TV screen as interactable
+    const tvScreen = tvStand.children.find(child => child.name === "tv_screen");
+    if (tvScreen) {
+        tvScreen.name = "tv";
+        engine.interactables.push(tvScreen);
+    }
+    scene.add(tvStand);
+
+    // Floor Lamp (beside armchair)
+    const floorLamp = Prefabs.createLamp('floor');
+    floorLamp.position.set(sittingAreaX - 1.8, 0, sittingAreaZ + 1.0);
+    floorLamp.name = "floor_lamp";
+    engine.interactables.push(floorLamp);
+    scene.add(floorLamp);
+
+    // Coffee Cup on table
+    const coffeeCup = Prefabs.createCoffeeCup(0.04, 0.1);
+    coffeeCup.position.set(sittingAreaX - 0.2, coffeeTableHeight, sittingAreaZ + 0.1);
+    coffeeCup.name = "coffee_cup";
+    engine.interactables.push(coffeeCup);
+    scene.add(coffeeCup);
+
+    // Newspaper on table
+    const newspaper = Prefabs.createNewspaper(0.3, 0.4);
+    newspaper.position.set(sittingAreaX + 0.2, coffeeTableHeight, sittingAreaZ - 0.1);
+    newspaper.rotation.y = Math.PI / 8; // Slight angle
+    newspaper.name = "newspaper";
+    engine.interactables.push(newspaper);
+    scene.add(newspaper);
+
+    // Remote Control on table
+    const remote = Prefabs.createRemote(0.15, 0.05);
+    remote.position.set(sittingAreaX - 0.3, coffeeTableHeight, sittingAreaZ - 0.2);
+    remote.rotation.y = -Math.PI / 6; // Angled
+    remote.name = "remote";
+    engine.interactables.push(remote);
+    scene.add(remote);
+
     // ===== LIBRARY ON EAST WALL =====
     // Create multiple bookshelves spanning the entire east wall
     // Each bookshelf is 3 units wide, 4 bookshelves fit perfectly in 12-unit room
