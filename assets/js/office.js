@@ -273,6 +273,8 @@ async function buildOfficeScene(engine) {
                 // Raise pens to match notepad height
                 pen.position.set(-0.15 + (i * 0.04), 0.01, -0.05 + (i * 0.02));
                 pen.rotation.y = Math.random() * Math.PI / 4;
+                pen.name = `pen_${i}`;
+                engine.interactables.push(pen);
                 topDrawer.add(pen);
             }
             console.log('Added 3 pens to drawer 2');
@@ -287,6 +289,8 @@ async function buildOfficeScene(engine) {
     const deskChair = Prefabs.createChair(0.5, 0.9);
     deskChair.position.set(-halfWidth + 2.3, 0, -halfDepth + 2.3);
     deskChair.rotation.y = Math.PI / 4 + Math.PI; // Facing desk
+    deskChair.name = "chair";
+    engine.interactables.push(deskChair);
     scene.add(deskChair);
 
     // Computer on desk (scaled bigger and moved forward toward chair)
@@ -301,12 +305,16 @@ async function buildOfficeScene(engine) {
     const keyboard = Prefabs.createKeyboard(0.4, 0.15);
     keyboard.position.set(-halfWidth + 1.7, DESK_SURFACE_Y, -halfDepth + 1.5);
     keyboard.rotation.y = Math.PI / 4; // Aligned with monitor
+    keyboard.name = "keyboard";
+    engine.interactables.push(keyboard);
     scene.add(keyboard);
 
     // Mouse on desk (to the right of keyboard)
     const mouse = Prefabs.createMouse();
     mouse.position.set(-halfWidth + 1.9, DESK_SURFACE_Y, -halfDepth + 1.3);
     mouse.rotation.y = Math.PI / 4; // Aligned with setup
+    mouse.name = "mouse";
+    engine.interactables.push(mouse);
     scene.add(mouse);
 
     // ===== LIBRARY ON EAST WALL =====
@@ -624,7 +632,16 @@ async function initOffice() {
                 handleDrawerInteraction(obj, engine);
                 return;
             }
-            // Handle other interactions via game logic
+            // Handle pen interactions (only when drawer is open)
+            if (name && name.startsWith('pen_')) {
+                // Pen -> Drawer Group
+                const drawerGroup = obj.parent;
+                if (drawerGroup && drawerGroup.userData.isOpen) {
+                    showModal(name, {});
+                }
+                return;
+            }
+            // Handle all other interactions via game logic
             showModal(name, {});
         }
     });
