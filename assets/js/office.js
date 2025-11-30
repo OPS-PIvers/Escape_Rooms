@@ -156,14 +156,12 @@ async function buildOfficeScene(engine) {
     ceiling.position.y = WALL_HEIGHT;
     scene.add(ceiling);
 
-    // Walls (3 solid walls + north wall with door opening)
+    // Walls (South wall solid, West wall solid, East wall with secret door opening, North wall with door opening)
     const walls = [
         // Front wall (South) - Solid
         { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
         // Left wall (West) - Solid
-        { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
-        // Right wall (East) - Solid
-        { width: OFFICE_DEPTH, pos: [halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
+        { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 }
     ];
 
     walls.forEach(wall => {
@@ -177,6 +175,62 @@ async function buildOfficeScene(engine) {
         mesh.receiveShadow = true;
         scene.add(mesh);
     });
+
+    // Right wall (East) - With secret door opening (3 pieces: north section, opening, south section)
+    // Secret bookshelf is at z = -1.5, width = 2.5 (spans from z = -2.75 to z = -0.25)
+    const secretDoorWidth = 2.5; // Width of the opening
+    const secretDoorZ = -1.5;    // Center Z position of the opening
+    const secretDoorHeight = 2.2; // Height of the opening
+
+    // Calculate wall sections
+    const northSectionDepth = halfDepth - (secretDoorZ + secretDoorWidth/2);
+    const southSectionDepth = (secretDoorZ - secretDoorWidth/2) - (-halfDepth);
+    const lintelHeightEast = WALL_HEIGHT - secretDoorHeight;
+
+    // North section of east wall (from secret door to north end)
+    const eastWallNorth = new THREE.Mesh(
+        new THREE.BoxGeometry(northSectionDepth, WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallNorth.position.set(
+        halfWidth,
+        WALL_HEIGHT/2,
+        secretDoorZ + secretDoorWidth/2 + northSectionDepth/2
+    );
+    eastWallNorth.rotation.y = Math.PI/2;
+    eastWallNorth.castShadow = true;
+    eastWallNorth.receiveShadow = true;
+    scene.add(eastWallNorth);
+
+    // South section of east wall (from south end to secret door)
+    const eastWallSouth = new THREE.Mesh(
+        new THREE.BoxGeometry(southSectionDepth, WALL_HEIGHT, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallSouth.position.set(
+        halfWidth,
+        WALL_HEIGHT/2,
+        secretDoorZ - secretDoorWidth/2 - southSectionDepth/2
+    );
+    eastWallSouth.rotation.y = Math.PI/2;
+    eastWallSouth.castShadow = true;
+    eastWallSouth.receiveShadow = true;
+    scene.add(eastWallSouth);
+
+    // Lintel above secret door opening
+    const eastWallLintel = new THREE.Mesh(
+        new THREE.BoxGeometry(secretDoorWidth, lintelHeightEast, WALL_THICKNESS),
+        materials.wall
+    );
+    eastWallLintel.position.set(
+        halfWidth,
+        secretDoorHeight + lintelHeightEast/2,
+        secretDoorZ
+    );
+    eastWallLintel.rotation.y = Math.PI/2;
+    eastWallLintel.castShadow = true;
+    eastWallLintel.receiveShadow = true;
+    scene.add(eastWallLintel);
 
     // North wall (Back) - With door opening (3 pieces: left, right, lintel)
     const doorW = 1.2;
