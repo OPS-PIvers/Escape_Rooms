@@ -153,7 +153,7 @@ function getDescriptionsForObject(objName) {
             "The chair sits at the perfect angle for both conversation and solitude.",
             "You notice the cushion maintains its shape despite regular use - quality foam.",
             "The chair's fabric has a sophisticated texture that feels expensive to the touch.",
-            "This chair has positioned to take advantage of the room's natural light.",
+            "This chair is positioned to take advantage of the room's natural light.",
             "The chair's sturdy construction suggests it's been here through multiple office redesigns."
         ],
         
@@ -518,39 +518,6 @@ function getDescriptionsForObject(objName) {
             "The shredder's cutting blades are well-maintained - regular oiling and cleaning.",
             "You spot the shredder has jam protection - quality equipment for important work.",
             "The shredder's placement suggests it's used frequently but kept out of sight."
-        ],
-        
-        "armchair": [
-            "A plush armchair that invites you to sit and stay awhile.",
-            "The chair's upholstery shows a subtle wear pattern where people lean back to contemplate.",
-            "One armrest has a faint ring stain from countless coffee mugs during reading sessions.",
-            "The chair sits at the perfect angle for both conversation and solitude.",
-            "You notice the cushion maintains its shape despite regular use - quality foam.",
-            "The chair's fabric has a sophisticated texture that feels expensive to the touch.",
-            "This chair has positioned to take advantage of the room's natural light.",
-            "The chair's sturdy construction suggests it's been here through multiple office redesigns."
-        ],
-        
-        "tv": [
-            "A large flat-screen TV that's currently displaying a serene nature documentary.",
-            "The TV is mounted at the perfect viewing height for someone sitting on the sofa.",
-            "You notice the screen is completely dust-free - someone cleans it regularly.",
-            "The TV's speakers are surprisingly good for a built-in system - quality entertainment.",
-            "The TV has minimal bezels, creating an immersive viewing experience.",
-            "A streaming device is hidden behind, suggesting someone who values clean aesthetics.",
-            "The TV's reflections show it's positioned to avoid glare from the windows.",
-            "This TV has clearly been chosen for both casual viewing and impressive presentations."
-        ],
-        
-        "floor_lamp": [
-            "An elegant floor lamp that provides ambient lighting for the sitting area.",
-            "The lamp's extended arm creates a perfect pool of light over the coffee table.",
-            "You notice the lamp has a dimmer switch - someone values adjustable atmosphere.",
-            "The lamp's weighted base ensures stability even when fully extended.",
-            "The lamp's shade diffuses light perfectly, creating a warm, inviting glow.",
-            "The lamp's cord is neatly tucked along the baseboard - attention to detail matters here.",
-            "The lamp's height creates visual balance with the surrounding furniture.",
-            "This lamp clearly serves both functional and decorative purposes in the room's design."
         ]
     };
     
@@ -569,8 +536,21 @@ function getDescriptionsForObject(objName) {
 
 // Check if an object has cycling descriptions available
 function hasCyclingDescriptions(objName) {
-    const descriptions = getDescriptionsForObject(objName);
-    return descriptions.length > 1;
+    // Need to check if the object exists in descriptionSets directly
+    // to avoid false positives from the generic fallback array
+    const descriptionSets = {
+        "desk": true, "chair": true, "computer": true, "keyboard": true, "mouse": true,
+        "secret_globe": true, "trash": true, "lamp": true, "filing_cabinet": true,
+        "sofa": true, "armchair": true, "coffee_table": true, "tv": true, "floor_lamp": true,
+        "coffee_cup": true, "newspaper": true, "remote": true, "plant": true, "picture": true,
+        "coat_rack": true, "briefcase": true, "safe": true, "notepad": true, "bookshelf": true,
+        "bookshelf_0_shelf_0": true, "bookshelf_0_shelf_1": true, "bookshelf_0_shelf_2": true,
+        "bookshelf_0_shelf_3": true, "secret_bookshelf_shelf_0": true, "secret_bookshelf_shelf_1": true,
+        "secret_bookshelf_shelf_2": true, "secret_bookshelf_shelf_3": true, "bookshelf_2_shelf_0": true,
+        "bookshelf_2_shelf_1": true, "bookshelf_2_shelf_2": true, "bookshelf_2_shelf_3": true,
+        "pen_0": true, "pen_1": true, "pen_2": true, "shredder": true
+    };
+    return descriptionSets[objName] === true;
 }
 
 // Export the cycling description system
