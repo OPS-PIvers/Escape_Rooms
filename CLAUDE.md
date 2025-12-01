@@ -86,12 +86,11 @@ Modal dialogs and user interface:
 
 #### 6. **Support Modules**
 - **[constants.js](assets/js/constants.js)**: Shared configuration values
-- **[modelLoader.js](assets/js/modelLoader.js)**: GLB/GLTF model loading utilities
+- **[prefabs.js](assets/js/prefabs.js)**: Procedural object generators (desk, chair, bookshelf, safe, etc.)
 - **[materials.js](assets/js/materials.js)**: Reusable Three.js materials
 - **[utils.js](assets/js/utils.js)**: Helper functions (createBox, etc.)
 - **[touchControls.js](assets/js/touchControls.js)**: Mobile touch control system
 - **[touchUtils.js](assets/js/touchUtils.js)**: Touch interaction helpers
-- **[prefabs/](assets/js/prefabs/)**: Reusable scene objects (desk, clock, shelves)
 
 ## File Structure
 
@@ -110,18 +109,13 @@ Escape_Rooms/
 │   │   ├── gameLogic.js           # Puzzle/clue system
 │   │   ├── ui.js                  # Modal and UI management
 │   │   ├── constants.js           # Shared constants
-│   │   ├── modelLoader.js         # Model loading utilities
+│   │   ├── prefabs.js             # ⭐ PROCEDURAL OBJECT GENERATORS
 │   │   ├── materials.js           # Reusable materials
 │   │   ├── utils.js               # Helper functions
 │   │   ├── touchControls.js       # Touch controls
-│   │   ├── touchUtils.js          # Touch utilities
-│   │   └── prefabs/               # Reusable objects
-│   │       ├── desk.js
-│   │       ├── clock.js
-│   │       └── shelves.js
-│   ├── css/
-│   │   └── main.css               # Shared styles
-│   └── models/                    # GLB/GLTF 3D models
+│   │   └── touchUtils.js          # Touch utilities
+│   └── css/
+│       └── main.css               # Shared styles
 └── CLAUDE.md                      # This file
 ```
 
@@ -166,32 +160,39 @@ Escape_Rooms/
 ```javascript
 import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
-import { loadModel } from './modelLoader.js';
+import * as Prefabs from './prefabs.js';
 import { showModal } from './ui.js';
 import { initGame } from './gameLogic.js';
 
-async function buildMyRoomScene(engine) {
+function buildMyRoomScene(engine) {
     const scene = engine.scene;
+    const halfWidth = 5;
+    const halfDepth = 5;
 
-    // Add floor
-    const floor = await loadModel('assets/models/floorFull.glb');
-    // ... add tiles
-
-    // Add walls, furniture, props
-    // ...
-
-    // Add interactables
-    const desk = await loadModel('assets/models/desk.glb');
+    // Add procedural furniture
+    const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+    desk.position.set(-halfWidth + 2, 0, -halfDepth + 2);
     desk.name = "desk";
     engine.interactables.push(desk);
     scene.add(desk);
+
+    // Add more objects
+    const chair = Prefabs.createChair();
+    chair.position.set(-halfWidth + 2, 0, -halfDepth + 3);
+    scene.add(chair);
+
+    const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
+    safe.position.set(halfWidth - 1, 0, -halfDepth + 1);
+    safe.children[0].name = "safe";  // The body is interactable
+    engine.interactables.push(safe.children[0]);
+    scene.add(safe);
 }
 
-async function initMyRoom() {
+function initMyRoom() {
     const engine = new RoomEngine({
         roomWidth: 10,
         roomDepth: 10,
-        enableProceduralRoom: false,  // Build custom scene
+        enableProceduralRoom: true,   // Use procedural room
         enableDoor: true,
         enableTimer: true,
         onInteract: (name, obj) => {
@@ -199,7 +200,7 @@ async function initMyRoom() {
         }
     });
 
-    await buildMyRoomScene(engine);
+    buildMyRoomScene(engine);
     initGame();
     engine.start();
 }
@@ -221,10 +222,17 @@ Copy and modify [blank_room_template.html](blank_room_template.html) and [blank_
 ### 1. Interactables System
 Objects that can be clicked/tapped must be registered:
 ```javascript
-const object = await loadModel('path/to/model.glb');
-object.name = "unique_identifier";
-engine.interactables.push(object);
-scene.add(object);
+// For single objects
+const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+desk.name = "desk";
+engine.interactables.push(desk);
+scene.add(desk);
+
+// For groups (like safe), register the specific mesh
+const safe = Prefabs.createSafe(0.8, 1.0, 0.8);
+safe.children[0].name = "safe";  // The body mesh
+engine.interactables.push(safe.children[0]);
+scene.add(safe);
 ```
 
 ### 2. Interaction Handling
@@ -241,23 +249,246 @@ new RoomEngine({
 });
 ```
 
-### 3. Async Scene Building
-Rooms load models asynchronously:
+### 3. Procedural Object Creation
+All objects are created using procedural generators from prefabs.js:
 ```javascript
-async function buildScene(engine) {
-    const model1 = await loadModel('model1.glb');
-    const model2 = await loadModel('model2.glb');
-    // Build scene...
+function buildScene(engine) {
+    // Create objects with explicit dimensions
+    const desk = Prefabs.createDesk(1.5, 0.75, 0.8);  // width, height, depth
+    const chair = Prefabs.createChair(0.5, 0.9);      // seatHeight, backHeight
+    const bookshelf = Prefabs.createBookshelf(1.0, 2.0, 0.4, 4);  // w, h, d, shelves
+
+    // Position and add to scene
+    desk.position.set(x, y, z);
+    scene.add(desk);
 }
 ```
 
-### 4. Dynamic Bounds
+### 4. Available Prefabs
+The prefabs.js module provides these generators:
+
+**Furniture:**
+- `createDesk(width, height, depth)` - Office/student desk with drawer
+- `createChair(seatHeight, backHeight)` - Simple chair with backrest
+- `createBookshelf(width, height, depth, shelves)` - Bookshelf with adjustable shelves
+- `createFilingCabinet(width, height, depth, drawers)` - Metal filing cabinet
+- `createSofa(width, depth, seatHeight)` - Lounge sofa with armrests
+- `createCoffeeTable(width, height, depth)` - Glass-top coffee table
+
+**Office Equipment:**
+- `createComputer(screenWidth, screenHeight)` - Monitor with stand
+- `createKeyboard(width, depth)` - Keyboard with keys
+- `createMouse()` - Computer mouse
+- `createSafe(width, height, depth)` - Safe with dial and handle
+
+**Decorations:**
+- `createGlobe(radius)` - Globe on wooden base
+- `createClock(radius)` - Wall clock with hands
+- `createBooks(count, stackHeight)` - Stack of books
+- `createPlant(potRadius, plantHeight)` - Potted plant
+- `createLamp(type)` - Desk or floor lamp ('desk' or 'floor')
+- `createBriefcase(width, height, depth)` - Leather briefcase
+- `createTrashCan(radius, height)` - Cylindrical trash can
+- `createCoatRack(height)` - Standing coat rack
+- `createChalkboard(width, height)` - Chalkboard with frame
+
+### 5. Dynamic Bounds
 RoomEngine automatically constrains camera movement. Override with:
 ```javascript
 engine.roomBounds = {
     minX: -5, maxX: 5,
     minZ: -5, maxZ: 5
 };
+```
+
+### 6. Object Orientation and Positioning
+
+**IMPORTANT**: Always consider object orientation when placing furniture and props. Objects must face the correct direction for the scene to make sense.
+
+#### Coordinate System
+- **X-axis**: East (+) / West (-)
+- **Y-axis**: Up (+) / Down (-)
+- **Z-axis**: South (+) / North (-)
+- **Rotation**: `rotation.y` controls horizontal facing (yaw)
+
+#### Common Rotation Values
+```javascript
+0           // Facing North (default, toward -Z)
+Math.PI/2   // Facing East  (90° clockwise)
+Math.PI     // Facing South (180°)
+-Math.PI/2  // Facing West  (90° counter-clockwise)
+```
+
+#### Wall-Mounted Objects
+When placing objects against walls, consider both position AND rotation:
+
+```javascript
+// WRONG: Bookshelf perpendicular to east wall
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, z);  // Against east wall
+// No rotation - faces NORTH by default (perpendicular to wall!)
+scene.add(bookshelf);
+
+// CORRECT: Bookshelf parallel to east wall, facing west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, z);  // Against east wall
+bookshelf.rotation.y = -Math.PI / 2;  // Rotate to face WEST into room
+scene.add(bookshelf);
+```
+
+#### Orientation by Wall Position
+
+**Quick Reference:**
+- **North wall**: No rotation needed (`rotation.y = 0`) - objects face south by default
+- **South wall**: Rotate 180° (`rotation.y = Math.PI`) - objects face north into room
+- **East wall**: Rotate -90° (`rotation.y = -Math.PI/2`) - objects face west into room
+- **West wall**: Rotate +90° (`rotation.y = Math.PI/2`) - objects face east into room
+
+| Wall Position | Rotation | Faces Direction | Notes |
+|--------------|----------|-----------------|-------|
+| **North wall** (Z = -halfDepth) | `0` | South (into room) | Default orientation |
+| **South wall** (Z = +halfDepth) | `Math.PI` | North (into room) | 180° rotation |
+| **East wall** (X = +halfWidth) | `-Math.PI/2` | West (into room) | -90° rotation |
+| **West wall** (X = -halfWidth) | `Math.PI/2` | East (into room) | +90° rotation |
+
+#### Practical Examples
+
+**North Wall Objects** (Z = -halfDepth, rotation.y = 0):
+```javascript
+// Desk against north wall, facing south (into room)
+const desk = Prefabs.createDesk(1.5, 0.75, 0.8);
+desk.position.set(0, 0, -halfDepth + 1);
+desk.rotation.y = 0;  // Faces south (default - no rotation needed)
+scene.add(desk);
+
+// Bookshelf against north wall, facing south
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(-2, 0, -halfDepth + 0.3);
+bookshelf.rotation.y = 0;  // Default orientation works for north wall
+scene.add(bookshelf);
+
+// Chalkboard on north wall
+const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
+chalkboard.position.set(0, 1, -halfDepth + 0.1);
+chalkboard.rotation.y = 0;  // Faces south (no rotation needed)
+scene.add(chalkboard);
+```
+
+**South Wall Objects** (Z = +halfDepth, rotation.y = Math.PI):
+```javascript
+// Filing cabinet against south wall, facing north (into room)
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(-2, 0, halfDepth - 0.5);
+cabinet.rotation.y = Math.PI;  // 180° to face north
+scene.add(cabinet);
+
+// Bookshelf against south wall, facing north
+const bookshelf = Prefabs.createBookshelf(2.0, 2.0, 0.4, 4);
+bookshelf.position.set(2, 0, halfDepth - 0.3);
+bookshelf.rotation.y = Math.PI;  // 180° to face north into room
+scene.add(bookshelf);
+
+// Sofa against south wall
+const sofa = Prefabs.createSofa(2.0, 0.9, 0.45);
+sofa.position.set(0, 0, halfDepth - 1);
+sofa.rotation.y = Math.PI;  // Faces north into room
+scene.add(sofa);
+```
+
+**East Wall Objects** (X = +halfWidth, rotation.y = -Math.PI/2):
+```javascript
+// Chalkboard on east wall, facing west (into room)
+const chalkboard = Prefabs.createChalkboard(4.0, 2.0);
+chalkboard.position.set(halfWidth - 0.1, 1, 0);
+chalkboard.rotation.y = -Math.PI/2;  // 90° counter-clockwise to face west
+scene.add(chalkboard);
+
+// Bookshelf against east wall, facing west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.3, 0, -2);
+bookshelf.rotation.y = -Math.PI/2;  // Faces west into room
+scene.add(bookshelf);
+
+// Filing cabinet on east wall
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(halfWidth - 0.4, 0, 2);
+cabinet.rotation.y = -Math.PI/2;  // Faces west
+scene.add(cabinet);
+```
+
+**West Wall Objects** (X = -halfWidth, rotation.y = Math.PI/2):
+```javascript
+// Filing cabinet against west wall, facing east (into room)
+const cabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6, 3);
+cabinet.position.set(-halfWidth + 0.5, 0, 0);
+cabinet.rotation.y = Math.PI/2;  // 90° clockwise to face east
+scene.add(cabinet);
+
+// Bookshelf against west wall, facing east
+const bookshelf = Prefabs.createBookshelf(2.0, 2.0, 0.4, 4);
+bookshelf.position.set(-halfWidth + 0.3, 0, 3);
+bookshelf.rotation.y = Math.PI/2;  // Faces east into room
+scene.add(bookshelf);
+
+// Coat rack by west wall
+const coatRack = Prefabs.createCoatRack(1.8);
+coatRack.position.set(-halfWidth + 0.5, 0, -3);
+// No rotation needed - coat racks work from any angle
+scene.add(coatRack);
+```
+
+**Center Room Objects** (no wall attachment):
+```javascript
+// Coffee table in center - no rotation needed unless specific facing required
+const coffeeTable = Prefabs.createCoffeeTable(1.0, 0.35, 0.6);
+coffeeTable.position.set(0, 0, 0);
+scene.add(coffeeTable);
+
+// Chair facing north
+const chair = Prefabs.createChair(0.5, 0.9);
+chair.position.set(0, 0, 2);
+chair.rotation.y = Math.PI;  // Faces north
+scene.add(chair);
+```
+
+#### Items on Rotated Objects
+When placing items ON or IN rotated objects (like books on a rotated bookshelf), use the parent's local coordinate system:
+
+```javascript
+// Bookshelf rotated to face west
+const bookshelf = Prefabs.createBookshelf(2.5, 2.0, 0.4, 4);
+bookshelf.position.set(halfWidth - 0.5, 0, 0);
+bookshelf.rotation.y = -Math.PI/2;
+scene.add(bookshelf);
+
+// WRONG: Using world coordinates
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(halfWidth - 0.3, 1.0, 0.5);  // Will be misaligned!
+scene.add(books);
+
+// CORRECT: Using parent's local space or adjust for rotation
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(halfWidth - 0.3, 1.0, 0.5);  // World position
+books.rotation.y = -Math.PI/2;  // Match parent rotation
+scene.add(books);
+
+// OR: Add to parent's local space
+const books = Prefabs.createBooks(5, 0.15);
+books.position.set(0, 1.0, 0.5);  // Relative to bookshelf center
+bookshelf.add(books);  // Inherits parent rotation
+```
+
+#### Debugging Orientation Issues
+1. **Visualize axes**: Temporarily add axis helpers to objects
+2. **Check from above**: Use browser dev tools to inspect object transforms
+3. **Console log rotations**: `console.log(object.rotation.y)` to verify angles
+4. **Test incrementally**: Rotate by 45° steps to find correct angle
+
+```javascript
+// Add temporary axis helper for debugging
+import { AxesHelper } from 'three';
+const axesHelper = new AxesHelper(1);  // Red=X, Green=Y, Blue=Z
+object.add(axesHelper);
 ```
 
 ## Testing & Debugging
@@ -275,14 +506,16 @@ window.interactables // Array of clickable objects
 ### Common Issues
 
 **Objects not clickable:**
-- Ensure object is added to `engine.interactables`
+- Ensure object (or child mesh) is added to `engine.interactables`
 - Check object has a `name` property
 - Verify raycasting is working (check crosshair highlight)
+- For Groups, make sure to register the specific mesh, not the group
 
-**Models not loading:**
-- Check file path is correct
-- Use browser DevTools Network tab
-- Ensure GLB file is valid
+**Objects not visible:**
+- Check position is within room bounds
+- Verify object is added to scene
+- Check for JavaScript errors in console
+- Ensure shadows are properly configured
 
 **Controls not working:**
 - Check instructions modal is dismissed
@@ -291,15 +524,18 @@ window.interactables // Array of clickable objects
 
 ## Performance Tips
 
-1. **Use model cloning** for repeated objects:
+1. **Reuse geometries and materials** for repeated objects:
 ```javascript
-const tile = baseFloor.clone();
+const deskGeometry = new THREE.BoxGeometry(1.5, 0.05, 0.8);
+const deskMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+// Reuse for multiple desks
 ```
 
 2. **Limit interactables** - only add clickable objects
 3. **Use fog** to hide far geometry
 4. **Optimize shadow maps** - set appropriate resolution
-5. **Test on mobile** - touch controls may need adjustment
+5. **Procedural generation is fast** - no network overhead
+6. **Test on mobile** - touch controls may need adjustment
 
 ## Version Control
 

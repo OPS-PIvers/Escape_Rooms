@@ -76,42 +76,86 @@ body.game-active {
     cursor: none;
 }
 
-/* CLUE MODAL */
+/* CLUE MODAL - Full screen overlay to prevent click-through */
 #clueModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000; /* Higher z-index to be above all game elements */
+    pointer-events: auto; /* Capture all pointer events to prevent click-through */
+    background: rgba(0, 0, 0, 0.7); /* Semi-transparent backdrop */
+    backdrop-filter: blur(3px);
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    /* Flexbox centering - active when displayed */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     display: none;
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 650px;
-    max-width: 90%;
-    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
-    color: #e0e0e0;
-    border: 1px solid #00ffcc;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 255, 204, 0.3);
-    z-index: 20;
-    font-family: 'Share Tech Mono', monospace;
-    text-align: left;
-    overflow: hidden;
 }
-#clueModal::before {
+
+#clueModal[style*="display: block"] {
+    display: flex !important;
+}
+
+/* Modal content wrapper */
+#clueModal h2:first-of-type {
+    width: 100%;
+    max-width: 500px;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
+    border: 1px solid #00ffcc;
+    border-radius: 15px 15px 0 0;
+    padding: 25px 25px 10px 25px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 255, 204, 0.3);
+    margin: 0;
+    position: relative;
+}
+
+#clueModal #modalContent,
+#clueModal #optionsContainer,
+#clueModal #modalFeedback {
+    width: 100%;
+    max-width: 500px;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
+    border-left: 1px solid #00ffcc;
+    border-right: 1px solid #00ffcc;
+    padding: 15px 25px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+#clueModal #closeModalBtn {
+    width: 100%;
+    max-width: 500px;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 15, 20, 0.98) 100%);
+    border: 1px solid #00ffcc;
+    border-radius: 0 0 15px 15px;
+    padding: 12px 25px;
+    text-align: center;
+    margin: 0 0 20px 0;
+    box-sizing: border-box;
+}
+
+#clueModal h2::before {
     content: "SECURE CONNECTION ESTABLISHED";
     position: absolute;
-    top: 5px; right: 15px;
+    top: 8px; right: 15px;
     font-size: 10px;
     color: #00ffcc;
     opacity: 0.7;
 }
 
 #clueModal h2 {
-    margin-top: 0;
     color: #00ffcc;
     border-bottom: 1px solid #333;
     padding-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-shadow: 0 0 5px rgba(0,255,204,0.5);
+    font-family: 'Share Tech Mono', monospace;
 }
 #clueModal p { line-height: 1.6; font-size: 18px; color: #b0bec5; }
 
@@ -123,10 +167,18 @@ body.game-active {
     border-radius: 0 5px 5px 0;
     color: #fff;
     font-size: 1.1em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* OPTIONS BUTTONS */
-#optionsContainer { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+#optionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 15px 0;
+    width: 100%;
+}
 .option-btn {
     background: rgba(255,255,255,0.05);
     color: #00ffcc;
@@ -140,6 +192,10 @@ body.game-active {
     border-radius: 5px;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .option-btn:hover {
     background: rgba(0,255,204,0.1);
@@ -150,21 +206,31 @@ body.game-active {
 .option-btn.correct { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; color: #81c784; }
 .option-btn.wrong { background: rgba(229, 57, 53, 0.2); border-color: #e57373; color: #ef9a9a; }
 
-#modalFeedback { margin-top: 15px; font-weight: bold; min-height: 25px; font-size: 18px; text-align: center;}
+#modalFeedback {
+    margin: 15px 0;
+    font-weight: bold;
+    min-height: 25px;
+    font-size: 18px;
+    text-align: center;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
 
 #closeModalBtn {
-    background: transparent;
-    color: #aaa;
-    border: 1px solid #555;
-    padding: 8px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: #00ffcc;
     cursor: pointer;
-    float: right;
-    margin-top: 15px;
-    font-family: inherit;
-    transition: 0.2s;
-    border-radius: 3px;
+    transition: all 0.2s;
 }
-#closeModalBtn:hover { background: #333; color: white; border-color: #fff; }
+
+#closeModalBtn:hover {
+    background: rgba(0, 255, 204, 0.1) !important;
+    color: #00ffcc;
+    border-color: #00ffcc !important;
+    cursor: pointer;
+}
 
 /* VICTORY MODAL */
 #victoryModal {
@@ -206,14 +272,15 @@ body.game-active {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    margin-top: 20px;
+    margin-top: 15px;
+    margin-bottom: 0;
+    width: 100%;
     max-width: 240px;
-    margin-left: auto;
-    margin-right: auto;
     background: #111;
     padding: 15px;
     border-radius: 10px;
     border: 1px solid #333;
+    box-sizing: border-box;
 }
 .key-btn {
     background: linear-gradient(to bottom, #333, #222);
@@ -237,11 +304,13 @@ body.game-active {
     padding: 15px;
     text-align: center;
     letter-spacing: 8px;
-    margin-bottom: 15px;
+    margin: 15px 0;
     border: 1px solid #333;
     border-radius: 5px;
     box-shadow: inset 0 0 10px rgba(0,255,204,0.2);
     text-shadow: 0 0 5px #00ffcc;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* MOBILE TOUCH CONTROLS */
@@ -322,9 +391,12 @@ body.game-active {
 
 /* MOBILE RESPONSIVE STYLES */
 @media (max-width: 768px) {
-    /* Hide crosshair on mobile (touch instead) */
+    /* Ensure crosshair is visible and centered on mobile */
     #crosshair {
-        display: none;
+        display: block !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
     }
 
     /* Make instructions more readable on small screens */
@@ -343,15 +415,22 @@ body.game-active {
 
     /* Make modal more mobile-friendly */
     #clueModal {
-        width: 90%;
-        max-width: 90%;
-        padding: 20px;
-        max-height: 80vh;
+        padding: 15px;
         overflow-y: auto;
     }
 
-    #clueModal h2 {
-        font-size: 20px;
+    #clueModal h2:first-of-type {
+        max-width: 90vw;
+        font-size: 18px;
+        padding: 20px 20px 10px 20px;
+    }
+
+    #clueModal #modalContent,
+    #clueModal #optionsContainer,
+    #clueModal #modalFeedback,
+    #clueModal #closeModalBtn {
+        max-width: 90vw;
+        padding: 15px 20px;
     }
 
     #clueModal p {
@@ -363,6 +442,7 @@ body.game-active {
         padding: 18px;
         font-size: 15px;
         min-height: 50px;
+        width: 100%;
     }
 
     .option-btn:hover {
@@ -371,14 +451,20 @@ body.game-active {
 
     /* Make keypad buttons larger for touch */
     .key-btn {
-        padding: 20px;
-        font-size: 24px;
-        min-height: 60px;
+        padding: 15px;
+        font-size: 20px;
+        min-height: 55px;
     }
 
     #keypad {
-        gap: 15px;
-        max-width: 280px;
+        gap: 10px;
+        max-width: 90vw;
+        padding: 12px;
+    }
+
+    #codeDisplay {
+        font-size: 24px;
+        letter-spacing: 5px;
     }
 
     /* Victory modal adjustments */
@@ -396,8 +482,11 @@ body.game-active {
 
     /* Close button larger on mobile */
     #closeModalBtn {
-        padding: 12px 24px;
-        font-size: 16px;
+        padding: 15px 20px;
+        font-size: 15px;
+        min-height: 45px;
+        width: 100%;
+        box-sizing: border-box;
     }
 }
 

@@ -22,6 +22,9 @@ export const CAMERA_HEIGHT = 1.4;
 /** Default initial room bounds for player movement collision. */
 export const INITIAL_ROOM_BOUNDS = 4.5;
 
+/** Viewport width breakpoint for mobile devices. */
+export const MOBILE_BREAKPOINT_WIDTH = 768;
+
 
 // --- GAME SETTINGS ---
 /** Maximum number of allowed animation errors before showing the error screen. */
@@ -115,8 +118,17 @@ export const CLASSROOM_DESK_GAP_Z = 2;
 export const LOCATIONS = [
     "computer", "filing_cabinet_1", "filing_cabinet_2", "filing_cabinet_3", "papers",
     "briefcase", "mug", "hat", "lamp",
-    "globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
+    "globe", "secret_globe", "radio", "typewriter", "plant", "trophy", "clock", "trash", "lunchbox",
     "picture", "desk_lamp", "cardboard_box", "fire_extinguisher",
     "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
-    "keyboard", "mouse", "open_book"
+    "keyboard", "mouse", "open_book", "chair",
+    "pen_0", "pen_1", "pen_2",
+    // Sitting area (southwest corner)
+    "sofa", "armchair", "coffee_table", "tv", "floor_lamp",
+    "coffee_cup", "newspaper", "remote",
+    // Library bookshelf shelf rows (4 bookshelves × 4 shelves each = 16 interactive zones)
+    "bookshelf_0_shelf_0", "bookshelf_0_shelf_1", "bookshelf_0_shelf_2", "bookshelf_0_shelf_3",
+    "secret_bookshelf_shelf_0", "secret_bookshelf_shelf_1", "secret_bookshelf_shelf_2", "secret_bookshelf_shelf_3",
+    "bookshelf_2_shelf_0", "bookshelf_2_shelf_1", "bookshelf_2_shelf_2", "bookshelf_2_shelf_3",
+    "bookshelf_3_shelf_0", "bookshelf_3_shelf_1", "bookshelf_3_shelf_2", "bookshelf_3_shelf_3"
 ];

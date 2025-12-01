@@ -22,7 +22,25 @@ const modalContent = document.getElementById('modalContent');
 const optionsContainer = document.getElementById('optionsContainer');
 const modalFeedback = document.getElementById('modalFeedback');
 const closeBtn = document.getElementById('closeModalBtn');
-closeBtn.addEventListener('click', closeModal);
+
+// Prevent modal clicks from propagating to game elements
+modal.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+modal.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+}, { passive: false });
+
+modal.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+}, { passive: false });
+
+// Close button handler
+closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeModal();
+});
 
 export function closeModal() {
     isInteracting = false;
@@ -140,7 +158,53 @@ const flavorTextPool = {
     "fire_extinguisher": ["In case of emergency, break glass.", "Safety first!", "Heavy and red.", "Not a toy.", "Hope I don't need this."],
     "cardboard_box": ["A cat trap.", "Just an empty box.", "Fragile.", "This side up.", "What's in the box?!"],
     "keyboard": ["Sticky keys. Gross.", "QWERTY or Dvorak?", "Missing the 'Any' key.", "Someone spilled coffee on this.", "Clickety-clack."],
-    "mouse": ["It's not a real mouse.", "Needs a mousepad.", "Scroll wheel is stuck.", "Double click to... do nothing.", "Squeak? No."]
+    "mouse": ["It's not a real mouse.", "Needs a mousepad.", "Scroll wheel is stuck.", "Double click to... do nothing.", "Squeak? No."],
+    "library_books": [
+        "'Advanced Filing Techniques Vol. 3'",
+        "Dusty old ledgers from the 1970s.",
+        "'Minnesota Tax Law: A Thriller'",
+        "Heavy tomes about nothing important.",
+        "'How to Escape: A Manual' - The pages are blank.",
+        "Ancient encyclopedias. Smells like knowledge.",
+        "'The Complete History of Paperclips'",
+        "Romance novels with suspicious stains.",
+        "'Dewey Decimal for Dummies'",
+        "Just research materials. Very boring.",
+        "A book falls out. You catch it dramatically.",
+        "'Lost: One Archive Key' - It's fiction.",
+        "Someone dog-eared page 42. Monsters.",
+        "'Cooking with Hotdish' - Classic Minnesota.",
+        "Legal documents from 1823. Fascinating."
+    ],
+    "library_plant": [
+        "It's plastic. But it looks real from afar.",
+        "Needs water. Or maybe it's fake?",
+        "The leaves are suspiciously perfect.",
+        "A decorative fern. Very professional.",
+        "It's seen better days. Or is it new?",
+        "Someone forgot to dust this.",
+        "Adds a touch of nature to the room.",
+        "Photosynthesis not included.",
+        "The pot says 'Handle with care'.",
+        "At least it can't die. Wait, is it alive?"
+    ],
+    "library_lamp": [
+        "Provides excellent reading light.",
+        "I love lamp. Library edition.",
+        "The bulb flickers. Ambiance.",
+        "Perfect for late night research.",
+        "Surprisingly heavy for a lamp.",
+        "The switch doesn't work. It's stuck on.",
+        "Casts interesting shadows on the books.",
+        "Moth-approved lighting solution."
+    ],
+    "secret_book": [
+        "*Click* The bookshelf mechanism activates!",
+        "The red book triggers something...",
+        "A hidden mechanism engages!",
+        "You hear a mechanical sound...",
+        "*CLUNK* Something is moving!"
+    ]
 };
 
 function triggerVictory(finalTimeStr) {
@@ -158,6 +222,11 @@ function getFlavorText(objName) {
     let key = "generic";
     if (objName.includes("filing_cabinet")) key = "filing_cabinet";
     else if (objName.includes("book_cluster")) key = "book_cluster";
+    else if (objName.includes("library_books")) key = "library_books";
+    else if (objName.includes("library_plant")) key = "library_plant";
+    else if (objName.includes("library_lamp")) key = "library_lamp";
+    else if (objName.includes("library_globe")) key = "globe";
+    else if (objName.includes("library_briefcase")) key = "briefcase";
     else if (objName.includes("lamp")) key = "lamp";
     else if (flavorTextPool[objName]) key = objName;
 
@@ -301,6 +370,14 @@ export function showModal(objName, {
     }
 
     if (qIndex === -1 || qIndex === null || qIndex === undefined) {
+        // --- COMPUTER PASSWORD ENTRY ---
+        if (objName === "computer") {
+            renderPasswordEntry();
+            modal.style.display = 'block';
+            isInteracting = true;
+            return;
+        }
+
         // Flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
         modalTitle.textContent = displayName;
@@ -513,5 +590,89 @@ function handleKeypad(num) {
         currentCode += num;
         const displayEl = document.getElementById('codeDisplay');
         if (displayEl) displayEl.textContent = currentCode.padEnd(4, '_');
+    }
+}
+
+// Computer password system
+let computerUnlocked = false;
+const COMPUTER_PASSWORD = "admin"; // Change this to any password you want
+
+function renderPasswordEntry() {
+    modalTitle.textContent = "COMPUTER LOGIN";
+
+    if (computerUnlocked) {
+        modalContent.innerHTML = `
+            <div style="color: #4caf50; text-align: center; margin: 20px 0;">
+                <h3>✓ SYSTEM UNLOCKED</h3>
+                <p>Access Granted</p>
+                <p style="margin-top: 15px; font-size: 14px; color: #aaa;">
+                    Computer files accessed successfully.
+                </p>
+            </div>
+        `;
+        optionsContainer.innerHTML = "";
+        modalFeedback.textContent = "";
+        return;
+    }
+
+    modalContent.innerHTML = `
+        <div style="text-align: center;">
+            <p>ENTER PASSWORD:</p>
+            <input type="password" id="computerPassword"
+                   style="width: 100%; padding: 10px; font-size: 16px;
+                          background: #1a1a1a; color: #fff; border: 2px solid #4a4a4a;
+                          border-radius: 4px; text-align: center; font-family: monospace;
+                          margin: 10px 0;"
+                   placeholder="Password"
+                   autocomplete="off">
+        </div>
+    `;
+
+    optionsContainer.innerHTML = "";
+
+    // Create submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'option-btn';
+    submitBtn.textContent = 'LOGIN';
+    submitBtn.style.backgroundColor = '#4a4a4a';
+    submitBtn.onclick = checkComputerPassword;
+    optionsContainer.appendChild(submitBtn);
+
+    modalFeedback.textContent = "";
+
+    // Allow Enter key to submit
+    setTimeout(() => {
+        const input = document.getElementById('computerPassword');
+        if (input) {
+            input.focus();
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkComputerPassword();
+                }
+            });
+        }
+    }, 100);
+}
+
+function checkComputerPassword() {
+    const input = document.getElementById('computerPassword');
+    if (!input) return;
+
+    const enteredPassword = input.value;
+
+    if (enteredPassword === COMPUTER_PASSWORD) {
+        computerUnlocked = true;
+        modalFeedback.style.color = '#4caf50';
+        modalFeedback.textContent = '✓ ACCESS GRANTED';
+
+        // Re-render with success state
+        setTimeout(() => {
+            renderPasswordEntry();
+        }, 800);
+    } else {
+        modalFeedback.style.color = '#e57373';
+        modalFeedback.textContent = '✗ INVALID PASSWORD';
+        input.value = '';
+        input.focus();
     }
 }
