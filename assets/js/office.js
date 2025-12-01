@@ -341,7 +341,7 @@ async function buildOfficeScene(engine) {
     const shredderHead = shredder.children.find(c => c.name === "shredder");
     const shredderHitbox = shredder.children.find(c => c.name === "shredder_hitbox");
     if (shredderHitbox) {
-    engine.interactables.push(shredderHitbox);
+         engine.interactables.push(shredderHitbox);
     } else if (shredderHead) {
          engine.interactables.push(shredderHead);
     }
@@ -364,7 +364,7 @@ async function buildOfficeScene(engine) {
     briefcase.name = "briefcase";
     // Find hitbox or just add group children
     briefcase.children.forEach(c => {
-    if(c.geometry) engine.interactables.push(c);
+         if(c.geometry) engine.interactables.push(c);
     });
     scene.add(briefcase);
 
@@ -790,12 +790,18 @@ function initShredderPuzzleLogic(officeState) {
     ctx.textBaseline = "middle";
     ctx.fillText("TURN ON THE TV", 150, 50);
 
-    // Add some noise lines to look like paper
+    // Add some noise lines to look like paper (seeded for consistency)
     ctx.strokeStyle = "#ddd";
+    let seed = 42;
+    const seededRandom = () => {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+    };
+
     for(let i=0; i<10; i++) {
         ctx.beginPath();
-        ctx.moveTo(0, Math.random()*100);
-        ctx.lineTo(300, Math.random()*100);
+        ctx.moveTo(0, seededRandom()*100);
+        ctx.lineTo(300, seededRandom()*100);
         ctx.stroke();
     }
 
