@@ -22,6 +22,9 @@ export const CAMERA_HEIGHT = 1.4;
 /** Default initial room bounds for player movement collision. */
 export const INITIAL_ROOM_BOUNDS = 4.5;
 
+/** Viewport width breakpoint for mobile devices. */
+export const MOBILE_BREAKPOINT_WIDTH = 768;
+
 
 // --- GAME SETTINGS ---
 /** Maximum number of allowed animation errors before showing the error screen. */

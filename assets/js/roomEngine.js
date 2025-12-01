@@ -15,7 +15,8 @@ import {
     SCENE_BACKGROUND_COLOR,
     FOG_COLOR,
     FOG_NEAR,
-    FOG_FAR
+    FOG_FAR,
+    MOBILE_BREAKPOINT_WIDTH
 } from './constants.js';
 import { TouchControls } from './touchControls.js';
 import { closeModal, isInteracting } from './ui.js';
@@ -411,6 +412,9 @@ export class RoomEngine {
         document.addEventListener('mousedown', () => { this.isMouseDown = true; });
         document.addEventListener('mouseup', () => { this.isMouseDown = false; });
         document.addEventListener('mousemove', (event) => {
+            // On mobile (small screens), keep mouse at center (0,0) and crosshair fixed
+            if (window.innerWidth <= MOBILE_BREAKPOINT_WIDTH) return;
+
             const currentlyInteracting = isInteracting;
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -455,6 +459,11 @@ export class RoomEngine {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // If resizing to mobile, reset mouse to center so crosshair logic works correctly
+            if (window.innerWidth <= MOBILE_BREAKPOINT_WIDTH) {
+                this.mouse.set(0, 0);
+            }
         });
     }
 
