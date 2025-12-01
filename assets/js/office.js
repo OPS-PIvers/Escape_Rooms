@@ -302,6 +302,107 @@ async function buildOfficeScene(engine) {
     }
     scene.add(globe);
 
+    // NEW OBJECTS START HERE
+
+    // Trash Can (near desk)
+    const trashCan = Prefabs.createTrashCan(0.15, 0.4);
+    trashCan.position.set(-halfWidth + 0.5, 0, -halfDepth + 1.5);
+    trashCan.name = "trash"; // Flavor text key
+    engine.interactables.push(trashCan.children[0]);
+    scene.add(trashCan);
+
+    // Desk Lamp
+    const deskLamp = Prefabs.createLamp('desk');
+    deskLamp.position.set(-halfWidth + 1.2, DESK_SURFACE_Y, -halfDepth + 1.0);
+    deskLamp.rotation.y = Math.PI / 3;
+    deskLamp.name = "lamp"; // Flavor text key
+    // Add hitbox or children
+    deskLamp.children.forEach(child => {
+        if (child.geometry) engine.interactables.push(child);
+    });
+    scene.add(deskLamp);
+
+    // Filing Cabinet
+    const filingCabinet = Prefabs.createFilingCabinet(0.5, 1.0, 0.6);
+    filingCabinet.position.set(-halfWidth + 0.5, 0, -halfDepth + 3.0);
+    filingCabinet.rotation.y = Math.PI / 2; // Facing into room
+    filingCabinet.name = "filing_cabinet";
+    // Add interactable parts
+    filingCabinet.children.forEach(child => {
+        engine.interactables.push(child);
+    });
+    scene.add(filingCabinet);
+
+    // Paper Shredder (New Puzzle!)
+    const shredder = Prefabs.createPaperShredder();
+    shredder.position.set(-halfWidth + 1.2, 0, -halfDepth + 2.5); // Near desk/chair
+    shredder.rotation.y = Math.PI / 4;
+    // Find the head part for interaction
+    const shredderHead = shredder.children.find(c => c.name === "shredder");
+    const shredderHitbox = shredder.children.find(c => c.name === "shredder_hitbox");
+    if (shredderHitbox) {
+         engine.interactables.push(shredderHitbox);
+    } else if (shredderHead) {
+         engine.interactables.push(shredderHead);
+    }
+    scene.add(shredder);
+
+    // Coat Rack (near entrance - North wall is entrance)
+    const coatRack = Prefabs.createCoatRack();
+    coatRack.position.set(2, 0, -halfDepth + 0.5); // To the right of the door
+    coatRack.name = "coat_rack";
+    coatRack.children.forEach(child => {
+        if (child.geometry) engine.interactables.push(child);
+    });
+    scene.add(coatRack);
+
+    // Briefcase
+    const briefcase = Prefabs.createBriefcase();
+    briefcase.position.set(-halfWidth + 2.5, 0.45, halfDepth - 1.0); // On the sofa
+    briefcase.rotation.y = 0.2;
+    briefcase.rotation.z = 0.1; // Leaning slightly
+    briefcase.name = "briefcase";
+    // Find hitbox or just add group children
+    briefcase.children.forEach(c => {
+         if(c.geometry) engine.interactables.push(c);
+    });
+    scene.add(briefcase);
+
+    // Wall Clock
+    const clock = Prefabs.createClock(0.3);
+    clock.position.set(0, 2.5, halfDepth - 0.05); // South wall, high up
+    clock.rotation.y = Math.PI; // Face north
+    // engine.interactables.push(clock.children.find(c => c.name === 'clock'));
+    scene.add(clock);
+
+    // Paintings
+    const painting1 = Prefabs.createPainting(1.2, 1.0);
+    painting1.position.set(-halfWidth + 0.05, 2.0, 0); // West wall
+    painting1.rotation.y = Math.PI / 2;
+    painting1.name = "picture";
+    engine.interactables.push(painting1);
+    scene.add(painting1);
+
+    const painting2 = Prefabs.createPainting(1.0, 0.8);
+    painting2.position.set(2, 2.0, halfDepth - 0.05); // South wall
+    painting2.rotation.y = Math.PI;
+    painting2.name = "picture";
+    engine.interactables.push(painting2);
+    scene.add(painting2);
+
+    // Plants
+    const plant1 = Prefabs.createPlant();
+    plant1.position.set(-halfWidth + 0.5, 0, 4); // Southwest corner-ish
+    plant1.name = "plant";
+    engine.interactables.push(plant1);
+    scene.add(plant1);
+
+    const plant2 = Prefabs.createPlant();
+    plant2.position.set(halfWidth - 0.5, 0, halfDepth - 0.5); // Southeast corner
+    plant2.name = "plant";
+    engine.interactables.push(plant2);
+    scene.add(plant2);
+
     // ===== SITTING AREA (Southwest Corner) =====
     const sittingAreaX = -halfWidth + 2.5;
     const sittingAreaZ = halfDepth - 2.5;
@@ -511,7 +612,9 @@ async function buildOfficeScene(engine) {
         toggleSecretBookshelf: () => {
             secretBookshelfOpen = !secretBookshelfOpen;
             return secretBookshelfOpen;
-        }
+        },
+        tvScreen,
+        shredder
     };
 }
 
@@ -623,10 +726,151 @@ function showNotepadModal() {
     `;
 }
 
+// Show Paper Shredder Puzzle
+function showShredderPuzzle(officeState) {
+    showModal('shredder_puzzle', {});
+
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const optionsContainer = document.getElementById('optionsContainer');
+
+    modalTitle.textContent = "PAPER SHREDDER";
+    optionsContainer.innerHTML = ""; // Clear default buttons
+
+    if (officeState.shredderSolved) {
+        modalContent.innerHTML = `<p style="color: #4caf50; font-weight: bold;">REASSEMBLED NOTE:</p>
+        <div style="background: white; color: black; padding: 20px; font-family: monospace; font-size: 24px; text-align: center; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            TURN ON THE TV
+        </div>`;
+        return;
+    }
+
+    modalContent.innerHTML = `
+        <p>There are shredded strips of paper in the bin. Can you piece them together?</p>
+        <div id="shredder-container" style="
+            width: 300px;
+            height: 100px;
+            background: #333;
+            margin: 20px auto;
+            position: relative;
+            display: flex;
+            border: 2px solid #555;
+            user-select: none;
+        "></div>
+        <p style="font-size: 12px; color: #888;">Drag and drop strips to rearrange.</p>
+    `;
+
+    // Initialize Puzzle Logic
+    setTimeout(() => {
+        initShredderPuzzleLogic(officeState);
+    }, 100);
+}
+
+function initShredderPuzzleLogic(officeState) {
+    const container = document.getElementById('shredder-container');
+    if (!container) return;
+
+    const numStrips = 10;
+    const stripWidth = 300 / numStrips;
+    const correctOrder = Array.from({length: numStrips}, (_, i) => i);
+    let currentOrder = [...correctOrder].sort(() => Math.random() - 0.5);
+
+    // Create strips
+    // We'll use a data URI for the background image text
+    // "TURN ON THE TV"
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = "#f5f5dc"; // Paper color
+    ctx.fillRect(0, 0, 300, 100);
+    ctx.font = "bold 30px monospace";
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("TURN ON THE TV", 150, 50);
+
+    // Add some noise lines to look like paper
+    ctx.strokeStyle = "#ddd";
+    for(let i=0; i<10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, Math.random()*100);
+        ctx.lineTo(300, Math.random()*100);
+        ctx.stroke();
+    }
+
+    const bgUrl = canvas.toDataURL();
+
+    function renderStrips() {
+        container.innerHTML = "";
+        currentOrder.forEach((originalIndex, displayIndex) => {
+            const strip = document.createElement('div');
+            strip.style.width = `${stripWidth}px`;
+            strip.style.height = "100%";
+            strip.style.backgroundImage = `url(${bgUrl})`;
+            strip.style.backgroundPosition = `-${originalIndex * stripWidth}px 0`;
+            strip.style.borderLeft = "1px solid rgba(0,0,0,0.1)";
+            strip.style.borderRight = "1px solid rgba(0,0,0,0.1)";
+            strip.style.cursor = "grab";
+            strip.draggable = true;
+
+            // Drag events
+            strip.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', displayIndex);
+                strip.style.opacity = '0.5';
+            });
+
+            strip.addEventListener('dragend', () => {
+                strip.style.opacity = '1';
+            });
+
+            strip.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Allow drop
+            });
+
+            strip.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                const toIndex = displayIndex;
+
+                if (fromIndex !== toIndex) {
+                    // Swap items
+                    const temp = currentOrder[fromIndex];
+                    currentOrder[fromIndex] = currentOrder[toIndex];
+                    currentOrder[toIndex] = temp;
+                    renderStrips();
+                    checkWin();
+                }
+            });
+
+            container.appendChild(strip);
+        });
+    }
+
+    function checkWin() {
+        const isWin = currentOrder.every((val, index) => val === correctOrder[index]);
+        if (isWin) {
+            officeState.shredderSolved = true;
+            const feedback = document.getElementById('modalFeedback');
+            if (feedback) {
+                feedback.style.color = '#4caf50';
+                feedback.innerHTML = "<strong>PUZZLE SOLVED!</strong>";
+                // Optionally auto-close or update UI after a delay
+                setTimeout(() => {
+                    showShredderPuzzle(officeState); // Re-render with success state
+                }, 1000);
+            }
+        }
+    }
+
+    renderStrips();
+}
+
 // Initialize the office
 async function initOffice() {
     // Office scene data (will be set after building scene)
     let officeData = null;
+    const officeState = { shredderSolved: false };
 
     const engine = new RoomEngine({
         roomWidth: OFFICE_WIDTH,
@@ -671,6 +915,49 @@ async function initOffice() {
                 }
                 return;
             }
+            // Handle Shredder
+            if (name === 'shredder' || name === 'shredder_hitbox') {
+                showShredderPuzzle(officeState);
+                return;
+            }
+            // Handle Remote
+            if (name === 'remote') {
+                if (officeState.shredderSolved) {
+                    // Turn on TV
+                    if (officeData.tvScreen) {
+                        officeData.tvScreen.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green Screen
+                        // Better: Draw a clue on canvas texture
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 512;
+                        canvas.height = 256;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(0,0,512,256);
+                        ctx.fillStyle = "#00ff00";
+                        ctx.font = "bold 60px monospace";
+                        ctx.textAlign = "center";
+                        ctx.fillText("CLUE:", 256, 100);
+                        ctx.fillText("BLUE BOOK", 256, 180);
+
+                        const texture = new THREE.CanvasTexture(canvas);
+                        officeData.tvScreen.material = new THREE.MeshBasicMaterial({ map: texture });
+                    }
+                    showModal('generic', {});
+                    const modalTitle = document.getElementById('modalTitle');
+                    const modalContent = document.getElementById('modalContent');
+                    modalTitle.textContent = "TV ON";
+                    modalContent.innerHTML = "<p>The TV flickers to life.</p><p>It displays a message.</p>";
+                } else {
+                    // Locked
+                    showModal('generic', {});
+                    const modalTitle = document.getElementById('modalTitle');
+                    const modalContent = document.getElementById('modalContent');
+                    modalTitle.textContent = "REMOTE";
+                    modalContent.innerHTML = "<p>It doesn't seem to work right now.</p><p style='font-style:italic; font-size: 0.9em; color:#888;'>Maybe I don't have a reason to watch TV yet.</p>";
+                }
+                return;
+            }
+
             // Handle all other interactions via game logic
             showModal(name, {});
         }

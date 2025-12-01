@@ -369,15 +369,15 @@ export function showModal(objName, {
         }
     }
 
-    // --- COMPUTER PASSWORD ENTRY ---
-    if (objName === "computer") {
-        renderPasswordEntry();
-        modal.style.display = 'block';
-        isInteracting = true;
-        return;
-    }
-
     if (qIndex === -1 || qIndex === null || qIndex === undefined) {
+        // --- COMPUTER PASSWORD ENTRY ---
+        if (objName === "computer") {
+            renderPasswordEntry();
+            modal.style.display = 'block';
+            isInteracting = true;
+            return;
+        }
+
         // Flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
         modalTitle.textContent = displayName;
