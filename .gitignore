@@ -1,2 +1,4 @@
 *.log
 verification_east_wall.png
+__pycache__/
+*.pyc
