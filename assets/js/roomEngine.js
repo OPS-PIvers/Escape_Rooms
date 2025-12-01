@@ -411,6 +411,9 @@ export class RoomEngine {
         document.addEventListener('mousedown', () => { this.isMouseDown = true; });
         document.addEventListener('mouseup', () => { this.isMouseDown = false; });
         document.addEventListener('mousemove', (event) => {
+            // On mobile (small screens), keep mouse at center (0,0) and crosshair fixed
+            if (window.innerWidth <= 768) return;
+
             const currentlyInteracting = isInteracting;
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -455,6 +458,11 @@ export class RoomEngine {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // If resizing to mobile, reset mouse to center so crosshair logic works correctly
+            if (window.innerWidth <= 768) {
+                this.mouse.set(0, 0);
+            }
         });
     }
 

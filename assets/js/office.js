@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { RoomEngine } from './roomEngine.js';
 import { showModal } from './ui.js?v=0fc212f';
 import { initGame } from './gameLogic.js';
+import * as gameLogic from './gameLogic.js';
 import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
 import * as Prefabs from './prefabs.js?v=1b03dd5&t=1764425183';
 
@@ -717,6 +718,9 @@ async function initOffice() {
     window.engine = engine;
     window.desk = desk;
     window.secretBookshelf = secretBookshelfPivot;
+    if (window.__DEV__) {
+        window.gameLogic = gameLogic;
+    }
 }
 
 // Start

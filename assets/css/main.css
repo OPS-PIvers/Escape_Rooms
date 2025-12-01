@@ -391,9 +391,12 @@ body.game-active {
 
 /* MOBILE RESPONSIVE STYLES */
 @media (max-width: 768px) {
-    /* Hide crosshair on mobile (touch instead) */
+    /* Ensure crosshair is visible and centered on mobile */
     #crosshair {
-        display: none;
+        display: block !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
     }
 
     /* Make instructions more readable on small screens */
