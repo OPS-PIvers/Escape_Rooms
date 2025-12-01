@@ -392,13 +392,13 @@ async function buildOfficeScene(engine) {
 
     // Plants
     const plant1 = Prefabs.createPlant();
-    plant1.position.set(-halfWidth + 0.5, 0, 4); // Southwest corner-ish
+    plant1.position.set(-halfWidth + 0.5, 0, 5.5); // Southwest corner (Moved from z=4 to avoid TV stand)
     plant1.name = "plant";
     engine.interactables.push(plant1);
     scene.add(plant1);
 
     const plant2 = Prefabs.createPlant();
-    plant2.position.set(halfWidth - 0.5, 0, halfDepth - 0.5); // Southeast corner
+    plant2.position.set(0, 0, halfDepth - 0.5); // South wall center (Moved from SE corner to avoid bookshelf)
     plant2.name = "plant";
     engine.interactables.push(plant2);
     scene.add(plant2);
