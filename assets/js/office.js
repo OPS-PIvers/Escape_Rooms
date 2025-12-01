@@ -341,7 +341,7 @@ async function buildOfficeScene(engine) {
     const shredderHead = shredder.children.find(c => c.name === "shredder");
     const shredderHitbox = shredder.children.find(c => c.name === "shredder_hitbox");
     if (shredderHitbox) {
-         engine.interactables.push(shredderHitbox);
+    engine.interactables.push(shredderHitbox);
     } else if (shredderHead) {
          engine.interactables.push(shredderHead);
     }
