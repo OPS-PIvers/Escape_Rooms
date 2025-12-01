@@ -1323,9 +1323,10 @@ export function createRemote(length = 0.15, width = 0.05) {
     // Add larger invisible hitbox for easier interaction
     const hitbox = new THREE.Mesh(
         new THREE.BoxGeometry(width * 2.5, 0.05, length * 1.5),
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+        new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     hitbox.position.y = 0.025;
+    hitbox.visible = false;
     group.add(hitbox);
 
     return group;
