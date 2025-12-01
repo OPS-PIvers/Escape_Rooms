@@ -364,7 +364,7 @@ async function buildOfficeScene(engine) {
     briefcase.name = "briefcase";
     // Find hitbox or just add group children
     briefcase.children.forEach(c => {
-         if(c.geometry) engine.interactables.push(c);
+    if(c.geometry) engine.interactables.push(c);
     });
     scene.add(briefcase);
 
