@@ -550,7 +550,7 @@ function getDescriptionsForObject(objName) {
             "The lamp's shade diffuses light perfectly, creating a warm, inviting glow.",
             "The lamp's cord is neatly tucked along the baseboard - attention to detail matters here.",
             "The lamp's height creates visual balance with the surrounding furniture.",
-            "This lamp clearly serves both functional and decorative purposes in room's design."
+            "This lamp clearly serves both functional and decorative purposes in the room's design."
         ]
     };
     
