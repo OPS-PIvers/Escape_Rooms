@@ -1320,6 +1320,14 @@ export function createRemote(length = 0.15, width = 0.05) {
     powerButton.position.set(0, 0.017, length * 0.35);
     group.add(powerButton);
 
+    // Add larger invisible hitbox for easier interaction
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 2.5, 0.05, length * 1.5),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+    );
+    hitbox.position.y = 0.025;
+    group.add(hitbox);
+
     return group;
 }
 
