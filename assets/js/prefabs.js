@@ -3,6 +3,7 @@ import * as THREE from 'three';
 /**
  * Comprehensive procedural object generators for escape rooms.
  * All objects are created with THREE.js primitives - no external models needed.
+ * Updated for Office Scene (Filing Cabinet, Coat Rack, Shredder, etc.)
  */
 
 // ===== FURNITURE =====
