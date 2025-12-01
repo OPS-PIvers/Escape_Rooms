@@ -3,6 +3,7 @@ import * as THREE from 'three';
 /**
  * Comprehensive procedural object generators for escape rooms.
  * All objects are created with THREE.js primitives - no external models needed.
+ * Updated for Office Scene (Filing Cabinet, Coat Rack, Shredder, etc.)
  */
 
 // ===== FURNITURE =====
@@ -661,6 +662,50 @@ export function createSafe(width = 0.8, height = 1.0, depth = 0.8) {
     return group;
 }
 
+export function createPaperShredder() {
+    const group = new THREE.Group();
+    const bodyColor = 0x2a2a2a; // Dark grey
+    const topColor = 0x1a1a1a;  // Almost black
+
+    // Bin (Bottom)
+    const bin = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.4, 0.2),
+        new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.7 })
+    );
+    bin.position.y = 0.2;
+    bin.castShadow = true;
+    group.add(bin);
+
+    // Shredder Head (Top)
+    const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.1, 0.22),
+        new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.5 })
+    );
+    head.position.y = 0.45;
+    head.castShadow = true;
+    head.name = "shredder"; // Interactable part
+    group.add(head);
+
+    // Slot
+    const slot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.01, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x000000 })
+    );
+    slot.position.y = 0.5;
+    group.add(slot);
+
+    // Add invisible hitbox for easier clicking
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.6, 0.3),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = 0.3;
+    hitbox.name = "shredder_hitbox";
+    group.add(hitbox);
+
+    return group;
+}
+
 // ===== DECORATIONS & PROPS =====
 
 export function createGlobe(radius = 0.2) {
@@ -749,6 +794,28 @@ export function createClock(radius = 0.3) {
     minuteHand.position.set(0, radius * 0.35, 0.07);
     minuteHand.rotation.z = -Math.PI / 4; // 15 minutes
     group.add(minuteHand);
+
+    return group;
+}
+
+export function createPainting(width = 1.0, height = 0.8) {
+    const group = new THREE.Group();
+
+    // Frame
+    const frameWidth = 0.05;
+    const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x3d2f1f }) // Dark wood
+    );
+    group.add(frame);
+
+    // Canvas/Picture
+    const canvas = new THREE.Mesh(
+        new THREE.BoxGeometry(width - frameWidth * 2, height - frameWidth * 2, 0.02),
+        new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff }) // Random color abstract art
+    );
+    canvas.position.z = 0.02;
+    group.add(canvas);
 
     return group;
 }
