@@ -12,6 +12,7 @@ import {
     currentStep,
     advanceStep
 } from './gameLogic.js';
+import { getNextDescription, hasCyclingDescriptions } from './cyclingDescriptions.js';
 
 export let isInteracting = false;
 let currentCode = "";
@@ -378,11 +379,19 @@ export function showModal(objName, {
             return;
         }
 
-        // Flavor text
+        // Cycling descriptions or fallback flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
         modalTitle.textContent = displayName;
-        const flavor = getFlavorText(objName);
-        modalContent.innerHTML = `<p>${flavor}</p>`;
+        
+        // Use cycling descriptions if available, otherwise fallback to flavor text
+        let description;
+        if (hasCyclingDescriptions(objName)) {
+            description = getNextDescription(objName);
+        } else {
+            description = getFlavorText(objName);
+        }
+        
+        modalContent.innerHTML = `<p>${description}</p>`;
         modal.style.display = 'block';
         isInteracting = true;
     } else {
