@@ -304,9 +304,9 @@ async function buildOfficeScene(engine) {
 
     // NEW OBJECTS START HERE
 
-    // Trash Can (near desk)
+    // Trash Can (north side of desk, near the back wall)
     const trashCan = Prefabs.createTrashCan(0.15, 0.4);
-    trashCan.position.set(-halfWidth + 0.5, 0, -halfDepth + 1.5);
+    trashCan.position.set(-halfWidth + 1.2, 0, -halfDepth + 0.8);
     trashCan.name = "trash"; // Flavor text key
     engine.interactables.push(trashCan.children[0]);
     scene.add(trashCan);
@@ -487,19 +487,30 @@ async function buildOfficeScene(engine) {
     });
     scene.add(floorLamp);
 
-    // Coffee Cup on table
+    // Coffee Cup on table (positioned above the glass surface)
     const coffeeCup = Prefabs.createCoffeeCup(0.04, 0.1);
-    coffeeCup.position.set(sittingAreaX - 0.2, coffeeTableHeight, sittingAreaZ + 0.1);
-    coffeeCup.name = "coffee_cup";
-    engine.interactables.push(coffeeCup);
+    coffeeCup.position.set(sittingAreaX - 0.2, coffeeTableHeight + 0.05, sittingAreaZ + 0.1);
+    // Register the cup body mesh (first child) as interactable
+    if (coffeeCup.children.length > 0) {
+        coffeeCup.children[0].name = "coffee_cup";
+        engine.interactables.push(coffeeCup.children[0]);
+    } else {
+        coffeeCup.name = "coffee_cup";
+        engine.interactables.push(coffeeCup);
+    }
     scene.add(coffeeCup);
 
-    // Newspaper on table
+    // Newspaper on table (positioned above the glass surface)
     const newspaper = Prefabs.createNewspaper(0.3, 0.4);
-    newspaper.position.set(sittingAreaX + 0.2, coffeeTableHeight, sittingAreaZ - 0.1);
-    newspaper.rotation.y = Math.PI / 8; // Slight angle
+    newspaper.position.set(sittingAreaX + 0.2, coffeeTableHeight + 0.05, sittingAreaZ - 0.1);
     newspaper.name = "newspaper";
-    engine.interactables.push(newspaper);
+    // Make the newspaper mesh itself interactable (it's the first child)
+    if (newspaper.children.length > 0) {
+        newspaper.children[0].name = "newspaper";
+        engine.interactables.push(newspaper.children[0]);
+    } else {
+        engine.interactables.push(newspaper);
+    }
     scene.add(newspaper);
 
     // Remote Control on table

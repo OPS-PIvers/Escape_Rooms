@@ -308,39 +308,136 @@ export function createBookshelf(width = 3.0, height = 2.0, depth = 0.4, shelves 
 
 export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, drawers = 3) {
     const group = new THREE.Group();
-    const metalMaterial = new THREE.MeshStandardMaterial({
-        color: 0x505050,
+
+    // Materials with better appearance
+    const cabinetMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a3a3a, // Darker gray
+        metalness: 0.7,
+        roughness: 0.3
+    });
+
+    const drawerMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4a4a4a,
         metalness: 0.6,
         roughness: 0.4
     });
 
-    // Cabinet body
-    const body = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth),
-        metalMaterial
+    const handleMaterial = new THREE.MeshStandardMaterial({
+        color: 0xaaaaaa,
+        metalness: 0.9,
+        roughness: 0.2
+    });
+
+    // Cabinet body (main frame)
+    const bodyThickness = 0.02;
+
+    // Back panel
+    const back = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, bodyThickness),
+        cabinetMaterial
     );
-    body.position.y = height/2;
-    body.castShadow = true;
-    body.receiveShadow = true;
-    group.add(body);
+    back.position.set(0, height/2, -depth/2 + bodyThickness/2);
+    back.castShadow = true;
+    back.receiveShadow = true;
+    group.add(back);
 
-    // Drawers
-    const drawerHeight = height / drawers;
+    // Left side
+    const leftSide = new THREE.Mesh(
+        new THREE.BoxGeometry(bodyThickness, height, depth),
+        cabinetMaterial
+    );
+    leftSide.position.set(-width/2 + bodyThickness/2, height/2, 0);
+    leftSide.castShadow = true;
+    leftSide.receiveShadow = true;
+    group.add(leftSide);
+
+    // Right side
+    const rightSide = new THREE.Mesh(
+        new THREE.BoxGeometry(bodyThickness, height, depth),
+        cabinetMaterial
+    );
+    rightSide.position.set(width/2 - bodyThickness/2, height/2, 0);
+    rightSide.castShadow = true;
+    rightSide.receiveShadow = true;
+    group.add(rightSide);
+
+    // Top
+    const top = new THREE.Mesh(
+        new THREE.BoxGeometry(width, bodyThickness, depth),
+        cabinetMaterial
+    );
+    top.position.set(0, height - bodyThickness/2, 0);
+    top.castShadow = true;
+    top.receiveShadow = true;
+    group.add(top);
+
+    // Base/feet (slightly raised)
+    const baseHeight = 0.05;
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(width - 0.04, baseHeight, depth - 0.04),
+        new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.5, roughness: 0.5 })
+    );
+    base.position.set(0, baseHeight/2, 0);
+    base.castShadow = true;
+    group.add(base);
+
+    // Drawers with detail
+    const drawerHeight = (height - baseHeight - bodyThickness) / drawers;
+    const drawerInset = 0.01;
+
     for (let i = 0; i < drawers; i++) {
-        const drawer = new THREE.Mesh(
-            new THREE.BoxGeometry(width - 0.05, drawerHeight - 0.05, depth - 0.02),
-            new THREE.MeshStandardMaterial({ color: 0x606060, metalness: 0.5, roughness: 0.5 })
-        );
-        drawer.position.set(0, drawerHeight * i + drawerHeight/2, depth/2 - 0.005);
-        group.add(drawer);
+        const drawerY = baseHeight + (i * drawerHeight) + drawerHeight/2;
 
-        // Handle
-        const handle = new THREE.Mesh(
-            new THREE.BoxGeometry(0.15, 0.03, 0.03),
-            new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 })
+        // Drawer front (beveled appearance)
+        const drawerFront = new THREE.Mesh(
+            new THREE.BoxGeometry(
+                width - bodyThickness * 2 - drawerInset * 2,
+                drawerHeight - drawerInset * 2,
+                0.03
+            ),
+            drawerMaterial
         );
-        handle.position.set(0, drawerHeight * i + drawerHeight/2, depth/2 + 0.02);
+        drawerFront.position.set(0, drawerY, depth/2 - 0.015);
+        drawerFront.castShadow = true;
+        group.add(drawerFront);
+
+        // Label holder (metal card holder on drawer)
+        const labelHolder = new THREE.Mesh(
+            new THREE.BoxGeometry(width * 0.5, drawerHeight * 0.2, 0.015),
+            handleMaterial
+        );
+        labelHolder.position.set(0, drawerY, depth/2 + 0.005);
+        group.add(labelHolder);
+
+        // Label background (white paper look)
+        const label = new THREE.Mesh(
+            new THREE.BoxGeometry(width * 0.45, drawerHeight * 0.15, 0.01),
+            new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 })
+        );
+        label.position.set(0, drawerY, depth/2 + 0.012);
+        group.add(label);
+
+        // Handle (recessed pull)
+        const handleWidth = 0.12;
+        const handleHeight = 0.015;
+        const handleDepth = 0.02;
+
+        const handle = new THREE.Mesh(
+            new THREE.BoxGeometry(handleWidth, handleHeight, handleDepth),
+            handleMaterial
+        );
+        handle.position.set(0, drawerY - drawerHeight * 0.25, depth/2 + handleDepth/2);
+        handle.castShadow = true;
         group.add(handle);
+
+        // Lock mechanism (small circle)
+        const lock = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.008, 0.008, 0.01, 16),
+            new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 })
+        );
+        lock.rotation.x = Math.PI / 2;
+        lock.position.set(0, drawerY + drawerHeight * 0.25, depth/2 + 0.005);
+        group.add(lock);
     }
 
     return group;
@@ -1241,39 +1338,106 @@ export function createCoffeeCup(radius = 0.04, height = 0.1) {
 
 export function createNewspaper(width = 0.3, height = 0.4) {
     const group = new THREE.Group();
-    const paperMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.9 });
 
-    // Folded newspaper (two pages)
-    const page1 = new THREE.Mesh(
-        new THREE.BoxGeometry(width, 0.002, height),
-        paperMaterial
-    );
-    page1.position.set(-width * 0.25, 0.001, 0);
-    page1.rotation.y = -0.2; // Slight angle
-    page1.castShadow = true;
-    page1.receiveShadow = true;
-    group.add(page1);
+    // Create canvas texture for realistic newspaper appearance
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 682; // Newspaper aspect ratio
+    const ctx = canvas.getContext('2d');
 
-    const page2 = new THREE.Mesh(
-        new THREE.BoxGeometry(width, 0.002, height),
-        paperMaterial
-    );
-    page2.position.set(width * 0.25, 0.001, 0);
-    page2.rotation.y = 0.2; // Slight angle
-    page2.castShadow = true;
-    page2.receiveShadow = true;
-    group.add(page2);
+    // Background (aged newspaper color)
+    ctx.fillStyle = '#f5f5dc';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Text lines (simple black rectangles to simulate text)
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
-    for (let i = 0; i < 8; i++) {
-        const line = new THREE.Mesh(
-            new THREE.BoxGeometry(width * 0.8, 0.003, height * 0.05),
-            textMaterial
+    // Add some texture/noise for aged paper effect
+    ctx.fillStyle = 'rgba(200, 180, 150, 0.05)';
+    for (let i = 0; i < 100; i++) {
+        ctx.fillRect(
+            Math.random() * canvas.width,
+            Math.random() * canvas.height,
+            Math.random() * 10,
+            Math.random() * 10
         );
-        line.position.set(0, 0.003, -height * 0.3 + i * height * 0.08);
-        page1.add(line);
     }
+
+    // Newspaper header
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 48px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('THE DAILY NEWS', canvas.width / 2, 60);
+
+    // Date
+    ctx.font = '16px serif';
+    ctx.fillText('Today\'s Edition', canvas.width / 2, 90);
+
+    // Dividing line
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(30, 110);
+    ctx.lineTo(canvas.width - 30, 110);
+    ctx.stroke();
+
+    // Headline
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 32px serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('BREAKING:', 40, 150);
+    ctx.fillText('Local Office Mystery', 40, 190);
+
+    // Article text (simulated with lines)
+    ctx.font = '14px serif';
+    ctx.fillStyle = '#333';
+    const articleY = 230;
+    const lineHeight = 18;
+    const lines = [
+        'Investigators are looking into',
+        'strange occurrences at a local',
+        'office building. Sources report',
+        'unusual activities and hidden',
+        'secrets within the premises.',
+        '',
+        'Staff members claim they\'ve',
+        'discovered mysterious clues',
+        'scattered throughout the office,',
+        'leading to speculation about',
+        'what might be concealed there.',
+        '',
+        'Authorities recommend anyone',
+        'visiting the location to keep',
+        'an eye out for anything unusual.',
+    ];
+
+    lines.forEach((line, i) => {
+        ctx.fillText(line, 40, articleY + (i * lineHeight));
+    });
+
+    // Second column
+    ctx.fillText('In related news, experts', 290, articleY);
+    ctx.fillText('suggest that solving', 290, articleY + lineHeight);
+    ctx.fillText('puzzles may help unlock', 290, articleY + lineHeight * 2);
+    ctx.fillText('hidden compartments.', 290, articleY + lineHeight * 3);
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    const paperMaterial = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.9,
+        side: THREE.DoubleSide
+    });
+
+    // Single sheet newspaper (flat on table with slight wrinkle)
+    const newspaper = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        paperMaterial
+    );
+    newspaper.rotation.x = -Math.PI / 2; // Lay flat
+    newspaper.position.y = 0.002; // Just above surface
+    newspaper.castShadow = true;
+    newspaper.receiveShadow = true;
+    group.add(newspaper);
 
     return group;
 }
