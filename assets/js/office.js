@@ -372,7 +372,17 @@ async function buildOfficeScene(engine) {
     const clock = Prefabs.createClock(0.3);
     clock.position.set(0, 2.5, halfDepth - 0.05); // South wall, high up
     clock.rotation.y = Math.PI; // Face north
-    // engine.interactables.push(clock.children.find(c => c.name === 'clock'));
+    // Find the clock face and make it interactable
+    const clockFace = clock.children.find(c => c.name === 'clock');
+    if (clockFace) {
+        engine.interactables.push(clockFace);
+    } else {
+        // Fallback to first child or group
+        if (clock.children.length > 0) {
+            clock.children[0].name = "clock";
+            engine.interactables.push(clock.children[0]);
+        }
+    }
     scene.add(clock);
 
     // Paintings
@@ -410,6 +420,8 @@ async function buildOfficeScene(engine) {
     // Rug (foundation of the sitting area)
     const rug = Prefabs.createRug(3.0, 2.5);
     rug.position.set(sittingAreaX, 0, sittingAreaZ);
+    rug.name = "rug";
+    engine.interactables.push(rug);
     scene.add(rug);
 
     // Sofa (against south wall, facing north)
@@ -432,8 +444,16 @@ async function buildOfficeScene(engine) {
     const coffeeTableHeight = 0.35;
     const coffeeTable = Prefabs.createCoffeeTable(1.0, coffeeTableHeight, 0.6);
     coffeeTable.position.set(sittingAreaX, 0, sittingAreaZ);
-    coffeeTable.name = "coffee_table";
-    engine.interactables.push(coffeeTable);
+    // Register only the glass top as interactable to avoid blocking items on the table
+    const glassTop = coffeeTable.children.find(child => child.position.y > 0.1);
+    if (glassTop) {
+        glassTop.name = "coffee_table";
+        engine.interactables.push(glassTop);
+    } else {
+        // Fallback to group
+        coffeeTable.name = "coffee_table";
+        engine.interactables.push(coffeeTable);
+    }
     scene.add(coffeeTable);
 
     // TV Stand with TV (against west wall, facing east)
@@ -446,13 +466,25 @@ async function buildOfficeScene(engine) {
         tvScreen.name = "tv";
         engine.interactables.push(tvScreen);
     }
+    // Also register TV stand itself as interactable
+    tvStand.children.forEach(child => {
+        if (child !== tvScreen && child.geometry) {
+            child.name = "tv_stand";
+            engine.interactables.push(child);
+        }
+    });
     scene.add(tvStand);
 
     // Floor Lamp (beside armchair on east side)
     const floorLamp = Prefabs.createLamp('floor');
     floorLamp.position.set(sittingAreaX + 1.8, 0, sittingAreaZ - 1.0);
-    floorLamp.name = "floor_lamp";
-    engine.interactables.push(floorLamp);
+    // Register lamp children as interactable (shade, stem, etc.)
+    floorLamp.children.forEach(child => {
+        if (child.geometry) {
+            child.name = "floor_lamp";
+            engine.interactables.push(child);
+        }
+    });
     scene.add(floorLamp);
 
     // Coffee Cup on table
@@ -474,8 +506,16 @@ async function buildOfficeScene(engine) {
     const remote = Prefabs.createRemote(0.15, 0.05);
     remote.position.set(sittingAreaX - 0.3, coffeeTableHeight, sittingAreaZ - 0.2);
     remote.rotation.y = -Math.PI / 6; // Angled
-    remote.name = "remote";
-    engine.interactables.push(remote);
+    // Find the invisible hitbox child and register it as interactable
+    const remoteHitbox = remote.children.find(child => !child.visible && child.geometry);
+    if (remoteHitbox) {
+        remoteHitbox.name = "remote";
+        engine.interactables.push(remoteHitbox);
+    } else {
+        // Fallback to group if no hitbox found
+        remote.name = "remote";
+        engine.interactables.push(remote);
+    }
     scene.add(remote);
 
     // ===== LIBRARY ON EAST WALL =====
