@@ -10,7 +10,10 @@ import {
     gameMode,
     winningObject,
     currentStep,
-    advanceStep
+    advanceStep,
+    puzzleState,
+    resetChain,
+    shuffleAllClues
 } from './gameLogic.js';
 import { getNextDescription, hasCyclingDescriptions } from './cyclingDescriptions.js';
 
@@ -304,30 +307,131 @@ export function showModal(objName, {
     }
 
     // --- SAFE INTERACTION ---
+    // --- SAFE INTERACTION ---
     if (objName === "safe") {
-        if (gameMode === "classic") {
-            currentCode = "";
-            renderKeypad("SAFE LOCK");
-            modal.style.display = 'block';
-            isInteracting = true;
-        } else {
-            modalTitle.textContent = "SAFE";
-            modalContent.innerHTML = "<p>It seems inactive or empty in this mission.</p>";
+        currentCode = "";
+        renderKeypad("SAFE LOCK");
+        modal.style.display = 'block';
+        isInteracting = true;
+        return;
+    }
+
+    // --- PUZZLE CHAIN INTERACTIONS ---
+
+    // 1. TRASH -> Find Shredded Paper
+    if (objName === "trash") {
+        if (!puzzleState.hasShreddedPaper) {
+            puzzleState.hasShreddedPaper = true;
+            modalTitle.textContent = "TRASH CAN";
+            modalContent.innerHTML = "<p>You dig through the trash...</p><p>You find a pile of <strong>SHREDDED PAPER</strong>.</p>";
             optionsContainer.innerHTML = "";
-            modalFeedback.textContent = "";
+            modalFeedback.textContent = "Item Added: Shredded Paper";
             modal.style.display = 'block';
             isInteracting = true;
+            return;
         }
+    }
+
+    // 2. SHREDDER -> Fix Paper -> Get Channel
+    if (objName.includes("shredder")) {
+        modalTitle.textContent = "PAPER SHREDDER";
+        if (puzzleState.shredderFixed) {
+            modalContent.innerHTML = "<p>The reassembled paper reveals a note:</p><h2 style='color: #4caf50'>TV CHANNEL 4</h2>";
+        } else if (puzzleState.hasShreddedPaper) {
+            modalContent.innerHTML = "<p>You have a pile of shredded paper.</p><p>Maybe you can put it back together?</p>";
+            optionsContainer.innerHTML = "";
+            const fixBtn = document.createElement('button');
+            fixBtn.className = 'option-btn';
+            fixBtn.textContent = "REASSEMBLE PAPER";
+            fixBtn.onclick = () => {
+                puzzleState.shredderFixed = true;
+                modalContent.innerHTML = "<p>You carefully tape the pieces together...</p><p>It reveals a note:</p><h2 style='color: #4caf50'>TV CHANNEL 4</h2>";
+                optionsContainer.innerHTML = "";
+            };
+            optionsContainer.appendChild(fixBtn);
+        } else {
+            modalContent.innerHTML = "<p>It's full of paper scraps. Too small to read.</p>";
+        }
+        modal.style.display = 'block';
+        isInteracting = true;
+        return;
+    }
+
+    // 3. REMOTE -> Turn on TV
+    if (objName === "remote") {
+        modalTitle.textContent = "TV REMOTE";
+        modalContent.innerHTML = "<p>Enter Channel Number:</p>";
+
+        // Simple input for channel
+        const input = document.createElement('input');
+        input.type = "number";
+        input.id = "channelInput";
+        input.style.fontSize = "20px";
+        input.style.textAlign = "center";
+        modalContent.appendChild(input);
+
+        optionsContainer.innerHTML = "";
+        const turnOnBtn = document.createElement('button');
+        turnOnBtn.className = 'option-btn';
+        turnOnBtn.textContent = "CHANGE CHANNEL";
+        turnOnBtn.onclick = () => {
+            const val = parseInt(document.getElementById('channelInput').value);
+            if (val === 4) {
+                puzzleState.tvChannel = 4;
+                modalFeedback.style.color = "#4caf50";
+                modalFeedback.textContent = "TV TURNED ON";
+                setTimeout(() => closeModal(), 1000);
+            } else {
+                modalFeedback.style.color = "red";
+                modalFeedback.textContent = "STATIC...";
+            }
+        };
+        optionsContainer.appendChild(turnOnBtn);
+
+        modal.style.display = 'block';
+        isInteracting = true;
+        return;
+    }
+
+    // 4. TV -> Trivia -> Computer Password
+    if (objName === "tv") {
+        if (puzzleState.tvChannel === 4) {
+            modalTitle.textContent = "BREAKING NEWS";
+            modalContent.innerHTML = "<p>Welcome to MN History Trivia!</p><p><strong>Question:</strong> Who was the first territorial governor of Minnesota?</p>";
+
+            optionsContainer.innerHTML = "";
+            const answers = ["Henry Sibley", "Alexander Ramsey", "Knute Nelson", "Jesse Ventura"];
+            answers.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = ans;
+                btn.onclick = () => {
+                    if (ans === "Alexander Ramsey") {
+                        modalContent.innerHTML = "<h2 style='color:#4caf50'>CORRECT!</h2><p>The secret password is:</p><h1>RAMSEY</h1>";
+                        optionsContainer.innerHTML = "";
+                    } else {
+                        btn.style.backgroundColor = "red";
+                        modalFeedback.textContent = "WRONG ANSWER";
+                    }
+                };
+                optionsContainer.appendChild(btn);
+            });
+        } else {
+            modalTitle.textContent = "TV";
+            modalContent.innerHTML = "<p>The screen is black.</p>";
+        }
+        modal.style.display = 'block';
+        isInteracting = true;
         return;
     }
 
     // --- OBJECT INTERACTION ---
     modalFeedback.textContent = "";
     optionsContainer.innerHTML = "";
-    
+
     let qIndex = -1;
     let slotIndex = -1; // Only for tracking solved state in activeClues
-    
+
     if (gameMode === "trail") {
         slotIndex = locationMap[objName];
         if (slotIndex !== null && slotIndex !== undefined) {
@@ -349,7 +453,7 @@ export function showModal(objName, {
             }
         }
     }
-    
+
     if (gameMode === "hidden_key") {
         qIndex = locationMap[objName];
     } else {
@@ -382,7 +486,7 @@ export function showModal(objName, {
         // Cycling descriptions or fallback flavor text
         const displayName = objName.replace(/_/g, ' ').toUpperCase();
         modalTitle.textContent = displayName;
-        
+
         // Use cycling descriptions if available, otherwise fallback to flavor text
         let description;
         if (hasCyclingDescriptions(objName)) {
@@ -390,7 +494,7 @@ export function showModal(objName, {
         } else {
             description = getFlavorText(objName);
         }
-        
+
         modalContent.innerHTML = `<p>${description}</p>`;
         modal.style.display = 'block';
         isInteracting = true;
@@ -398,7 +502,7 @@ export function showModal(objName, {
         // Show Question
         const qData = questionPool[qIndex];
         if (!qData) {
-             modalContent.innerHTML = "<p>Error: Missing Question Data</p>"; // Safety
+            modalContent.innerHTML = "<p>Error: Missing Question Data</p>"; // Safety
         } else {
             modalTitle.textContent = qData.t;
             modalContent.innerHTML = `<div class='question-box'><strong>${qData.q}</strong></div>`;
@@ -440,7 +544,7 @@ function resetGameLogic() {
 function checkKeypadCode() {
     if (currentCode === "1858") {
         if (gameMode === "code_door") {
-            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00"); 
+            triggerVictory(document.getElementById('victoryTime') ? document.getElementById('victoryTime').textContent : "00:00");
         } else {
             modalTitle.textContent = "SAFE UNLOCKED";
             modalContent.innerHTML = "<h2 style='color:#4caf50'>SUCCESS</h2><p>The safe opens.</p><p>Inside, you find an old <strong>SKELETON KEY</strong>.</p>";
@@ -475,11 +579,11 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
     if (isCorrect) {
         btnElement.classList.add('correct');
         modalFeedback.style.color = "#4caf50";
-        
+
         if (gameMode === "hidden_key") {
             if (objName === winningObject) {
                 modalFeedback.innerHTML = `CORRECT! <br><strong>YOU FOUND THE HIDDEN KEY!</strong>`;
-                setHasSkeletonKey(true); 
+                setHasSkeletonKey(true);
                 // Add "Exit" button
                 const exitBtn = document.createElement('button');
                 exitBtn.className = 'option-btn';
@@ -497,18 +601,18 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
         } else if (gameMode === "trail") {
             const nextStep = advanceStep();
             if (nextStep >= 4) {
-                 modalFeedback.innerHTML = `CORRECT! <br><strong>CHAIN COMPLETE! ESCAPE UNLOCKED!</strong>`;
-                 const exitBtn = document.createElement('button');
-                 exitBtn.className = 'option-btn';
-                 exitBtn.textContent = "ESCAPE";
-                 exitBtn.style.backgroundColor = "#4caf50";
-                 exitBtn.style.marginTop = "10px";
-                 exitBtn.onclick = () => { triggerVictory("00:00"); };
-                 optionsContainer.appendChild(exitBtn);
+                modalFeedback.innerHTML = `CORRECT! <br><strong>CHAIN COMPLETE! ESCAPE UNLOCKED!</strong>`;
+                const exitBtn = document.createElement('button');
+                exitBtn.className = 'option-btn';
+                exitBtn.textContent = "ESCAPE";
+                exitBtn.style.backgroundColor = "#4caf50";
+                exitBtn.style.marginTop = "10px";
+                exitBtn.onclick = () => { triggerVictory("00:00"); };
+                optionsContainer.appendChild(exitBtn);
             } else {
-                 const nextObj = Object.keys(locationMap).find(key => locationMap[key] === nextStep);
-                 const niceName = nextObj ? nextObj.replace(/_/g, ' ').toUpperCase() : "NEXT CLUE";
-                 modalFeedback.innerHTML = `CORRECT! <br>New Clue: <strong>Check the ${niceName}</strong>`;
+                const nextObj = Object.keys(locationMap).find(key => locationMap[key] === nextStep);
+                const niceName = nextObj ? nextObj.replace(/_/g, ' ').toUpperCase() : "NEXT CLUE";
+                modalFeedback.innerHTML = `CORRECT! <br>New Clue: <strong>Check the ${niceName}</strong>`;
             }
         } else {
             modalFeedback.innerHTML = `CORRECT! <br>You found a number: <strong>${activeClues[slotIndex].digit}</strong>`;
@@ -517,7 +621,12 @@ function handleAnswer(slotIndex, isCorrect, btnElement, objName) {
     } else {
         btnElement.classList.add('wrong');
         modalFeedback.style.color = "#e57373";
-        if (gameMode !== "hidden_key") {
+
+        if (gameMode === "trail") {
+            resetChain();
+            shuffleAllClues();
+            modalFeedback.innerHTML = `WRONG! Chain reset.<br>Questions have been shuffled.`;
+        } else if (gameMode !== "hidden_key") {
             moveClue(slotIndex, objName);
             modalFeedback.innerHTML = `WRONG! The clue has vanished.<br>You must find it again elsewhere.`;
         } else {
@@ -603,19 +712,18 @@ function handleKeypad(num) {
 }
 
 // Computer password system
-let computerUnlocked = false;
-const COMPUTER_PASSWORD = "admin"; // Change this to any password you want
+const COMPUTER_PASSWORD = "RAMSEY";
 
 function renderPasswordEntry() {
     modalTitle.textContent = "COMPUTER LOGIN";
 
-    if (computerUnlocked) {
+    if (puzzleState.computerUnlocked) {
         modalContent.innerHTML = `
             <div style="color: #4caf50; text-align: center; margin: 20px 0;">
                 <h3>✓ SYSTEM UNLOCKED</h3>
                 <p>Access Granted</p>
                 <p style="margin-top: 15px; font-size: 14px; color: #aaa;">
-                    Computer files accessed successfully.
+                    SAFE CODE: <strong style="color: #fff; font-size: 24px;">1858</strong>
                 </p>
             </div>
         `;
@@ -667,10 +775,10 @@ function checkComputerPassword() {
     const input = document.getElementById('computerPassword');
     if (!input) return;
 
-    const enteredPassword = input.value;
+    const enteredPassword = input.value.toUpperCase(); // Case insensitive
 
     if (enteredPassword === COMPUTER_PASSWORD) {
-        computerUnlocked = true;
+        puzzleState.computerUnlocked = true;
         modalFeedback.style.color = '#4caf50';
         modalFeedback.textContent = '✓ ACCESS GRANTED';
 

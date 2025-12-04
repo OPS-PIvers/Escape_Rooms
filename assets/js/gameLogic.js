@@ -87,7 +87,7 @@ try {
     if (window.CUSTOM_GAME_DATA) {
         rawData = window.CUSTOM_GAME_DATA;
         console.log("Loaded custom data from global variable.");
-    } 
+    }
     // 2. Check for URL parameters
     else {
         const params = new URLSearchParams(window.location.search);
@@ -135,6 +135,14 @@ let hasSkeletonKey = false;
 let safeAttempts = SAFE_ATTEMPTS;
 let currentStep = 0; // For "trail" mode
 
+// Puzzle Chain State
+let puzzleState = {
+    hasShreddedPaper: false,
+    shredderFixed: false,
+    tvChannel: 0,
+    computerUnlocked: false
+};
+
 // Expanded locations list
 const locations = [...LOCATIONS];
 
@@ -144,7 +152,7 @@ function initGame() {
     currentStep = 0;
     locations.forEach(loc => locationMap[loc] = null);
     questionPool.sort(() => 0.5 - Math.random());
-    
+
     if (gameMode === "hidden_key") {
         winningObject = locations[Math.floor(Math.random() * locations.length)];
         // Map every location to a question index
@@ -194,6 +202,54 @@ function moveClue(slotIndex, fromObjName) {
 function setHasSkeletonKey(value) {
     hasSkeletonKey = value;
 }
+function resetChain() {
+    currentStep = 0;
+}
+
+function shuffleAllClues() {
+    // Reset location map
+    locations.forEach(loc => locationMap[loc] = null);
+
+    // Reshuffle questions
+    questionPool.sort(() => 0.5 - Math.random());
+
+    if (gameMode === "hidden_key") {
+        winningObject = locations[Math.floor(Math.random() * locations.length)];
+        locations.forEach((loc, i) => {
+            locationMap[loc] = i % questionPool.length;
+        });
+    } else {
+        // Classic / Code / Cards / Trail
+        for (let i = 0; i < 4; i++) {
+            activeClues[i].qIndex = i % questionPool.length;
+            activeClues[i].solved = false;
+        }
+        const shuffledLocs = [...locations].sort(() => 0.5 - Math.random());
+        for (let i = 0; i < 4; i++) {
+            locationMap[shuffledLocs[i]] = i;
+        }
+    }
+}
+
+// Expose for debugging/testing
+window.gameLogic = {
+    questionPool,
+    activeClues,
+    hasSkeletonKey,
+    setHasSkeletonKey,
+    safeAttempts,
+    locations,
+    locationMap,
+    initGame,
+    moveClue,
+    gameMode,
+    winningObject,
+    currentStep,
+    advanceStep,
+    resetChain,
+    shuffleAllClues
+};
+
 // We need to export the variables themselves so other modules can mutate them
 export {
     questionPool,
@@ -208,5 +264,7 @@ export {
     gameMode,
     winningObject,
     currentStep,
-    advanceStep
+    advanceStep,
+    resetChain,
+    shuffleAllClues
 };
