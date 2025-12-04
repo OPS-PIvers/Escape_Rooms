@@ -70,9 +70,9 @@ async function buildOfficeScene(engine) {
     // Walls (3 solid walls + north wall with door opening)
     const walls = [
         // Front wall (South) - Solid
-        { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT/2, halfDepth] },
+        { width: OFFICE_WIDTH, pos: [0, WALL_HEIGHT / 2, halfDepth] },
         // Left wall (West) - Solid
-        { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT/2, 0], rotY: Math.PI/2 },
+        { width: OFFICE_DEPTH, pos: [-halfWidth, WALL_HEIGHT / 2, 0], rotY: Math.PI / 2 },
         // Right wall (East) - Will be split to create opening for secret door (handled below)
     ];
 
@@ -151,7 +151,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(sideWidth, WALL_HEIGHT, WALL_THICKNESS),
         materials.wall
     );
-    wallLeft.position.set(-(doorW/2 + sideWidth/2), WALL_HEIGHT/2, -halfDepth);
+    wallLeft.position.set(-(doorW / 2 + sideWidth / 2), WALL_HEIGHT / 2, -halfDepth);
     wallLeft.castShadow = true;
     wallLeft.receiveShadow = true;
     scene.add(wallLeft);
@@ -161,7 +161,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(sideWidth, WALL_HEIGHT, WALL_THICKNESS),
         materials.wall
     );
-    wallRight.position.set((doorW/2 + sideWidth/2), WALL_HEIGHT/2, -halfDepth);
+    wallRight.position.set((doorW / 2 + sideWidth / 2), WALL_HEIGHT / 2, -halfDepth);
     wallRight.castShadow = true;
     wallRight.receiveShadow = true;
     scene.add(wallRight);
@@ -171,7 +171,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(doorW, lintelHeight, WALL_THICKNESS),
         materials.wall
     );
-    lintel.position.set(0, doorH + lintelHeight/2, -halfDepth);
+    lintel.position.set(0, doorH + lintelHeight / 2, -halfDepth);
     lintel.castShadow = true;
     lintel.receiveShadow = true;
     scene.add(lintel);
@@ -204,7 +204,7 @@ async function buildOfficeScene(engine) {
             );
             // Position it at the front of the drawer (where the visible front is)
             const drawerDepth = 0.8 - 0.1; // desk depth - 0.1 from prefabs
-            clickMesh.position.z = drawerDepth/2;
+            clickMesh.position.z = drawerDepth / 2;
             clickMesh.name = `drawer_${index}_click`;
             clickMesh.userData.drawerGroup = drawerGroup;
 
@@ -341,9 +341,9 @@ async function buildOfficeScene(engine) {
     const shredderHead = shredder.children.find(c => c.name === "shredder");
     const shredderHitbox = shredder.children.find(c => c.name === "shredder_hitbox");
     if (shredderHitbox) {
-         engine.interactables.push(shredderHitbox);
+        engine.interactables.push(shredderHitbox);
     } else if (shredderHead) {
-         engine.interactables.push(shredderHead);
+        engine.interactables.push(shredderHead);
     }
     scene.add(shredder);
 
@@ -364,7 +364,7 @@ async function buildOfficeScene(engine) {
     briefcase.name = "briefcase";
     // Find hitbox or just add group children
     briefcase.children.forEach(c => {
-         if(c.geometry) engine.interactables.push(c);
+        if (c.geometry) engine.interactables.push(c);
     });
     scene.add(briefcase);
 
@@ -529,6 +529,48 @@ async function buildOfficeScene(engine) {
     }
     scene.add(remote);
 
+    // ===== CLUTTER & DECOR =====
+
+    // Paper Stack on Desk
+    const paperStack1 = Prefabs.createPaperStack(7);
+    paperStack1.position.set(-halfWidth + 1.8, DESK_SURFACE_Y, -halfDepth + 1.2);
+    paperStack1.rotation.y = Math.random() * 0.5;
+    paperStack1.name = "papers_desk";
+    engine.interactables.push(paperStack1); // Flavor text
+    scene.add(paperStack1);
+
+    // Cardboard Box near Filing Cabinet
+    const box1 = Prefabs.createCardboardBox(0.5, 0.4, 0.5);
+    box1.position.set(-halfWidth + 0.8, 0, -halfDepth + 3.8);
+    box1.rotation.y = Math.random() * 0.5;
+    box1.name = "box_storage";
+    engine.interactables.push(box1);
+    scene.add(box1);
+
+    // Cardboard Box near Coat Rack
+    const box2 = Prefabs.createCardboardBox(0.4, 0.3, 0.4);
+    box2.position.set(2.5, 0, -halfDepth + 0.8);
+    box2.rotation.y = Math.random() * 0.5 + 0.5;
+    box2.name = "box_misc";
+    engine.interactables.push(box2);
+    scene.add(box2);
+
+    // Whiteboard on West Wall
+    const whiteboard = Prefabs.createWhiteboard(2.0, 1.2);
+    whiteboard.position.set(-halfWidth + 0.05, 1.8, 2.5);
+    whiteboard.rotation.y = Math.PI / 2;
+    whiteboard.name = "whiteboard";
+    engine.interactables.push(whiteboard);
+    scene.add(whiteboard);
+
+    // Scattered Books near Sitting Area
+    const scatteredBooks = Prefabs.createScatteredBooks(4);
+    scatteredBooks.position.set(-halfWidth + 3.5, 0, halfDepth - 1.5);
+    scatteredBooks.rotation.y = Math.random() * Math.PI;
+    scatteredBooks.name = "scattered_books";
+    engine.interactables.push(scatteredBooks);
+    scene.add(scatteredBooks);
+
     // ===== LIBRARY ON EAST WALL =====
     // Create multiple bookshelves spanning the entire east wall
     // Each bookshelf is 3 units wide, 4 bookshelves fit perfectly in 12-unit room
@@ -552,12 +594,12 @@ async function buildOfficeScene(engine) {
             // Create pivot point for swinging bookshelf
             secretBookshelfPivot = new THREE.Group();
             // Position pivot at the back edge of the bookshelf (where hinge would be, against the wall)
-            secretBookshelfPivot.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z - shelfWidth/2);
+            secretBookshelfPivot.position.set(halfWidth - shelfDepth / 2 - 0.3, 0, config.z - shelfWidth / 2);
             scene.add(secretBookshelfPivot);
 
             // Create bookshelf with pre-populated books and add to pivot
             bookshelf = Prefabs.createBookshelf(shelfWidth, shelfHeight, shelfDepth, numShelves);
-            bookshelf.position.set(0, 0, shelfWidth/2); // Offset from pivot point
+            bookshelf.position.set(0, 0, shelfWidth / 2); // Offset from pivot point
             bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             secretBookshelfPivot.add(bookshelf);
 
@@ -566,7 +608,7 @@ async function buildOfficeScene(engine) {
         } else {
             // Normal static bookshelf with pre-populated books
             bookshelf = Prefabs.createBookshelf(shelfWidth, shelfHeight, shelfDepth, numShelves);
-            bookshelf.position.set(halfWidth - shelfDepth/2 - 0.3, 0, config.z);
+            bookshelf.position.set(halfWidth - shelfDepth / 2 - 0.3, 0, config.z);
             bookshelf.rotation.y = -Math.PI / 2; // Rotate to face west (into room)
             scene.add(bookshelf);
 
@@ -579,7 +621,7 @@ async function buildOfficeScene(engine) {
     // Create a small secret room behind the bookshelf (idx === 1, z = -1.5)
     const hiddenRoomWidth = 3.0;
     const hiddenRoomDepth = 2.5;
-    const hiddenRoomX = halfWidth + hiddenRoomWidth/2 + 0.2; // Beyond the east wall
+    const hiddenRoomX = halfWidth + hiddenRoomWidth / 2 + 0.2; // Beyond the east wall
     const hiddenRoomZ = -1.5; // Same Z as secret bookshelf
     const hiddenRoomHeight = shelfHeight; // Match bookshelf height
 
@@ -604,7 +646,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(hiddenRoomWidth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenBackWall.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ);
+    hiddenBackWall.position.set(hiddenRoomX, hiddenRoomHeight / 2, hiddenRoomZ);
     hiddenBackWall.rotation.y = Math.PI / 2;
     hiddenBackWall.castShadow = true;
     hiddenBackWall.receiveShadow = true;
@@ -615,7 +657,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(hiddenRoomDepth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenSideWall1.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ + hiddenRoomDepth/2);
+    hiddenSideWall1.position.set(hiddenRoomX, hiddenRoomHeight / 2, hiddenRoomZ + hiddenRoomDepth / 2);
     hiddenSideWall1.castShadow = true;
     hiddenSideWall1.receiveShadow = true;
     scene.add(hiddenSideWall1);
@@ -624,7 +666,7 @@ async function buildOfficeScene(engine) {
         new THREE.BoxGeometry(hiddenRoomDepth, hiddenRoomHeight, WALL_THICKNESS),
         hiddenRoomMaterial
     );
-    hiddenSideWall2.position.set(hiddenRoomX, hiddenRoomHeight/2, hiddenRoomZ - hiddenRoomDepth/2);
+    hiddenSideWall2.position.set(hiddenRoomX, hiddenRoomHeight / 2, hiddenRoomZ - hiddenRoomDepth / 2);
     hiddenSideWall2.castShadow = true;
     hiddenSideWall2.receiveShadow = true;
     scene.add(hiddenSideWall2);
@@ -823,7 +865,7 @@ function initShredderPuzzleLogic(officeState) {
 
     const numStrips = 10;
     const stripWidth = 300 / numStrips;
-    const correctOrder = Array.from({length: numStrips}, (_, i) => i);
+    const correctOrder = Array.from({ length: numStrips }, (_, i) => i);
     let currentOrder = [...correctOrder].sort(() => Math.random() - 0.5);
 
     // Create strips
@@ -849,10 +891,10 @@ function initShredderPuzzleLogic(officeState) {
         return x - Math.floor(x);
     };
 
-    for(let i=0; i<10; i++) {
+    for (let i = 0; i < 10; i++) {
         ctx.beginPath();
-        ctx.moveTo(0, seededRandom()*100);
-        ctx.lineTo(300, seededRandom()*100);
+        ctx.moveTo(0, seededRandom() * 100);
+        ctx.lineTo(300, seededRandom() * 100);
         ctx.stroke();
     }
 
@@ -989,7 +1031,7 @@ async function initOffice() {
                         canvas.height = 256;
                         const ctx = canvas.getContext('2d');
                         ctx.fillStyle = "black";
-                        ctx.fillRect(0,0,512,256);
+                        ctx.fillRect(0, 0, 512, 256);
                         ctx.fillStyle = "#00ff00";
                         ctx.font = "bold 60px monospace";
                         ctx.textAlign = "center";
@@ -1036,12 +1078,12 @@ async function initOffice() {
 
     // Add drawer and secret bookshelf animation to the render loop
     const originalAnimate = engine.animate.bind(engine);
-    engine.animate = function(time) {
+    engine.animate = function (time) {
         originalAnimate(time);
         // Animate drawers (deltaTime is approximately 1/60 for 60fps)
-        animateDrawers(desk, 1/60);
+        animateDrawers(desk, 1 / 60);
         // Animate secret bookshelf
-        animateSecretBookshelf(secretBookshelfPivot, getSecretBookshelfState(), 1/60);
+        animateSecretBookshelf(secretBookshelfPivot, getSecretBookshelfState(), 1 / 60);
 
         // Dynamically adjust room bounds when secret bookshelf is open
         // This allows the player to access the hidden room beyond the east wall

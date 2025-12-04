@@ -803,6 +803,160 @@ export function createPaperShredder() {
     return group;
 }
 
+// ===== CLUTTER & DECOR =====
+
+export function createPaperStack(count = 5) {
+    const group = new THREE.Group();
+    const paperMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xfffdf0, 
+        roughness: 0.9,
+        side: THREE.DoubleSide
+    });
+
+    for (let i = 0; i < count; i++) {
+        const width = 0.21; // A4 approx
+        const height = 0.297;
+        
+        const paper = new THREE.Mesh(
+            new THREE.BoxGeometry(width, 0.001, height),
+            paperMaterial
+        );
+        
+        // Stack them with slight randomness
+        paper.position.y = i * 0.0015;
+        paper.rotation.y = (Math.random() - 0.5) * 0.2; // Random rotation
+        paper.position.x = (Math.random() - 0.5) * 0.02; // Random offset
+        paper.position.z = (Math.random() - 0.5) * 0.02;
+        
+        paper.castShadow = true;
+        group.add(paper);
+    }
+    
+    return group;
+}
+
+export function createCardboardBox(width = 0.4, height = 0.3, depth = 0.4) {
+    const group = new THREE.Group();
+    const cardboardMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8d6e63, // Brown
+        roughness: 0.9 
+    });
+    const tapeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xd7ccc8, // Lighter tape
+        roughness: 0.6
+    });
+
+    // Main box
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        cardboardMaterial
+    );
+    box.position.y = height / 2;
+    box.castShadow = true;
+    box.receiveShadow = true;
+    group.add(box);
+
+    // Tape across top
+    const tape = new THREE.Mesh(
+        new THREE.BoxGeometry(width + 0.01, 0.005, 0.05),
+        tapeMaterial
+    );
+    tape.position.y = height;
+    group.add(tape);
+
+    return group;
+}
+
+export function createWhiteboard(width = 2.0, height = 1.2) {
+    const group = new THREE.Group();
+    
+    // Frame
+    const frameThickness = 0.02;
+    const frameDepth = 0.02;
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.6 }); // Silver
+    
+    const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(width + frameThickness*2, height + frameThickness*2, frameDepth),
+        frameMaterial
+    );
+    frame.castShadow = true;
+    group.add(frame);
+    
+    // Board surface
+    const boardMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xffffff, 
+        roughness: 0.2,
+        metalness: 0.1
+    });
+    const board = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, frameDepth/2),
+        boardMaterial
+    );
+    board.position.z = frameDepth/2 + 0.001;
+    group.add(board);
+    
+    // Tray
+    const tray = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.05, 0.1),
+        frameMaterial
+    );
+    tray.position.set(0, -height/2 - 0.025, 0.05);
+    group.add(tray);
+    
+    // Eraser
+    const eraser = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.03, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+    );
+    eraser.position.set(width/3, -height/2 - 0.01, 0.05);
+    eraser.rotation.x = 0.2;
+    group.add(eraser);
+    
+    // Markers
+    const markerColors = [0xff0000, 0x0000ff, 0x000000];
+    markerColors.forEach((col, i) => {
+        const marker = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.01, 0.01, 0.12),
+            new THREE.MeshStandardMaterial({ color: col })
+        );
+        marker.rotation.z = Math.PI / 2;
+        marker.position.set(-width/3 + i*0.05, -height/2 - 0.015, 0.05);
+        group.add(marker);
+    });
+
+    return group;
+}
+
+export function createScatteredBooks(count = 3) {
+    const group = new THREE.Group();
+    const bookColors = [0x8B0000, 0x00008B, 0x006400, 0x8B4513];
+    
+    for (let i = 0; i < count; i++) {
+        const width = 0.15 + Math.random() * 0.05;
+        const length = 0.22 + Math.random() * 0.05;
+        const thickness = 0.03 + Math.random() * 0.04;
+        
+        const book = new THREE.Mesh(
+            new THREE.BoxGeometry(width, thickness, length),
+            new THREE.MeshStandardMaterial({ 
+                color: bookColors[Math.floor(Math.random() * bookColors.length)],
+                roughness: 0.7
+            })
+        );
+        
+        // Stack or scatter
+        book.position.y = i * thickness + thickness/2;
+        book.rotation.y = Math.random() * Math.PI * 2;
+        book.position.x = (Math.random() - 0.5) * 0.1;
+        book.position.z = (Math.random() - 0.5) * 0.1;
+        
+        book.castShadow = true;
+        group.add(book);
+    }
+    
+    return group;
+}
+
 // ===== DECORATIONS & PROPS =====
 
 export function createGlobe(radius = 0.2) {
