@@ -265,6 +265,7 @@ export {
     winningObject,
     currentStep,
     advanceStep,
+    puzzleState,
     resetChain,
     shuffleAllClues
 };
