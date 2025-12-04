@@ -14,7 +14,7 @@ import {
     puzzleState,
     resetChain,
     shuffleAllClues
-} from './gameLogic.js';
+} from './gameLogic.js?v=fc4351d';
 import { getNextDescription, hasCyclingDescriptions } from './cyclingDescriptions.js';
 
 export let isInteracting = false;
