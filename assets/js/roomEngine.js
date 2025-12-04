@@ -375,13 +375,16 @@ export class RoomEngine {
     _setupInputHandlers() {
         // Instructions dismiss
         if (this.instructions) {
-            const dismissInstructions = () => {
+            const dismissInstructions = (e) => {
+                e.preventDefault(); // Prevent default behavior
+                e.stopPropagation(); // Prevent click from bubbling to document handler
                 this.instructions.style.display = 'none';
             };
             this.instructions.addEventListener('click', dismissInstructions);
             this.instructions.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                dismissInstructions();
+                e.stopPropagation(); // Prevent touch from bubbling to document handler
+                this.instructions.style.display = 'none';
             });
         }
 
