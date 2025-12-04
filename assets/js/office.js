@@ -9,8 +9,8 @@ import { WALL_HEIGHT, DESK_SURFACE_Y } from './constants.js';
 import * as Prefabs from './prefabs.js?v=1b03dd5&t=1764425183';
 
 // Room Configuration
-const OFFICE_WIDTH = 12;
-const OFFICE_DEPTH = 12;
+const OFFICE_WIDTH = 10;
+const OFFICE_DEPTH = 10;
 const WALL_THICKNESS = 0.5;
 
 // Materials
@@ -402,7 +402,7 @@ async function buildOfficeScene(engine) {
 
     // Plants
     const plant1 = Prefabs.createPlant();
-    plant1.position.set(-halfWidth + 0.5, 0, 5.5); // Southwest corner (Moved from z=4 to avoid TV stand)
+    plant1.position.set(-halfWidth + 0.5, 0, halfDepth - 0.5); // Southwest corner
     plant1.name = "plant";
     engine.interactables.push(plant1);
     scene.add(plant1);
@@ -572,8 +572,8 @@ async function buildOfficeScene(engine) {
     scene.add(scatteredBooks);
 
     // ===== MEETING AREA (South East) =====
-    const meetingX = 3.5;
-    const meetingZ = 2.5;
+    const meetingX = 2.5;
+    const meetingZ = 1.5;
 
     // Round Table
     const roundTable = Prefabs.createRoundTable(0.6, 0.75);
@@ -602,7 +602,7 @@ async function buildOfficeScene(engine) {
 
     // Water Cooler
     const waterCooler = Prefabs.createWaterCooler();
-    waterCooler.position.set(5.0, 0, -5.0);
+    waterCooler.position.set(4.0, 0, -4.0);
     waterCooler.rotation.y = -Math.PI / 4; // Angled into room
     waterCooler.name = "water_cooler";
     engine.interactables.push(waterCooler);
@@ -610,7 +610,7 @@ async function buildOfficeScene(engine) {
 
     // Corkboard on South Wall
     const corkboard = Prefabs.createCorkboard(1.2, 0.8);
-    corkboard.position.set(4.0, 1.8, halfDepth - 0.05);
+    corkboard.position.set(3.0, 1.8, halfDepth - 0.05);
     corkboard.rotation.y = Math.PI; // Face North
     corkboard.name = "corkboard";
     engine.interactables.push(corkboard);
