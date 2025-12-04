@@ -123,6 +123,7 @@ export const LOCATIONS = [
     "book_cluster_1", "book_cluster_2", "book_cluster_3", "book_cluster_4",
     "keyboard", "mouse", "open_book", "chair",
     "pen_0", "pen_1", "pen_2",
+    "printer", "fire_extinguisher", "lunchbox", "trophy", "radio", "typewriter", "hat",
     // Sitting area (southwest corner)
     "sofa", "armchair", "coffee_table", "tv", "floor_lamp",
     "coffee_cup", "newspaper", "remote",

@@ -1883,6 +1883,540 @@ export function createPen(length = 0.12, radius = 0.003) {
     return group;
 }
 
+export function createPrinter(width = 0.6, height = 0.5, depth = 0.5) {
+    const group = new THREE.Group();
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4 });
+    const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5 });
+    const paperMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+
+    // Main Body
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        bodyMaterial
+    );
+    body.position.y = height / 2;
+    body.castShadow = true;
+    group.add(body);
+
+    // Paper Tray (Bottom)
+    const tray = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.8, height * 0.2, depth + 0.15),
+        bodyMaterial
+    );
+    tray.position.set(0, height * 0.15, 0.075);
+    group.add(tray);
+
+    // Paper stack in tray
+    const paperStack = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.7, 0.05, depth * 0.8),
+        paperMaterial
+    );
+    paperStack.position.set(0, height * 0.15 + 0.02, 0.1);
+    group.add(paperStack);
+
+    // Top Scanner Lid
+    const lid = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.05, depth),
+        darkMaterial
+    );
+    lid.position.y = height + 0.025;
+    group.add(lid);
+
+    // Control Panel (Angled)
+    const panelGroup = new THREE.Group();
+    panelGroup.position.set(width * 0.25, height + 0.06, depth * 0.25);
+    panelGroup.rotation.x = -0.3;
+
+    const panelBase = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.35, 0.02, depth * 0.35),
+        darkMaterial
+    );
+    panelGroup.add(panelBase);
+
+    // Screen on panel
+    const screen = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.2, 0.01, depth * 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x003300 })
+    );
+    screen.position.y = 0.015;
+    panelGroup.add(screen);
+
+    // Buttons
+    const btnGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.01, 8);
+    const btnMat = new THREE.MeshStandardMaterial({ color: 0x999999 });
+    for (let i = 0; i < 3; i++) {
+        const btn = new THREE.Mesh(btnGeo, btnMat);
+        btn.position.set(0.08, 0.015, -0.05 + i * 0.03);
+        panelGroup.add(btn);
+    }
+
+    group.add(panelGroup);
+
+    // Output Tray (Top Indent simulated)
+    const outputTray = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.6, 0.02, depth * 0.6),
+        darkMaterial
+    );
+    outputTray.position.set(-0.1, height - 0.01, 0);
+    group.add(outputTray);
+
+    // Printed Page
+    const printedPage = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.21, 0.297), // A4 size roughly
+        paperMaterial
+    );
+    printedPage.rotation.x = -Math.PI / 2;
+    printedPage.position.set(-0.1, height + 0.005, 0.05);
+    group.add(printedPage);
+
+    return group;
+}
+
+export function createFireExtinguisher() {
+    const group = new THREE.Group();
+    const redMaterial = new THREE.MeshStandardMaterial({ color: 0xcc0000, metalness: 0.3, roughness: 0.4 });
+    const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8 });
+    const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
+
+    // Tank
+    const tank = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.1, 0.5, 16),
+        redMaterial
+    );
+    tank.position.y = 0.25;
+    tank.castShadow = true;
+    group.add(tank);
+
+    // Top dome
+    const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        redMaterial
+    );
+    dome.position.y = 0.5;
+    group.add(dome);
+
+    // Valve Assembly
+    const valve = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.1),
+        metalMaterial
+    );
+    valve.position.y = 0.55;
+    group.add(valve);
+
+    // Handle (Lever)
+    const handleLower = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.01, 0.12),
+        metalMaterial
+    );
+    handleLower.position.set(0.04, 0.54, 0);
+    group.add(handleLower);
+
+    const handleUpper = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.01, 0.12),
+        metalMaterial
+    );
+    handleUpper.position.set(0.04, 0.58, 0);
+    handleUpper.rotation.z = 0.2;
+    group.add(handleUpper);
+
+    // Pressure Gauge
+    const gauge = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.025, 0.01, 16),
+        metalMaterial
+    );
+    gauge.rotation.x = Math.PI / 2;
+    gauge.position.set(0, 0.55, 0.04);
+    group.add(gauge);
+
+    const gaugeFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.02, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    gaugeFace.rotation.y = 0; // Face Z
+    gaugeFace.position.set(0, 0.55, 0.046);
+    group.add(gaugeFace);
+
+    // Green zone on gauge
+    const gaugeGreen = new THREE.Mesh(
+        new THREE.CircleGeometry(0.01, 16, 0, Math.PI),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+    );
+    gaugeGreen.rotation.y = 0;
+    gaugeGreen.position.set(0, 0.55, 0.047);
+    group.add(gaugeGreen);
+
+    // Nozzle Hose
+    const hose = new THREE.Mesh(
+        new THREE.TorusGeometry(0.15, 0.015, 8, 16, Math.PI * 1.5),
+        blackMaterial
+    );
+    hose.position.set(-0.1, 0.3, 0);
+    hose.rotation.z = Math.PI / 2;
+    group.add(hose);
+
+    const nozzleTip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.03, 0.1, 16),
+        blackMaterial
+    );
+    nozzleTip.position.set(-0.1, 0.15, 0.15);
+    nozzleTip.rotation.x = -Math.PI / 4;
+    group.add(nozzleTip);
+
+    // Add hitbox
+    const hitbox = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 0.7, 8),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = 0.35;
+    group.add(hitbox);
+
+    return group;
+}
+
+export function createLunchbox() {
+    const group = new THREE.Group();
+    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x3f51b5, roughness: 0.6, metalness: 0.3 }); // Indigo Metal
+    const handleMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+    const latchMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 });
+
+    // Main box (Bottom)
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25, 0.12, 0.15),
+        boxMaterial
+    );
+    box.position.y = 0.06;
+    box.castShadow = true;
+    group.add(box);
+
+    // Dome Lid
+    const lidGeo = new THREE.CylinderGeometry(0.125, 0.125, 0.25, 16, 1, false, 0, Math.PI);
+    const lid = new THREE.Mesh(lidGeo, boxMaterial);
+    lid.rotation.z = Math.PI / 2;
+    lid.position.y = 0.12;
+    group.add(lid);
+
+    // Handle
+    const handle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.04, 0.006, 8, 16, Math.PI),
+        handleMaterial
+    );
+    handle.position.y = 0.25;
+    group.add(handle);
+
+    // Latches
+    const latchGeo = new THREE.BoxGeometry(0.02, 0.04, 0.005);
+    const latch1 = new THREE.Mesh(latchGeo, latchMaterial);
+    latch1.position.set(-0.06, 0.12, 0.075);
+    group.add(latch1);
+
+    const latch2 = new THREE.Mesh(latchGeo, latchMaterial);
+    latch2.position.set(0.06, 0.12, 0.075);
+    group.add(latch2);
+
+    return group;
+}
+
+export function createTrophy() {
+    const group = new THREE.Group();
+    const goldMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
+    const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+    const plaqueMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.6 });
+
+    // Base (Tiered)
+    const base1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.02, 0.12),
+        baseMaterial
+    );
+    base1.position.y = 0.01;
+    base1.castShadow = true;
+    group.add(base1);
+
+    const base2 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.04, 0.1),
+        baseMaterial
+    );
+    base2.position.y = 0.04;
+    group.add(base2);
+
+    // Plaque on base
+    const plaque = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.08, 0.02),
+        plaqueMaterial
+    );
+    plaque.position.set(0, 0.04, 0.051);
+    group.add(plaque);
+
+    // Stem (Decorative)
+    const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.025, 0.08, 8),
+        goldMaterial
+    );
+    stem.position.y = 0.1;
+    group.add(stem);
+
+    // Cup (Lathe for better shape)
+    const points = [];
+    for (let i = 0; i < 10; i++) {
+        points.push(new THREE.Vector2(Math.sin(i * 0.2) * 0.06 + 0.01, (i * 0.015)));
+    }
+    const cupGeo = new THREE.LatheGeometry(points, 16);
+    const cup = new THREE.Mesh(cupGeo, goldMaterial);
+    cup.position.y = 0.14;
+    cup.material.side = THREE.DoubleSide;
+    group.add(cup);
+
+    // Handles
+    const handleGeo = new THREE.TorusGeometry(0.035, 0.004, 8, 16, Math.PI);
+    const leftHandle = new THREE.Mesh(handleGeo, goldMaterial);
+    leftHandle.position.set(-0.05, 0.2, 0);
+    leftHandle.rotation.z = Math.PI / 2;
+    group.add(leftHandle);
+
+    const rightHandle = new THREE.Mesh(handleGeo, goldMaterial);
+    rightHandle.position.set(0.05, 0.2, 0);
+    rightHandle.rotation.z = -Math.PI / 2;
+    group.add(rightHandle);
+
+    // Hitbox
+    const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.3, 0.15),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = 0.15;
+    group.add(hitbox);
+
+    return group;
+}
+
+export function createRadio() {
+    const group = new THREE.Group();
+    const caseMaterial = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.7 }); // Wood/Brown
+    const grillMaterial = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
+    const knobMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.5 });
+    const dialMaterial = new THREE.MeshStandardMaterial({ color: 0xfff8e1, emissive: 0x333300 });
+
+    // Case
+    const radioCase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.18, 0.12),
+        caseMaterial
+    );
+    radioCase.position.y = 0.09;
+    radioCase.castShadow = true;
+    group.add(radioCase);
+
+    // Speaker Grill (Textured look via geometry strips)
+    const grillBg = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.14, 0.01),
+        grillMaterial
+    );
+    grillBg.position.set(-0.06, 0.09, 0.06);
+    group.add(grillBg);
+
+    // Horizontal slats
+    for (let i = 0; i < 5; i++) {
+        const slat = new THREE.Mesh(
+            new THREE.BoxGeometry(0.14, 0.005, 0.015),
+            caseMaterial
+        );
+        slat.position.set(-0.06, 0.04 + i * 0.025, 0.06);
+        group.add(slat);
+    }
+
+    // Tuning Dial Area
+    const dialBg = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.06, 0.01),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    dialBg.position.set(0.08, 0.12, 0.06);
+    group.add(dialBg);
+
+    // Lit Dial
+    const dial = new THREE.Mesh(
+        new THREE.BoxGeometry(0.09, 0.01, 0.012),
+        dialMaterial
+    );
+    dial.position.set(0.08, 0.12, 0.06);
+    group.add(dial);
+
+    // Indicator Needle
+    const needle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.002, 0.04, 0.015),
+        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    );
+    needle.position.set(0.08, 0.12, 0.06);
+    group.add(needle);
+
+    // Knobs
+    const knob1 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.02),
+        knobMaterial
+    );
+    knob1.rotation.x = Math.PI / 2;
+    knob1.position.set(0.06, 0.05, 0.065);
+    group.add(knob1);
+
+    const knob2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.02),
+        knobMaterial
+    );
+    knob2.rotation.x = Math.PI / 2;
+    knob2.position.set(0.11, 0.05, 0.065);
+    group.add(knob2);
+
+    // Antenna
+    const antenna = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.003, 0.003, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8 })
+    );
+    antenna.position.set(-0.12, 0.3, -0.04);
+    antenna.rotation.z = 0.1;
+    group.add(antenna);
+
+    return group;
+}
+
+export function createTypewriter() {
+    const group = new THREE.Group();
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.4 }); // Dark Blue-Grey
+    const keyMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+    const paperMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+    // Body
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.35, 0.1, 0.35),
+        bodyMaterial
+    );
+    body.position.y = 0.05;
+    body.castShadow = true;
+    group.add(body);
+
+    // Carriage (Top part)
+    const carriage = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.08, 0.1),
+        bodyMaterial
+    );
+    carriage.position.set(0, 0.12, -0.08);
+    group.add(carriage);
+
+    // Roller
+    const roller = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    roller.rotation.z = Math.PI / 2;
+    roller.position.set(0, 0.14, -0.08);
+    group.add(roller);
+
+    // Paper in roller
+    const paper = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.21, 0.25),
+        paperMaterial
+    );
+    paper.position.set(0, 0.22, -0.1);
+    paper.rotation.x = -0.2;
+    group.add(paper);
+
+    // Return Lever
+    const lever = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.005, 0.005, 0.1),
+        new THREE.MeshStandardMaterial({ color: 0xcccccc })
+    );
+    lever.position.set(-0.22, 0.15, -0.05);
+    lever.rotation.z = Math.PI / 4;
+    group.add(lever);
+
+    // Keys area (sloped)
+    const keysBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.02, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    keysBase.position.set(0, 0.06, 0.1);
+    keysBase.rotation.x = 0.2;
+    group.add(keysBase);
+
+    // Individual keys (simplified rows)
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 8; j++) {
+            const key = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.01, 0.01, 0.01),
+                keyMaterial
+            );
+            key.position.set(
+                -0.12 + j * 0.035,
+                0.07 + i * 0.015,
+                0.15 - i * 0.03
+            );
+            key.rotation.x = 0.2;
+            group.add(key);
+        }
+    }
+
+    return group;
+}
+
+export function createHat() {
+    const group = new THREE.Group();
+    const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 1.0 }); // Dark Brown Felt
+    const bandMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }); // Black Ribbon
+
+    // Brim (Curved)
+    const brimGeo = new THREE.TorusGeometry(0.12, 0.04, 8, 32);
+    // Flatten torus to make a brim
+    brimGeo.scale(1, 0.1, 1);
+    const brim = new THREE.Mesh(brimGeo, hatMaterial);
+    group.add(brim);
+
+    // Fill brim center
+    const brimFill = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 0.01, 32),
+        hatMaterial
+    );
+    group.add(brimFill);
+
+    // Crown (Tapered)
+    const crown = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.07, 0.09, 0.12, 32),
+        hatMaterial
+    );
+    crown.position.y = 0.06;
+    group.add(crown);
+
+    // Indent on top (Fedora style)
+    const indent = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.02, 0.02),
+        hatMaterial
+    );
+    indent.position.set(0, 0.12, 0);
+    group.add(indent);
+
+    // Band
+    const band = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.091, 0.091, 0.025, 32),
+        bandMaterial
+    );
+    band.position.y = 0.02;
+    group.add(band);
+
+    // Feather
+    const feather = new THREE.Mesh(
+        new THREE.ConeGeometry(0.01, 0.08, 8),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+    feather.position.set(0.08, 0.08, 0);
+    feather.rotation.z = -0.3;
+    group.add(feather);
+
+    // Hitbox
+    const hitbox = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.16, 0.16, 0.15, 16),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    hitbox.position.y = 0.05;
+    group.add(hitbox);
+
+    return group;
+}
+
 // ===== UTILITY FUNCTIONS =====
 
 /**

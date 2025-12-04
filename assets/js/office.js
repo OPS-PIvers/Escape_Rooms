@@ -413,6 +413,87 @@ async function buildOfficeScene(engine) {
     engine.interactables.push(plant2);
     scene.add(plant2);
 
+    // --- NEW OBJECTS BATCH 2 ---
+
+    // Printer (Near filing cabinet)
+    const printer = Prefabs.createPrinter();
+    printer.position.set(-halfWidth + 0.5, 1.0, -halfDepth + 3.0); // On top of filing cabinet
+    printer.rotation.y = Math.PI / 2;
+    printer.name = "printer";
+    // Add interactable parts
+    printer.children.forEach(child => {
+        engine.interactables.push(child);
+    });
+    scene.add(printer);
+
+    // Fire Extinguisher (Mounted on North Wall near door)
+    const fireExtinguisher = Prefabs.createFireExtinguisher();
+    fireExtinguisher.position.set(1.5, 1.5, -halfDepth + 0.15); // Left of door
+    fireExtinguisher.name = "fire_extinguisher";
+    // Find hitbox
+    const feHitbox = fireExtinguisher.children.find(c => c.geometry && !c.visible);
+    if (feHitbox) {
+        feHitbox.name = "fire_extinguisher";
+        engine.interactables.push(feHitbox);
+    } else {
+        engine.interactables.push(fireExtinguisher.children[0]);
+    }
+    scene.add(fireExtinguisher);
+
+    // Lunchbox (On round table)
+    const lunchbox = Prefabs.createLunchbox();
+    lunchbox.position.set(2.5, 0.75, 1.5); // On meeting table
+    lunchbox.rotation.y = Math.random() * Math.PI;
+    lunchbox.name = "lunchbox";
+    engine.interactables.push(lunchbox.children[0]);
+    scene.add(lunchbox);
+
+    // Trophy (On top shelf of bookshelf 0)
+    const trophy = Prefabs.createTrophy();
+    trophy.position.set(halfWidth - 0.4, 1.6 + 0.05, -4.5); // Bookshelf 0 top shelf
+    trophy.rotation.y = -Math.PI / 2;
+    trophy.name = "trophy";
+    // Find hitbox
+    const trophyHitbox = trophy.children.find(c => c.geometry && !c.visible);
+    if (trophyHitbox) {
+        trophyHitbox.name = "trophy";
+        engine.interactables.push(trophyHitbox);
+    } else {
+        engine.interactables.push(trophy.children[0]);
+    }
+    scene.add(trophy);
+
+    // Radio (On bookshelf 3)
+    const radio = Prefabs.createRadio();
+    radio.position.set(halfWidth - 0.4, 0.8 + 0.05, 4.5); // Bookshelf 3 middle shelf
+    radio.rotation.y = -Math.PI / 2;
+    radio.name = "radio";
+    engine.interactables.push(radio.children[0]);
+    scene.add(radio);
+
+    // Typewriter (On bookshelf 2 - bottom shelf display)
+    const typewriter = Prefabs.createTypewriter();
+    typewriter.position.set(halfWidth - 0.4, 0.4 + 0.05, 1.5); // Bookshelf 2 bottom shelf
+    typewriter.rotation.y = -Math.PI / 2;
+    typewriter.name = "typewriter";
+    engine.interactables.push(typewriter.children[0]);
+    scene.add(typewriter);
+
+    // Hat (On coat rack)
+    const hat = Prefabs.createHat();
+    hat.position.set(2.05, 1.5, -halfDepth + 0.5); // Hanging on coat rack hook
+    hat.rotation.z = -0.5; // Tilted
+    hat.name = "hat";
+    // Find hitbox
+    const hatHitbox = hat.children.find(c => c.geometry && !c.visible);
+    if (hatHitbox) {
+        hatHitbox.name = "hat";
+        engine.interactables.push(hatHitbox);
+    } else {
+        engine.interactables.push(hat.children[0]);
+    }
+    scene.add(hat);
+
     // ===== SITTING AREA (Southwest Corner) =====
     const sittingAreaX = -halfWidth + 2.5;
     const sittingAreaZ = halfDepth - 2.5;
