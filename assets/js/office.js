@@ -571,6 +571,51 @@ async function buildOfficeScene(engine) {
     engine.interactables.push(scatteredBooks);
     scene.add(scatteredBooks);
 
+    // ===== MEETING AREA (South East) =====
+    const meetingX = 3.5;
+    const meetingZ = 2.5;
+
+    // Round Table
+    const roundTable = Prefabs.createRoundTable(0.6, 0.75);
+    roundTable.position.set(meetingX, 0, meetingZ);
+    roundTable.name = "meeting_table";
+    engine.interactables.push(roundTable);
+    scene.add(roundTable);
+
+    // Chairs around table
+    const chairDist = 0.9;
+    const chairAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+
+    chairAngles.forEach((angle, i) => {
+        const chair = Prefabs.createSimpleChair();
+        const cx = meetingX + Math.sin(angle) * chairDist;
+        const cz = meetingZ + Math.cos(angle) * chairDist;
+
+        chair.position.set(cx, 0, cz);
+        chair.rotation.y = angle + Math.PI; // Face table
+        chair.name = `meeting_chair_${i}`;
+        engine.interactables.push(chair);
+        scene.add(chair);
+    });
+
+    // ===== BREAK CORNER (North East) =====
+
+    // Water Cooler
+    const waterCooler = Prefabs.createWaterCooler();
+    waterCooler.position.set(5.0, 0, -5.0);
+    waterCooler.rotation.y = -Math.PI / 4; // Angled into room
+    waterCooler.name = "water_cooler";
+    engine.interactables.push(waterCooler);
+    scene.add(waterCooler);
+
+    // Corkboard on South Wall
+    const corkboard = Prefabs.createCorkboard(1.2, 0.8);
+    corkboard.position.set(4.0, 1.8, halfDepth - 0.05);
+    corkboard.rotation.y = Math.PI; // Face North
+    corkboard.name = "corkboard";
+    engine.interactables.push(corkboard);
+    scene.add(corkboard);
+
     // ===== LIBRARY ON EAST WALL =====
     // Create multiple bookshelves spanning the entire east wall
     // Each bookshelf is 3 units wide, 4 bookshelves fit perfectly in 12-unit room

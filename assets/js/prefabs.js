@@ -27,10 +27,10 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
     const legRadius = 0.04;
     const legGeometry = new THREE.CylinderGeometry(legRadius, legRadius, height);
     const positions = [
-        [width/2 - 0.1, height/2, depth/2 - 0.1],
-        [width/2 - 0.1, height/2, -depth/2 + 0.1],
-        [-width/2 + 0.1, height/2, depth/2 - 0.1],
-        [-width/2 + 0.1, height/2, -depth/2 + 0.1]
+        [width / 2 - 0.1, height / 2, depth / 2 - 0.1],
+        [width / 2 - 0.1, height / 2, -depth / 2 + 0.1],
+        [-width / 2 + 0.1, height / 2, depth / 2 - 0.1],
+        [-width / 2 + 0.1, height / 2, -depth / 2 + 0.1]
     ];
 
     positions.forEach(pos => {
@@ -68,7 +68,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerThickness),
             drawerMaterial
         );
-        drawerFront.position.z = drawerDepth/2 - drawerThickness/2;
+        drawerFront.position.z = drawerDepth / 2 - drawerThickness / 2;
         drawerFront.castShadow = true;
         drawerFront.name = `drawer_${i}_front`; // Name for interaction
         drawerGroup.add(drawerFront);
@@ -78,7 +78,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             new THREE.BoxGeometry(drawerWidth, drawerThickness, drawerDepth - drawerThickness),
             drawerMaterial
         );
-        drawerBottom.position.y = -drawerHeight/2 + drawerThickness/2;
+        drawerBottom.position.y = -drawerHeight / 2 + drawerThickness / 2;
         drawerBottom.castShadow = true;
         drawerBottom.name = `drawer_${i}_bottom`;
         drawerGroup.add(drawerBottom);
@@ -88,7 +88,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             new THREE.BoxGeometry(drawerThickness, drawerHeight, drawerDepth - drawerThickness),
             drawerMaterial
         );
-        drawerLeft.position.x = -drawerWidth/2 + drawerThickness/2;
+        drawerLeft.position.x = -drawerWidth / 2 + drawerThickness / 2;
         drawerLeft.castShadow = true;
         drawerLeft.name = `drawer_${i}_left`;
         drawerGroup.add(drawerLeft);
@@ -98,7 +98,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             new THREE.BoxGeometry(drawerThickness, drawerHeight, drawerDepth - drawerThickness),
             drawerMaterial
         );
-        drawerRight.position.x = drawerWidth/2 - drawerThickness/2;
+        drawerRight.position.x = drawerWidth / 2 - drawerThickness / 2;
         drawerRight.castShadow = true;
         drawerRight.name = `drawer_${i}_right`;
         drawerGroup.add(drawerRight);
@@ -108,7 +108,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             new THREE.BoxGeometry(drawerWidth, drawerHeight, drawerThickness),
             drawerMaterial
         );
-        drawerBack.position.z = -drawerDepth/2 + drawerThickness/2;
+        drawerBack.position.z = -drawerDepth / 2 + drawerThickness / 2;
         drawerBack.castShadow = true;
         drawerBack.name = `drawer_${i}_back`;
         drawerGroup.add(drawerBack);
@@ -119,7 +119,7 @@ export function createDesk(width = 1.5, height = 0.75, depth = 0.8) {
             handleMaterial
         );
         handle.rotation.z = Math.PI / 2;
-        handle.position.set(0, 0, drawerDepth/2 + 0.01); // Just in front of drawer front
+        handle.position.set(0, 0, drawerDepth / 2 + 0.01); // Just in front of drawer front
         handle.name = `drawer_${i}_handle`; // Also make handle clickable
         drawerGroup.add(handle);
 
@@ -162,17 +162,17 @@ export function createChair(seatHeight = 0.5, backHeight = 0.9) {
         new THREE.BoxGeometry(0.45, backHeight - seatHeight, 0.05),
         chairMaterial
     );
-    back.position.set(0, seatHeight + (backHeight - seatHeight)/2, -0.2);
+    back.position.set(0, seatHeight + (backHeight - seatHeight) / 2, -0.2);
     back.castShadow = true;
     group.add(back);
 
     // Legs (4)
     const legGeometry = new THREE.CylinderGeometry(0.025, 0.025, seatHeight);
     const legPositions = [
-        [0.2, seatHeight/2, 0.2],
-        [0.2, seatHeight/2, -0.2],
-        [-0.2, seatHeight/2, 0.2],
-        [-0.2, seatHeight/2, -0.2]
+        [0.2, seatHeight / 2, 0.2],
+        [0.2, seatHeight / 2, -0.2],
+        [-0.2, seatHeight / 2, 0.2],
+        [-0.2, seatHeight / 2, -0.2]
     ];
 
     legPositions.forEach(pos => {
@@ -208,18 +208,18 @@ export function createBookshelf(width = 3.0, height = 2.0, depth = 0.4, shelves 
         new THREE.BoxGeometry(width, height, backThickness),
         woodMaterial
     );
-    back.position.set(0, height/2, -depth/2 + backThickness/2);
+    back.position.set(0, height / 2, -depth / 2 + backThickness / 2);
     back.castShadow = true;
     back.receiveShadow = true;
     group.add(back);
 
     // Sides
-    [width/2, -width/2].forEach(x => {
+    [width / 2, -width / 2].forEach(x => {
         const side = new THREE.Mesh(
             new THREE.BoxGeometry(sideThickness, height, depth),
             woodMaterial
         );
-        side.position.set(x - (x > 0 ? sideThickness/2 : -sideThickness/2), height/2, 0);
+        side.position.set(x - (x > 0 ? sideThickness / 2 : -sideThickness / 2), height / 2, 0);
         side.castShadow = true;
         group.add(side);
     });
@@ -270,9 +270,9 @@ export function createBookshelf(width = 3.0, height = 2.0, depth = 0.4, shelves 
 
             // Position book on shelf
             book.position.set(
-                xOffset + bookSpacing/2,
+                xOffset + bookSpacing / 2,
                 bookHeight / 2,
-                -depth/2 + backThickness + bookDepth/2 + 0.02 // Just in front of back panel
+                -depth / 2 + backThickness + bookDepth / 2 + 0.02 // Just in front of back panel
             );
 
             // Slight random tilt for realism
@@ -294,7 +294,7 @@ export function createBookshelf(width = 3.0, height = 2.0, depth = 0.4, shelves 
         hitbox.position.set(
             0,
             bookHeight / 2,
-            -depth/2 + backThickness + bookDepth/2 + 0.02
+            -depth / 2 + backThickness + bookDepth / 2 + 0.02
         );
         hitbox.name = `shelf_row_${shelfIdx}_hitbox`;
         shelfRowGroup.add(hitbox);
@@ -336,7 +336,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
         new THREE.BoxGeometry(width, height, bodyThickness),
         cabinetMaterial
     );
-    back.position.set(0, height/2, -depth/2 + bodyThickness/2);
+    back.position.set(0, height / 2, -depth / 2 + bodyThickness / 2);
     back.castShadow = true;
     back.receiveShadow = true;
     group.add(back);
@@ -346,7 +346,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
         new THREE.BoxGeometry(bodyThickness, height, depth),
         cabinetMaterial
     );
-    leftSide.position.set(-width/2 + bodyThickness/2, height/2, 0);
+    leftSide.position.set(-width / 2 + bodyThickness / 2, height / 2, 0);
     leftSide.castShadow = true;
     leftSide.receiveShadow = true;
     group.add(leftSide);
@@ -356,7 +356,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
         new THREE.BoxGeometry(bodyThickness, height, depth),
         cabinetMaterial
     );
-    rightSide.position.set(width/2 - bodyThickness/2, height/2, 0);
+    rightSide.position.set(width / 2 - bodyThickness / 2, height / 2, 0);
     rightSide.castShadow = true;
     rightSide.receiveShadow = true;
     group.add(rightSide);
@@ -366,7 +366,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
         new THREE.BoxGeometry(width, bodyThickness, depth),
         cabinetMaterial
     );
-    top.position.set(0, height - bodyThickness/2, 0);
+    top.position.set(0, height - bodyThickness / 2, 0);
     top.castShadow = true;
     top.receiveShadow = true;
     group.add(top);
@@ -377,7 +377,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
         new THREE.BoxGeometry(width - 0.04, baseHeight, depth - 0.04),
         new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.5, roughness: 0.5 })
     );
-    base.position.set(0, baseHeight/2, 0);
+    base.position.set(0, baseHeight / 2, 0);
     base.castShadow = true;
     group.add(base);
 
@@ -386,7 +386,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
     const drawerInset = 0.01;
 
     for (let i = 0; i < drawers; i++) {
-        const drawerY = baseHeight + (i * drawerHeight) + drawerHeight/2;
+        const drawerY = baseHeight + (i * drawerHeight) + drawerHeight / 2;
 
         // Drawer front (beveled appearance)
         const drawerFront = new THREE.Mesh(
@@ -397,7 +397,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
             ),
             drawerMaterial
         );
-        drawerFront.position.set(0, drawerY, depth/2 - 0.015);
+        drawerFront.position.set(0, drawerY, depth / 2 - 0.015);
         drawerFront.castShadow = true;
         group.add(drawerFront);
 
@@ -406,7 +406,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
             new THREE.BoxGeometry(width * 0.5, drawerHeight * 0.2, 0.015),
             handleMaterial
         );
-        labelHolder.position.set(0, drawerY, depth/2 + 0.005);
+        labelHolder.position.set(0, drawerY, depth / 2 + 0.005);
         group.add(labelHolder);
 
         // Label background (white paper look)
@@ -414,7 +414,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
             new THREE.BoxGeometry(width * 0.45, drawerHeight * 0.15, 0.01),
             new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 })
         );
-        label.position.set(0, drawerY, depth/2 + 0.012);
+        label.position.set(0, drawerY, depth / 2 + 0.012);
         group.add(label);
 
         // Handle (recessed pull)
@@ -426,7 +426,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
             new THREE.BoxGeometry(handleWidth, handleHeight, handleDepth),
             handleMaterial
         );
-        handle.position.set(0, drawerY - drawerHeight * 0.25, depth/2 + handleDepth/2);
+        handle.position.set(0, drawerY - drawerHeight * 0.25, depth / 2 + handleDepth / 2);
         handle.castShadow = true;
         group.add(handle);
 
@@ -436,7 +436,7 @@ export function createFilingCabinet(width = 0.5, height = 1.0, depth = 0.6, draw
             new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 })
         );
         lock.rotation.x = Math.PI / 2;
-        lock.position.set(0, drawerY + drawerHeight * 0.25, depth/2 + 0.005);
+        lock.position.set(0, drawerY + drawerHeight * 0.25, depth / 2 + 0.005);
         group.add(lock);
     }
 
@@ -461,12 +461,12 @@ export function createSofa(width = 2.0, depth = 0.9, seatHeight = 0.45) {
         new THREE.BoxGeometry(width, 0.6, 0.2),
         fabricMaterial
     );
-    back.position.set(0, seatHeight + 0.4, -depth/2 + 0.1);
+    back.position.set(0, seatHeight + 0.4, -depth / 2 + 0.1);
     back.castShadow = true;
     group.add(back);
 
     // Armrests
-    [-width/2 + 0.1, width/2 - 0.1].forEach(x => {
+    [-width / 2 + 0.1, width / 2 - 0.1].forEach(x => {
         const arm = new THREE.Mesh(
             new THREE.BoxGeometry(0.2, 0.4, depth),
             fabricMaterial
@@ -479,10 +479,10 @@ export function createSofa(width = 2.0, depth = 0.9, seatHeight = 0.45) {
     // Legs (simple)
     const legGeometry = new THREE.CylinderGeometry(0.04, 0.04, seatHeight - 0.1);
     const legPositions = [
-        [width/2 - 0.2, seatHeight/2 - 0.05, depth/2 - 0.2],
-        [width/2 - 0.2, seatHeight/2 - 0.05, -depth/2 + 0.2],
-        [-width/2 + 0.2, seatHeight/2 - 0.05, depth/2 - 0.2],
-        [-width/2 + 0.2, seatHeight/2 - 0.05, -depth/2 + 0.2]
+        [width / 2 - 0.2, seatHeight / 2 - 0.05, depth / 2 - 0.2],
+        [width / 2 - 0.2, seatHeight / 2 - 0.05, -depth / 2 + 0.2],
+        [-width / 2 + 0.2, seatHeight / 2 - 0.05, depth / 2 - 0.2],
+        [-width / 2 + 0.2, seatHeight / 2 - 0.05, -depth / 2 + 0.2]
     ];
 
     legPositions.forEach(pos => {
@@ -518,10 +518,10 @@ export function createCoffeeTable(width = 1.0, height = 0.35, depth = 0.6) {
     const legMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
     const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, height - 0.05);
     const legPositions = [
-        [width/2 - 0.1, height/2, depth/2 - 0.1],
-        [width/2 - 0.1, height/2, -depth/2 + 0.1],
-        [-width/2 + 0.1, height/2, depth/2 - 0.1],
-        [-width/2 + 0.1, height/2, -depth/2 + 0.1]
+        [width / 2 - 0.1, height / 2, depth / 2 - 0.1],
+        [width / 2 - 0.1, height / 2, -depth / 2 + 0.1],
+        [-width / 2 + 0.1, height / 2, depth / 2 - 0.1],
+        [-width / 2 + 0.1, height / 2, -depth / 2 + 0.1]
     ];
 
     legPositions.forEach(pos => {
@@ -552,12 +552,12 @@ export function createArmchair(width = 0.9, depth = 0.9, seatHeight = 0.45) {
         new THREE.BoxGeometry(width, 0.7, 0.15),
         fabricMaterial
     );
-    back.position.set(0, seatHeight + 0.45, -depth/2 + 0.075);
+    back.position.set(0, seatHeight + 0.45, -depth / 2 + 0.075);
     back.castShadow = true;
     group.add(back);
 
     // Armrests
-    [-width/2 + 0.1, width/2 - 0.1].forEach(x => {
+    [-width / 2 + 0.1, width / 2 - 0.1].forEach(x => {
         const arm = new THREE.Mesh(
             new THREE.BoxGeometry(0.2, 0.5, depth - 0.2),
             fabricMaterial
@@ -580,10 +580,10 @@ export function createArmchair(width = 0.9, depth = 0.9, seatHeight = 0.45) {
     const legGeometry = new THREE.CylinderGeometry(0.04, 0.04, seatHeight - 0.15);
     const legMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2a1a });
     const legPositions = [
-        [width/2 - 0.15, (seatHeight - 0.15)/2, depth/2 - 0.15],
-        [width/2 - 0.15, (seatHeight - 0.15)/2, -depth/2 + 0.15],
-        [-width/2 + 0.15, (seatHeight - 0.15)/2, depth/2 - 0.15],
-        [-width/2 + 0.15, (seatHeight - 0.15)/2, -depth/2 + 0.15]
+        [width / 2 - 0.15, (seatHeight - 0.15) / 2, depth / 2 - 0.15],
+        [width / 2 - 0.15, (seatHeight - 0.15) / 2, -depth / 2 + 0.15],
+        [-width / 2 + 0.15, (seatHeight - 0.15) / 2, depth / 2 - 0.15],
+        [-width / 2 + 0.15, (seatHeight - 0.15) / 2, -depth / 2 + 0.15]
     ];
 
     legPositions.forEach(pos => {
@@ -619,7 +619,7 @@ export function createRug(width = 2.5, depth = 2.0) {
 
     const borderThickness = 0.15;
     // Top and bottom borders
-    [depth/2 - borderThickness/2, -depth/2 + borderThickness/2].forEach(z => {
+    [depth / 2 - borderThickness / 2, -depth / 2 + borderThickness / 2].forEach(z => {
         const border = new THREE.Mesh(
             new THREE.BoxGeometry(width, 0.025, borderThickness),
             borderMaterial
@@ -629,7 +629,7 @@ export function createRug(width = 2.5, depth = 2.0) {
     });
 
     // Left and right borders
-    [-width/2 + borderThickness/2, width/2 - borderThickness/2].forEach(x => {
+    [-width / 2 + borderThickness / 2, width / 2 - borderThickness / 2].forEach(x => {
         const border = new THREE.Mesh(
             new THREE.BoxGeometry(borderThickness, 0.025, depth - 2 * borderThickness),
             borderMaterial
@@ -651,7 +651,7 @@ export function createComputer(screenWidth = 0.4, screenHeight = 0.3) {
         new THREE.BoxGeometry(screenWidth, screenHeight, 0.02),
         new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.2 })
     );
-    screen.position.set(0, 0.05 + screenHeight/2, 0);
+    screen.position.set(0, 0.05 + screenHeight / 2, 0);
     screen.castShadow = true;
     group.add(screen);
 
@@ -686,9 +686,9 @@ export function createKeyboard(width = 0.4, depth = 0.15) {
                 keyMaterial
             );
             key.position.set(
-                -width/2 + 0.05 + col * 0.035,
+                -width / 2 + 0.05 + col * 0.035,
                 0.025,
-                -depth/2 + 0.03 + row * 0.035
+                -depth / 2 + 0.03 + row * 0.035
             );
             group.add(key);
         }
@@ -726,7 +726,7 @@ export function createSafe(width = 0.8, height = 1.0, depth = 0.8) {
         new THREE.BoxGeometry(width, height, depth),
         safeMaterial
     );
-    body.position.y = height/2;
+    body.position.y = height / 2;
     body.castShadow = true;
     body.name = "safe";
     group.add(body);
@@ -736,7 +736,7 @@ export function createSafe(width = 0.8, height = 1.0, depth = 0.8) {
         new THREE.BoxGeometry(width * 0.9, height * 0.9, 0.02),
         new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
     );
-    door.position.set(0, height/2, depth/2 + 0.01);
+    door.position.set(0, height / 2, depth / 2 + 0.01);
     group.add(door);
 
     // Combination dial
@@ -745,7 +745,7 @@ export function createSafe(width = 0.8, height = 1.0, depth = 0.8) {
         new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
     );
     dial.rotation.x = Math.PI / 2;
-    dial.position.set(0, height/2 + 0.2, depth/2 + 0.03);
+    dial.position.set(0, height / 2 + 0.2, depth / 2 + 0.03);
     group.add(dial);
 
     // Handle
@@ -753,7 +753,7 @@ export function createSafe(width = 0.8, height = 1.0, depth = 0.8) {
         new THREE.BoxGeometry(0.05, 0.2, 0.05),
         new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
     );
-    handle.position.set(0.2, height/2, depth/2 + 0.03);
+    handle.position.set(0.2, height / 2, depth / 2 + 0.03);
     group.add(handle);
 
     return group;
@@ -807,8 +807,8 @@ export function createPaperShredder() {
 
 export function createPaperStack(count = 5) {
     const group = new THREE.Group();
-    const paperMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xfffdf0, 
+    const paperMaterial = new THREE.MeshStandardMaterial({
+        color: 0xfffdf0,
         roughness: 0.9,
         side: THREE.DoubleSide
     });
@@ -816,30 +816,30 @@ export function createPaperStack(count = 5) {
     for (let i = 0; i < count; i++) {
         const width = 0.21; // A4 approx
         const height = 0.297;
-        
+
         const paper = new THREE.Mesh(
             new THREE.BoxGeometry(width, 0.001, height),
             paperMaterial
         );
-        
+
         // Stack them with slight randomness
         paper.position.y = i * 0.0015;
         paper.rotation.y = (Math.random() - 0.5) * 0.2; // Random rotation
         paper.position.x = (Math.random() - 0.5) * 0.02; // Random offset
         paper.position.z = (Math.random() - 0.5) * 0.02;
-        
+
         paper.castShadow = true;
         group.add(paper);
     }
-    
+
     return group;
 }
 
 export function createCardboardBox(width = 0.4, height = 0.3, depth = 0.4) {
     const group = new THREE.Group();
-    const cardboardMaterial = new THREE.MeshStandardMaterial({ 
+    const cardboardMaterial = new THREE.MeshStandardMaterial({
         color: 0x8d6e63, // Brown
-        roughness: 0.9 
+        roughness: 0.9
     });
     const tapeMaterial = new THREE.MeshStandardMaterial({
         color: 0xd7ccc8, // Lighter tape
@@ -869,49 +869,49 @@ export function createCardboardBox(width = 0.4, height = 0.3, depth = 0.4) {
 
 export function createWhiteboard(width = 2.0, height = 1.2) {
     const group = new THREE.Group();
-    
+
     // Frame
     const frameThickness = 0.02;
     const frameDepth = 0.02;
     const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.6 }); // Silver
-    
+
     const frame = new THREE.Mesh(
-        new THREE.BoxGeometry(width + frameThickness*2, height + frameThickness*2, frameDepth),
+        new THREE.BoxGeometry(width + frameThickness * 2, height + frameThickness * 2, frameDepth),
         frameMaterial
     );
     frame.castShadow = true;
     group.add(frame);
-    
+
     // Board surface
-    const boardMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xffffff, 
+    const boardMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
         roughness: 0.2,
         metalness: 0.1
     });
     const board = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, frameDepth/2),
+        new THREE.BoxGeometry(width, height, frameDepth / 2),
         boardMaterial
     );
-    board.position.z = frameDepth/2 + 0.001;
+    board.position.z = frameDepth / 2 + 0.001;
     group.add(board);
-    
+
     // Tray
     const tray = new THREE.Mesh(
         new THREE.BoxGeometry(width, 0.05, 0.1),
         frameMaterial
     );
-    tray.position.set(0, -height/2 - 0.025, 0.05);
+    tray.position.set(0, -height / 2 - 0.025, 0.05);
     group.add(tray);
-    
+
     // Eraser
     const eraser = new THREE.Mesh(
         new THREE.BoxGeometry(0.15, 0.03, 0.05),
         new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    eraser.position.set(width/3, -height/2 - 0.01, 0.05);
+    eraser.position.set(width / 3, -height / 2 - 0.01, 0.05);
     eraser.rotation.x = 0.2;
     group.add(eraser);
-    
+
     // Markers
     const markerColors = [0xff0000, 0x0000ff, 0x000000];
     markerColors.forEach((col, i) => {
@@ -920,7 +920,7 @@ export function createWhiteboard(width = 2.0, height = 1.2) {
             new THREE.MeshStandardMaterial({ color: col })
         );
         marker.rotation.z = Math.PI / 2;
-        marker.position.set(-width/3 + i*0.05, -height/2 - 0.015, 0.05);
+        marker.position.set(-width / 3 + i * 0.05, -height / 2 - 0.015, 0.05);
         group.add(marker);
     });
 
@@ -930,34 +930,195 @@ export function createWhiteboard(width = 2.0, height = 1.2) {
 export function createScatteredBooks(count = 3) {
     const group = new THREE.Group();
     const bookColors = [0x8B0000, 0x00008B, 0x006400, 0x8B4513];
-    
+
     for (let i = 0; i < count; i++) {
         const width = 0.15 + Math.random() * 0.05;
         const length = 0.22 + Math.random() * 0.05;
         const thickness = 0.03 + Math.random() * 0.04;
-        
+
         const book = new THREE.Mesh(
             new THREE.BoxGeometry(width, thickness, length),
-            new THREE.MeshStandardMaterial({ 
+            new THREE.MeshStandardMaterial({
                 color: bookColors[Math.floor(Math.random() * bookColors.length)],
                 roughness: 0.7
             })
         );
-        
+
         // Stack or scatter
-        book.position.y = i * thickness + thickness/2;
+        book.position.y = i * thickness + thickness / 2;
         book.rotation.y = Math.random() * Math.PI * 2;
         book.position.x = (Math.random() - 0.5) * 0.1;
         book.position.z = (Math.random() - 0.5) * 0.1;
-        
+
         book.castShadow = true;
         group.add(book);
     }
-    
+
     return group;
 }
 
-// ===== DECORATIONS & PROPS =====
+export function createRoundTable(radius = 0.6, height = 0.75) {
+    const group = new THREE.Group();
+    const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.6 });
+
+    // Table Top
+    const top = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, 0.05, 32),
+        woodMaterial
+    );
+    top.position.y = height;
+    top.castShadow = true;
+    top.receiveShadow = true;
+    group.add(top);
+
+    // Central Leg
+    const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, height),
+        woodMaterial
+    );
+    leg.position.y = height / 2;
+    leg.castShadow = true;
+    group.add(leg);
+
+    // Base
+    const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.4, 0.05, 16),
+        woodMaterial
+    );
+    base.position.y = 0.025;
+    base.castShadow = true;
+    group.add(base);
+
+    return group;
+}
+
+export function createSimpleChair(seatHeight = 0.45) {
+    const group = new THREE.Group();
+    const material = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
+
+    // Seat
+    const seat = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.05, 0.4),
+        material
+    );
+    seat.position.y = seatHeight;
+    seat.castShadow = true;
+    group.add(seat);
+
+    // Back
+    const back = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.4, 0.05),
+        material
+    );
+    back.position.set(0, seatHeight + 0.2, -0.175);
+    back.castShadow = true;
+    group.add(back);
+
+    // Legs
+    const legGeo = new THREE.CylinderGeometry(0.03, 0.03, seatHeight);
+    const legPos = [
+        [0.15, seatHeight / 2, 0.15],
+        [0.15, seatHeight / 2, -0.15],
+        [-0.15, seatHeight / 2, 0.15],
+        [-0.15, seatHeight / 2, -0.15]
+    ];
+
+    legPos.forEach(pos => {
+        const leg = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x666666 }));
+        leg.position.set(...pos);
+        group.add(leg);
+    });
+
+    return group;
+}
+
+export function createWaterCooler() {
+    const group = new THREE.Group();
+
+    // Base unit
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(0.35, 1.0, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4 })
+    );
+    base.position.y = 0.5;
+    base.castShadow = true;
+    group.add(base);
+
+    // Water Bottle
+    const bottle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.14, 0.14, 0.4, 16),
+        new THREE.MeshStandardMaterial({
+            color: 0x00aaff,
+            transparent: true,
+            opacity: 0.6,
+            roughness: 0.1
+        })
+    );
+    bottle.position.y = 1.2;
+    group.add(bottle);
+
+    // Taps
+    const tapRed = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, 0.05, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+    tapRed.position.set(0.08, 0.75, 0.18);
+    group.add(tapRed);
+
+    const tapBlue = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, 0.05, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x0000ff })
+    );
+    tapBlue.position.set(-0.08, 0.75, 0.18);
+    group.add(tapBlue);
+
+    return group;
+}
+
+export function createCorkboard(width = 1.2, height = 0.8) {
+    const group = new THREE.Group();
+
+    // Frame
+    const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(width + 0.04, height + 0.04, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x5d4037 })
+    );
+    group.add(frame);
+
+    // Cork
+    const cork = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, 0.025),
+        new THREE.MeshStandardMaterial({ color: 0xc19a6b, roughness: 0.9 })
+    );
+    group.add(cork);
+
+    // Notes
+    const noteColors = [0xffffcc, 0xffccff, 0xccffff];
+    for (let i = 0; i < 5; i++) {
+        const note = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.1, 0.1),
+            new THREE.MeshBasicMaterial({ color: noteColors[i % 3], side: THREE.DoubleSide })
+        );
+        note.position.set(
+            (Math.random() - 0.5) * width * 0.8,
+            (Math.random() - 0.5) * height * 0.8,
+            0.015
+        );
+        note.rotation.z = (Math.random() - 0.5) * 0.5;
+        group.add(note);
+
+        // Pin
+        const pin = new THREE.Mesh(
+            new THREE.SphereGeometry(0.005),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+        pin.position.copy(note.position);
+        pin.position.z += 0.005;
+        group.add(pin);
+    }
+
+    return group;
+}
 
 export function createGlobe(radius = 0.2) {
     const group = new THREE.Group();
@@ -1265,16 +1426,16 @@ export function createBriefcase(width = 0.6, height = 0.15, depth = 0.4) {
         new THREE.MeshStandardMaterial({ color: 0x2a2a2a })
     );
     handle.rotation.z = Math.PI / 2;
-    handle.position.y = height/2 + 0.05;
+    handle.position.y = height / 2 + 0.05;
     group.add(handle);
 
     // Latches
-    [-width/4, width/4].forEach(x => {
+    [-width / 4, width / 4].forEach(x => {
         const latch = new THREE.Mesh(
             new THREE.BoxGeometry(0.05, 0.02, 0.02),
             new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 })
         );
-        latch.position.set(x, 0, depth/2 + 0.01);
+        latch.position.set(x, 0, depth / 2 + 0.01);
         group.add(latch);
     });
 
@@ -1296,7 +1457,7 @@ export function createTrashCan(radius = 0.15, height = 0.4) {
         new THREE.CylinderGeometry(radius, radius * 0.9, height, 16),
         new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 })
     );
-    can.position.y = height/2;
+    can.position.y = height / 2;
     can.castShadow = true;
     group.add(can);
 
@@ -1312,7 +1473,7 @@ export function createCoatRack(height = 1.8) {
         new THREE.CylinderGeometry(0.04, 0.06, height, 8),
         woodMaterial
     );
-    pole.position.y = height/2;
+    pole.position.y = height / 2;
     pole.castShadow = true;
     group.add(pole);
 
@@ -1370,7 +1531,7 @@ export function createChalkboard(width = 4.0, height = 2.0) {
     const frameThickness = 0.08;
 
     // Top/Bottom
-    [height/2, -height/2].forEach(y => {
+    [height / 2, -height / 2].forEach(y => {
         const frame = new THREE.Mesh(
             new THREE.BoxGeometry(width + frameThickness * 2, frameThickness, 0.12),
             frameMaterial
@@ -1380,7 +1541,7 @@ export function createChalkboard(width = 4.0, height = 2.0) {
     });
 
     // Left/Right
-    [-width/2, width/2].forEach(x => {
+    [-width / 2, width / 2].forEach(x => {
         const frame = new THREE.Mesh(
             new THREE.BoxGeometry(frameThickness, height, 0.12),
             frameMaterial
@@ -1394,7 +1555,7 @@ export function createChalkboard(width = 4.0, height = 2.0) {
         new THREE.BoxGeometry(width, 0.05, 0.15),
         frameMaterial
     );
-    tray.position.set(0, -height/2 - 0.05, 0.05);
+    tray.position.set(0, -height / 2 - 0.05, 0.05);
     group.add(tray);
 
     return group;
@@ -1432,7 +1593,7 @@ export function createTVStand(screenWidth = 1.2, screenHeight = 0.7, standWidth 
     const frameThickness = 0.05;
 
     // Top/Bottom frame
-    [screenHeight/2, -screenHeight/2].forEach(y => {
+    [screenHeight / 2, -screenHeight / 2].forEach(y => {
         const frame = new THREE.Mesh(
             new THREE.BoxGeometry(screenWidth + frameThickness * 2, frameThickness, tvThickness),
             frameMaterial
@@ -1442,7 +1603,7 @@ export function createTVStand(screenWidth = 1.2, screenHeight = 0.7, standWidth 
     });
 
     // Left/Right frame
-    [-screenWidth/2 - frameThickness/2, screenWidth/2 + frameThickness/2].forEach(x => {
+    [-screenWidth / 2 - frameThickness / 2, screenWidth / 2 + frameThickness / 2].forEach(x => {
         const frame = new THREE.Mesh(
             new THREE.BoxGeometry(frameThickness, screenHeight, tvThickness),
             frameMaterial
@@ -1680,9 +1841,9 @@ export function createNotepad(width = 0.15, height = 0.005, depth = 0.2) {
         );
         coil.rotation.y = Math.PI / 2;
         coil.position.set(
-            -width/2,
+            -width / 2,
             height * 0.4,
-            -depth/2 + 0.02 + (i * (depth - 0.04) / 7)
+            -depth / 2 + 0.02 + (i * (depth - 0.04) / 7)
         );
         group.add(coil);
     }
@@ -1734,7 +1895,7 @@ export function createPen(length = 0.12, radius = 0.003) {
  * @param {string} name - Name for the hitbox (for interaction)
  * @returns {THREE.Mesh} The invisible hitbox mesh
  */
-export function addInvisibleHitbox(object, size = {width: 0.3, height: 0.3, depth: 0.3}, offset = {x: 0, y: 0, z: 0}, name = null) {
+export function addInvisibleHitbox(object, size = { width: 0.3, height: 0.3, depth: 0.3 }, offset = { x: 0, y: 0, z: 0 }, name = null) {
     const hitbox = new THREE.Mesh(
         new THREE.BoxGeometry(size.width, size.height, size.depth),
         new THREE.MeshBasicMaterial({
@@ -1777,7 +1938,7 @@ export function createInteractableWrapper(object, name, hitboxSize = null) {
     };
 
     const size = hitboxSize || defaultSize;
-    const hitbox = addInvisibleHitbox(group, size, {x: 0, y: 0, z: 0}, name);
+    const hitbox = addInvisibleHitbox(group, size, { x: 0, y: 0, z: 0 }, name);
 
     return {
         group: group,
