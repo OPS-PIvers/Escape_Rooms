@@ -501,3 +501,64 @@ canvas {
     -webkit-user-select: none;
     user-select: none;
 }
+
+/* INVENTORY SYSTEM */
+#inventory-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 50;
+    background: rgba(10, 20, 30, 0.8);
+    padding: 10px 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.inventory-slot {
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    user-select: none;
+}
+
+.inventory-slot:hover {
+    border-color: rgba(0, 255, 204, 0.8);
+    background: rgba(0, 255, 204, 0.1);
+}
+
+.inventory-slot.selected {
+    border-color: #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+    background: rgba(0, 255, 204, 0.2);
+}
+
+.inventory-slot.filled {
+    border-color: rgba(0, 255, 204, 0.6);
+}
+
+.slot-icon {
+    pointer-events: none;
+}
+
+.slot-number {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 10px;
+    color: rgba(0, 255, 204, 0.5);
+    pointer-events: none;
+}

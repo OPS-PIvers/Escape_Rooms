@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>The Science Lab - Escape Room</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        /* Lab-specific overrides or additions can go here if needed, 
+           but we should try to keep main.css as the source of truth. */
+        body {
+            background-color: #111;
+        }
+    </style>
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- UI Overlays -->
+    <div id="crosshair"></div>
+
+    <div id="instructions">
+        <h1>THE SCIENCE LAB</h1>
+        <p>You are trapped in a high-tech laboratory.</p>
+        <p>Find clues, conduct experiments, and solve puzzles to escape.</p>
+        <p><strong>Controls:</strong></p>
+        <ul>
+            <li>W, A, S, D to Move</li>
+            <li>Mouse to Look</li>
+            <li>Click to Interact</li>
+            <li>ESC to Close Menus</li>
+        </ul>
+        <p class="start-prompt">CLICK TO START</p>
+    </div>
+
+    <!-- Inventory UI (New) -->
+    <div id="inventory-container">
+        <!-- Will be populated by JS -->
+    </div>
+
+    <!-- Interaction Modal -->
+    <div id="clueModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModalBtn" class="close">&times;</span>
+            <h2 id="modalTitle">OBJECT NAME</h2>
+            <div id="modalContent">
+                <!-- Dynamic Content -->
+            </div>
+            <div id="optionsContainer">
+                <!-- Buttons -->
+            </div>
+            <div id="modalFeedback"></div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content" style="text-align: center; border-color: #4caf50;">
+            <h1 style="color: #4caf50;">EXPERIMENT SUCCESSFUL!</h1>
+            <p>You have unlocked the lab door.</p>
+            <h2 id="victoryTime"></h2>
+            <button class="option-btn" onclick="location.reload()">PLAY AGAIN</button>
+            <button class="option-btn" onclick="window.location.href='index.html'">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Main Game Script -->
+    <script type="module" src="assets/js/science_lab.js"></script>
+</body>
+</html>

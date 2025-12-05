@@ -16,6 +16,13 @@ import {
     shuffleAllClues
 } from './gameLogic.js?v=fc4351d';
 import { getNextDescription, hasCyclingDescriptions } from './cyclingDescriptions.js';
+import {
+    inventory,
+    selectSlot,
+    getSelectedSlot,
+    setInventoryChangeListener,
+    INVENTORY_SIZE
+} from './inventory.js';
 
 export let isInteracting = false;
 let currentCode = "";
@@ -26,6 +33,68 @@ const modalContent = document.getElementById('modalContent');
 const optionsContainer = document.getElementById('optionsContainer');
 const modalFeedback = document.getElementById('modalFeedback');
 const closeBtn = document.getElementById('closeModalBtn');
+
+// --- INVENTORY UI ---
+export function initInventoryUI() {
+    const container = document.getElementById('inventory-container');
+    if (!container) return; // Not on a page with inventory
+
+    // Create slots
+    container.innerHTML = '';
+    for (let i = 0; i < INVENTORY_SIZE; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'inventory-slot';
+        slot.dataset.index = i;
+
+        const number = document.createElement('span');
+        number.className = 'slot-number';
+        number.textContent = i + 1;
+        slot.appendChild(number);
+
+        slot.onclick = () => {
+            selectSlot(i);
+        };
+
+        container.appendChild(slot);
+    }
+
+    // Listen for changes
+    setInventoryChangeListener(renderInventory);
+    renderInventory(inventory, getSelectedSlot());
+}
+
+function renderInventory(inv, selectedIdx) {
+    const container = document.getElementById('inventory-container');
+    if (!container) return;
+
+    const slots = container.querySelectorAll('.inventory-slot');
+    slots.forEach((slot, idx) => {
+        const item = inv[idx];
+
+        // Clear previous content (except number)
+        const number = slot.querySelector('.slot-number');
+        slot.innerHTML = '';
+        slot.appendChild(number);
+
+        if (item) {
+            slot.classList.add('filled');
+            const icon = document.createElement('div');
+            icon.className = 'slot-icon';
+            icon.textContent = item.icon;
+            slot.appendChild(icon);
+            slot.title = item.name; // Tooltip
+        } else {
+            slot.classList.remove('filled');
+            slot.title = "Empty";
+        }
+
+        if (idx === selectedIdx) {
+            slot.classList.add('selected');
+        } else {
+            slot.classList.remove('selected');
+        }
+    });
+}
 
 // Prevent modal clicks from propagating to game elements
 modal.addEventListener('click', (e) => {
