@@ -22,7 +22,6 @@ import {
 } from './constants.js';
 import { TouchControls } from './touchControls.js';
 import { closeModal, isInteracting, initInventoryUI } from './ui.js'; // We will add initInventoryUI to ui.js
-import { createRoom } from './roomEngine.js'; // We might want to use the engine or build custom
 import { addItem } from './inventory.js';
 
 // --- CONSTANTS ---
