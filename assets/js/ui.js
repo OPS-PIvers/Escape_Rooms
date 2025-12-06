@@ -14,7 +14,7 @@ import {
     puzzleState,
     resetChain,
     shuffleAllClues
-} from './gameLogic.js?v=fc4351d';
+} from './gameLogic.js';
 import { getNextDescription, hasCyclingDescriptions } from './cyclingDescriptions.js';
 import {
     inventory,
