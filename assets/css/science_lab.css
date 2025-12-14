@@ -109,12 +109,35 @@ body {
 
 /* Victory modal lab theme */
 #victoryModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(10, 30, 50, 0.98);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 #victoryModal h1 {
     color: #00ffff;
     text-shadow: 0 0 20px #00ffff;
+}
+
+/* Time's Up modal lab theme */
+#timeUpModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 10, 10, 0.98);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 /* Crosshair */

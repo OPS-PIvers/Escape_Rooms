@@ -629,7 +629,12 @@ function handleBunsenBurner(obj) {
         const turnOffBtn = createButton('TURN OFF', () => {
             labState.bunsenBurnerOn = false;
             const flame = obj.getObjectByName('flame');
-            if (flame) flame.visible = false;
+            if (flame) {
+                flame.visible = false;
+                // Also toggle inner flame
+                const innerFlame = obj.getObjectByName('innerFlame');
+                if (innerFlame) innerFlame.visible = false;
+            }
             closeModal();
         });
         dom.optionsContainer.appendChild(turnOffBtn);
@@ -641,7 +646,12 @@ function handleBunsenBurner(obj) {
         const turnOnBtn = createButton('TURN ON', () => {
             labState.bunsenBurnerOn = true;
             const flame = obj.getObjectByName('flame');
-            if (flame) flame.visible = true;
+            if (flame) {
+                flame.visible = true;
+                // Also toggle inner flame
+                const innerFlame = obj.getObjectByName('innerFlame');
+                if (innerFlame) innerFlame.visible = true;
+            }
             closeModal();
         });
         dom.optionsContainer.appendChild(turnOnBtn);
@@ -697,11 +707,23 @@ function handleMixingBeaker(labData) {
         dom.modalFeedback.textContent = 'Turn on the Bunsen burner to heat the mixture.';
     }
 
-    // Reset button
+    // Reset button - restores chemicals to inventory
     if (labState.mixedChemicals.length > 0) {
         const resetBtn = createButton('EMPTY BEAKER', () => {
+            // Restore each chemical to inventory
+            const colorNames = { red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow' };
+            labState.mixedChemicals.forEach(color => {
+                addItem({
+                    id: `chemical_${color}`,
+                    name: `${colorNames[color]} Chemical`,
+                    icon: '🧪',
+                    description: `A flask containing ${color} liquid.`
+                });
+            });
             labState.mixedChemicals = [];
-            handleMixingBeaker(labData);
+            dom.modalFeedback.style.color = '#4caf50';
+            dom.modalFeedback.textContent = 'Chemicals returned to inventory.';
+            setTimeout(() => handleMixingBeaker(labData), 500);
         });
         resetBtn.style.backgroundColor = '#666';
         dom.optionsContainer.appendChild(resetBtn);
@@ -817,7 +839,7 @@ function handleLabNotebook() {
             </p>
             <hr style="border-color: #ccc; margin: 15px 0;">
             <p style="font-size: 0.8em; color: #666;">
-                Note: Yellow reagent is stored in cold storage for stability.
+                Note: Yellow reagent in cold storage is for a different experiment. Do NOT use.
             </p>
         </div>
     `;
@@ -998,6 +1020,13 @@ function handleLabSafe() {
 
     // Enter button
     const enterBtn = createKeypadButton('E', () => {
+        // Validate 4-digit requirement first
+        if (currentInput.length !== 4) {
+            dom.modalFeedback.style.color = '#ffaa44';
+            dom.modalFeedback.textContent = 'Enter a complete 4-digit code';
+            return;
+        }
+
         if (currentInput === labState.safeCode) {
             labState.safeUnlocked = true;
             dom.modalFeedback.style.color = '#4caf50';
@@ -1010,8 +1039,16 @@ function handleLabSafe() {
             dom.modalFeedback.style.color = '#e57373';
 
             if (labState.safeAttempts <= 0) {
-                dom.modalFeedback.textContent = 'LOCKOUT - Try again later';
-                labState.safeAttempts = 3;
+                dom.modalFeedback.textContent = 'SECURITY LOCKOUT - 10 second penalty';
+                // Actual lockout - disable keypad temporarily
+                const buttons = keypad.querySelectorAll('button');
+                buttons.forEach(btn => btn.disabled = true);
+                setTimeout(() => {
+                    labState.safeAttempts = 3;
+                    buttons.forEach(btn => btn.disabled = false);
+                    dom.modalFeedback.textContent = 'Keypad unlocked. 3 attempts remaining.';
+                    dom.modalFeedback.style.color = '#ffaa44';
+                }, 10000);
             } else {
                 dom.modalFeedback.textContent = `INVALID CODE - ${labState.safeAttempts} attempts left`;
             }
@@ -1188,9 +1225,31 @@ function showMessage(title, content) {
 
 // Store engine reference locally for victory calculation
 let engineRef = null;
+let timeUpTriggered = false;
+
+function checkTimeUp() {
+    if (timeUpTriggered || !engineRef) return;
+
+    if (engineRef.timeLeft <= 0 && !engineRef.gameWon) {
+        timeUpTriggered = true;
+        triggerTimeUp();
+    }
+}
+
+function triggerTimeUp() {
+    const dom = getDomElements();
+    if (dom.timeUpModal) {
+        dom.timeUpModal.style.display = 'flex';
+    }
+}
 
 function triggerVictory() {
     const dom = getDomElements();
+
+    // Mark game as won to prevent time up trigger
+    if (engineRef) {
+        engineRef.gameWon = true;
+    }
 
     // Calculate time from engine timer
     if (dom.victoryTime && engineRef) {
@@ -1257,6 +1316,9 @@ async function initScienceLab() {
 
     // Start the engine
     engine.start();
+
+    // Check for time up every second
+    setInterval(checkTimeUp, 1000);
 
     // Setup keyboard shortcuts for inventory
     document.addEventListener('keydown', (e) => {
