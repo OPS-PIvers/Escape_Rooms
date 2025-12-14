@@ -1,76 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>The Science Lab - Escape Room</title>
+    <title>Science Lab - Escape Room</title>
     <link rel="stylesheet" href="assets/css/main.css">
     <style>
-        /* Lab-specific overrides or additions can go here if needed, 
-           but we should try to keep main.css as the source of truth. */
+        /* Lab-specific theme overrides */
         body {
-            background-color: #111;
+            background: #0a0f1a;
+        }
+
+        #instructions {
+            background: rgba(10, 20, 40, 0.95);
+            border: 2px solid #00ffff;
+        }
+
+        #instructions h1 {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        #instructions b {
+            color: #00ffff;
+        }
+
+        /* Inventory container */
+        #inventory-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 30, 60, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #00ffff;
+            z-index: 100;
+        }
+
+        .inventory-slot {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 60, 80, 0.5);
+            border: 2px solid #006080;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .inventory-slot:hover {
+            background: rgba(0, 100, 120, 0.6);
+            border-color: #00aacc;
+        }
+
+        .inventory-slot.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .inventory-slot.filled {
+            background: rgba(0, 80, 100, 0.7);
+        }
+
+        .slot-number {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 10px;
+            color: #00aacc;
+        }
+
+        .slot-icon {
+            font-size: 24px;
+        }
+
+        /* Modal lab theme */
+        #clueModal {
+            background: rgba(10, 30, 50, 0.98);
+            border: 2px solid #00ffff;
+        }
+
+        #modalTitle {
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .option-btn {
+            background: #005566;
+            border: 1px solid #00aacc;
+        }
+
+        .option-btn:hover {
+            background: #007788;
+            border-color: #00ffff;
+        }
+
+        #closeModalBtn {
+            background: #004455;
+            border: 1px solid #00aacc;
+        }
+
+        #closeModalBtn:hover {
+            background: #005566;
+        }
+
+        /* Victory modal lab theme */
+        #victoryModal {
+            background: rgba(10, 30, 50, 0.98);
+        }
+
+        #victoryModal h1 {
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        /* Crosshair */
+        #crosshair {
+            border-color: #00ffff;
+        }
+
+        /* Keypad styling */
+        #keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 200px;
+            margin: 15px auto;
+        }
+
+        .key-btn {
+            padding: 15px;
+            font-size: 18px;
+            background: #003344;
+            color: #00ffff;
+            border: 1px solid #00aacc;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .key-btn:hover {
+            background: #005566;
+        }
+
+        #codeDisplay {
+            font-size: 32px;
+            font-family: monospace;
+            letter-spacing: 10px;
+            color: #00ffff;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        /* Question box styling */
+        .question-box {
+            background: rgba(0, 60, 80, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #00ffff;
+            margin: 10px 0;
         }
     </style>
-    <!-- Import Map for Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-            }
-        }
-    </script>
 </head>
+
 <body>
-    <!-- UI Overlays -->
+    <!-- Instructions overlay -->
+    <div id="instructions">
+        <h1>SCIENCE LAB ESCAPE</h1>
+        <p><b>CLICK TO START</b></p>
+        <hr style="border-color: #00ffff; margin: 15px 0;">
+        <p style="font-size: 14px; color: #aaa;">
+            You've been locked in a high-security research laboratory.<br>
+            Complete the chemical experiment to unlock the safe<br>
+            and retrieve the keycard to escape.
+        </p>
+        <hr style="border-color: #00ffff; margin: 15px 0;">
+        <p><strong>Controls:</strong></p>
+        <p>WASD to Move | Mouse/Arrows to Look</p>
+        <p>SPACE to Close Dialogs | CLICK to Interact</p>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+            Numbers 1-3 to select inventory slots
+        </p>
+    </div>
+
+    <!-- Crosshair -->
     <div id="crosshair"></div>
 
-    <div id="instructions">
-        <h1>THE SCIENCE LAB</h1>
-        <p>You are trapped in a high-tech laboratory.</p>
-        <p>Find clues, conduct experiments, and solve puzzles to escape.</p>
-        <p><strong>Controls:</strong></p>
-        <ul>
-            <li>W, A, S, D to Move</li>
-            <li>Mouse to Look</li>
-            <li>Click to Interact</li>
-            <li>ESC to Close Menus</li>
-        </ul>
-        <p class="start-prompt">CLICK TO START</p>
-    </div>
-
-    <!-- Inventory UI (New) -->
+    <!-- Inventory UI -->
     <div id="inventory-container">
-        <!-- Will be populated by JS -->
+        <!-- Slots will be generated by JavaScript -->
     </div>
 
-    <!-- Interaction Modal -->
-    <div id="clueModal" class="modal">
-        <div class="modal-content">
-            <span id="closeModalBtn" class="close">&times;</span>
-            <h2 id="modalTitle">OBJECT NAME</h2>
-            <div id="modalContent">
-                <!-- Dynamic Content -->
-            </div>
-            <div id="optionsContainer">
-                <!-- Buttons -->
-            </div>
-            <div id="modalFeedback"></div>
-        </div>
+    <!-- Clue/Interaction Modal -->
+    <div id="clueModal" style="display: none;">
+        <h2 id="modalTitle">Title</h2>
+        <div id="modalContent">Content goes here.</div>
+        <div id="optionsContainer"></div>
+        <p id="modalFeedback" style="margin-top: 10px;"></p>
+        <button id="closeModalBtn">CLOSE</button>
     </div>
 
     <!-- Victory Modal -->
-    <div id="victoryModal" class="modal" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content" style="text-align: center; border-color: #4caf50;">
-            <h1 style="color: #4caf50;">EXPERIMENT SUCCESSFUL!</h1>
-            <p>You have unlocked the lab door.</p>
-            <h2 id="victoryTime"></h2>
-            <button class="option-btn" onclick="location.reload()">PLAY AGAIN</button>
-            <button class="option-btn" onclick="window.location.href='index.html'">MAIN MENU</button>
+    <div id="victoryModal" style="display: none;">
+        <div style="text-align: center; padding: 40px;">
+            <h1 style="font-size: 48px; margin-bottom: 20px;">ESCAPED!</h1>
+            <p style="font-size: 24px; color: #00ffff;">You successfully escaped the Science Lab!</p>
+            <p id="victoryTime" style="font-size: 18px; color: #aaa; margin-top: 20px;"></p>
+            <div style="margin-top: 30px;">
+                <button onclick="window.location.href='index.html'" class="option-btn" style="padding: 15px 30px; font-size: 18px;">
+                    RETURN TO MENU
+                </button>
+                <button onclick="window.location.reload()" class="option-btn" style="padding: 15px 30px; font-size: 18px; margin-left: 10px;">
+                    PLAY AGAIN
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- Time's Up Modal -->
+    <div id="timeUpModal" style="display: none;">
+        <div style="text-align: center; padding: 40px;">
+            <h1 style="font-size: 48px; color: #ff4444; margin-bottom: 20px;">TIME'S UP!</h1>
+            <p style="font-size: 20px; color: #aaa;">The security lockdown has engaged.</p>
+            <p style="font-size: 16px; color: #888; margin-top: 15px;">You couldn't escape in time.</p>
+            <div style="margin-top: 30px;">
+                <button onclick="window.location.reload()" class="option-btn" style="padding: 15px 30px; font-size: 18px;">
+                    TRY AGAIN
+                </button>
+                <button onclick="window.location.href='index.html'" class="option-btn" style="padding: 15px 30px; font-size: 18px; margin-left: 10px;">
+                    RETURN TO MENU
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
     <!-- Main Game Script -->
-    <script type="module" src="assets/js/science_lab.js"></script>
+    <script type="module" src="assets/js/science_lab.js?v=prod-2"></script>
+
+    <!-- Keyboard shortcuts for inventory -->
+    <script>
+        document.addEventListener('keydown', (e) => {
+            // Number keys 1-3 for inventory slots
+            if (e.key >= '1' && e.key <= '3') {
+                const slotIndex = parseInt(e.key) - 1;
+                const slots = document.querySelectorAll('.inventory-slot');
+                if (slots[slotIndex]) {
+                    slots[slotIndex].click();
+                }
+            }
+        });
+    </script>
 </body>
+
 </html>
