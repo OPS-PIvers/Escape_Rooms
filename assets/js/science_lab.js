@@ -56,6 +56,25 @@ const labState = {
     safeAttempts: 3
 };
 
+// Cached DOM elements (avoid repeated queries)
+let domElements = null;
+
+function getDomElements() {
+    if (!domElements) {
+        domElements = {
+            modal: document.getElementById('clueModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalContent: document.getElementById('modalContent'),
+            optionsContainer: document.getElementById('optionsContainer'),
+            modalFeedback: document.getElementById('modalFeedback'),
+            victoryModal: document.getElementById('victoryModal'),
+            victoryTime: document.getElementById('victoryTime'),
+            timeUpModal: document.getElementById('timeUpModal')
+        };
+    }
+    return domElements;
+}
+
 // Materials for the lab
 const materials = {
     wall: new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.9 }), // Clean white
@@ -429,16 +448,12 @@ function createCeilingLights(scene, width, depth) {
 
 // Lab-specific interaction handler
 function handleLabInteraction(name, obj, labData) {
-    const modal = document.getElementById('clueModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
     // Clear previous content
-    optionsContainer.innerHTML = '';
-    modalFeedback.textContent = '';
-    modalFeedback.style.color = '';
+    dom.optionsContainer.innerHTML = '';
+    dom.modalFeedback.textContent = '';
+    dom.modalFeedback.style.color = '';
 
     // === DOOR ===
     if (name === 'door') {
@@ -446,8 +461,8 @@ function handleLabInteraction(name, obj, labData) {
             // Victory!
             triggerVictory();
         } else {
-            modalTitle.textContent = 'SECURITY DOOR';
-            modalContent.innerHTML = `
+            dom.modalTitle.textContent = 'SECURITY DOOR';
+            dom.modalContent.innerHTML = `
                 <p>The door is sealed with an electronic lock.</p>
                 <p style="color: #e57373;">KEYCARD REQUIRED</p>
                 <p style="font-size: 0.9em; color: #888;">Complete the experiment to unlock the safe.</p>
@@ -536,11 +551,7 @@ function handleLabInteraction(name, obj, labData) {
 
 // Chemical pickup handler
 function handleChemicalPickup(color, obj, labData) {
-    const modal = document.getElementById('clueModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
     const colorNames = {
         red: 'Red',
@@ -552,8 +563,8 @@ function handleChemicalPickup(color, obj, labData) {
     const stateKey = `has${colorNames[color]}Chemical`;
 
     if (labState[stateKey]) {
-        modalTitle.textContent = 'EMPTY FLASK';
-        modalContent.innerHTML = '<p>You already collected this chemical.</p>';
+        dom.modalTitle.textContent = 'EMPTY FLASK';
+        dom.modalContent.innerHTML = '<p>You already collected this chemical.</p>';
         showModalElement();
         return;
     }
@@ -570,16 +581,16 @@ function handleChemicalPickup(color, obj, labData) {
         labState[stateKey] = true;
         obj.visible = false;
 
-        modalTitle.textContent = 'CHEMICAL COLLECTED';
-        modalContent.innerHTML = `
+        dom.modalTitle.textContent = 'CHEMICAL COLLECTED';
+        dom.modalContent.innerHTML = `
             <div style="text-align: center; font-size: 48px; margin: 20px 0;">${getChemicalIcon(color)}</div>
             <p>You collected the <strong style="color: ${getChemicalDisplayColor(color)};">${colorNames[color]} Chemical</strong>.</p>
             <p style="font-size: 0.9em; color: #888;">Added to inventory.</p>
         `;
         showModalElement();
     } else {
-        modalTitle.textContent = 'INVENTORY FULL';
-        modalContent.innerHTML = '<p>Your inventory is full. Use or drop an item first.</p>';
+        dom.modalTitle.textContent = 'INVENTORY FULL';
+        dom.modalContent.innerHTML = '<p>Your inventory is full. Use or drop an item first.</p>';
         showModalElement();
     }
 }
@@ -606,14 +617,12 @@ function getChemicalDisplayColor(color) {
 
 // Bunsen Burner handler
 function handleBunsenBurner(obj) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'BUNSEN BURNER';
+    dom.modalTitle.textContent = 'BUNSEN BURNER';
 
     if (labState.bunsenBurnerOn) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>The flame is burning steadily.</p>
             <p style="color: #ffaa44;">Status: ON</p>
         `;
@@ -623,9 +632,9 @@ function handleBunsenBurner(obj) {
             if (flame) flame.visible = false;
             closeModal();
         });
-        optionsContainer.appendChild(turnOffBtn);
+        dom.optionsContainer.appendChild(turnOffBtn);
     } else {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>A standard laboratory Bunsen burner.</p>
             <p style="color: #888;">Status: OFF</p>
         `;
@@ -635,27 +644,23 @@ function handleBunsenBurner(obj) {
             if (flame) flame.visible = true;
             closeModal();
         });
-        optionsContainer.appendChild(turnOnBtn);
+        dom.optionsContainer.appendChild(turnOnBtn);
     }
     showModalElement();
 }
 
 // Mixing Beaker handler
 function handleMixingBeaker(labData) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'MIXING BEAKER';
+    dom.modalTitle.textContent = 'MIXING BEAKER';
 
     if (labState.reactionComplete) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p style="color: #4caf50;">The reaction was successful!</p>
             <p>A crystallized compound has formed.</p>
-            <p style="font-size: 0.9em;">The safe code was revealed: <strong>2731</strong></p>
+            <p style="font-size: 0.9em;">The residue shows: <strong>${labState.safeCode}</strong></p>
         `;
-        labState.foundSafeCode = true;
         showModalElement();
         return;
     }
@@ -669,7 +674,7 @@ function handleMixingBeaker(labData) {
     }
     stateHtml += `<p style="font-size: 0.9em; color: #888;">Attempts remaining: ${labState.mixingAttempts}</p>`;
 
-    modalContent.innerHTML = stateHtml;
+    dom.modalContent.innerHTML = stateHtml;
 
     // Add pour button if chemical is selected
     if (selectedItem && selectedItem.id.startsWith('chemical_')) {
@@ -677,7 +682,7 @@ function handleMixingBeaker(labData) {
         const pourBtn = createButton(`POUR ${color.toUpperCase()} CHEMICAL`, () => {
             pourChemical(color, selectedItem.index, labData);
         });
-        optionsContainer.appendChild(pourBtn);
+        dom.optionsContainer.appendChild(pourBtn);
     }
 
     // Add heat button if chemicals are mixed and burner is on
@@ -686,10 +691,10 @@ function handleMixingBeaker(labData) {
             attemptReaction(labData);
         });
         heatBtn.style.backgroundColor = '#ff6600';
-        optionsContainer.appendChild(heatBtn);
+        dom.optionsContainer.appendChild(heatBtn);
     } else if (labState.mixedChemicals.length >= 3 && !labState.bunsenBurnerOn) {
-        modalFeedback.style.color = '#ffaa44';
-        modalFeedback.textContent = 'Turn on the Bunsen burner to heat the mixture.';
+        dom.modalFeedback.style.color = '#ffaa44';
+        dom.modalFeedback.textContent = 'Turn on the Bunsen burner to heat the mixture.';
     }
 
     // Reset button
@@ -699,18 +704,18 @@ function handleMixingBeaker(labData) {
             handleMixingBeaker(labData);
         });
         resetBtn.style.backgroundColor = '#666';
-        optionsContainer.appendChild(resetBtn);
+        dom.optionsContainer.appendChild(resetBtn);
     }
 
     showModalElement();
 }
 
 function pourChemical(color, inventoryIndex, labData) {
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
     if (labState.mixedChemicals.includes(color)) {
-        modalFeedback.style.color = '#e57373';
-        modalFeedback.textContent = 'This chemical is already in the mixture!';
+        dom.modalFeedback.style.color = '#e57373';
+        dom.modalFeedback.textContent = 'This chemical is already in the mixture!';
         return;
     }
 
@@ -718,40 +723,35 @@ function pourChemical(color, inventoryIndex, labData) {
     removeItem(inventoryIndex);
     selectSlot(-1);
 
-    modalFeedback.style.color = '#4caf50';
-    modalFeedback.textContent = `Added ${color} chemical to the mixture.`;
+    dom.modalFeedback.style.color = '#4caf50';
+    dom.modalFeedback.textContent = `Added ${color} chemical to the mixture.`;
 
     // Refresh the modal
     setTimeout(() => handleMixingBeaker(labData), 500);
 }
 
 function attemptReaction(labData) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
-    // Check if formula is correct (order matters!)
-    const isCorrect = labState.mixedChemicals.length === 3 &&
-        labState.mixedChemicals[0] === 'red' &&
-        labState.mixedChemicals[1] === 'blue' &&
-        labState.mixedChemicals[2] === 'green';
+    // Check if formula is correct (order matters!) - use labState.correctFormula
+    const isCorrect = labState.mixedChemicals.length === labState.correctFormula.length &&
+        labState.mixedChemicals.every((color, index) => color === labState.correctFormula[index]);
 
     if (isCorrect) {
         labState.reactionComplete = true;
         labState.foundSafeCode = true;
 
-        modalTitle.textContent = 'REACTION COMPLETE!';
-        modalContent.innerHTML = `
+        dom.modalTitle.textContent = 'REACTION COMPLETE!';
+        dom.modalContent.innerHTML = `
             <div style="text-align: center; color: #4caf50;">
                 <h2>SUCCESS!</h2>
                 <p>The chemicals react and form a crystalline structure.</p>
                 <p>Numbers appear in the residue:</p>
-                <h1 style="font-size: 48px; color: #fff; text-shadow: 0 0 10px #4caf50;">2731</h1>
+                <h1 style="font-size: 48px; color: #fff; text-shadow: 0 0 10px #4caf50;">${labState.safeCode}</h1>
                 <p style="font-size: 0.9em; color: #888;">This must be the safe code!</p>
             </div>
         `;
-        optionsContainer.innerHTML = '';
+        dom.optionsContainer.innerHTML = '';
     } else {
         labState.mixingAttempts--;
 
@@ -763,13 +763,13 @@ function attemptReaction(labData) {
             labState.hasBlueChemical = false;
             labState.hasGreenChemical = false;
 
-            // Reset chemical visibility
-            if (labData.redChemical) labData.redChemical.visible = true;
-            if (labData.blueChemical) labData.blueChemical.visible = true;
-            if (labData.greenChemical) labData.greenChemical.visible = true;
+            // Reset chemical visibility with null checks
+            if (labData && labData.redChemical) labData.redChemical.visible = true;
+            if (labData && labData.blueChemical) labData.blueChemical.visible = true;
+            if (labData && labData.greenChemical) labData.greenChemical.visible = true;
 
-            modalTitle.textContent = 'HAZARDOUS REACTION!';
-            modalContent.innerHTML = `
+            dom.modalTitle.textContent = 'HAZARDOUS REACTION!';
+            dom.modalContent.innerHTML = `
                 <div style="text-align: center; color: #e57373;">
                     <h2>FAILED!</h2>
                     <p>The mixture bubbles violently and evaporates!</p>
@@ -777,12 +777,12 @@ function attemptReaction(labData) {
                     <p style="color: #888;">Check the lab notebook for the correct formula.</p>
                 </div>
             `;
-            optionsContainer.innerHTML = '';
+            dom.optionsContainer.innerHTML = '';
         } else {
             labState.mixedChemicals = [];
 
-            modalTitle.textContent = 'REACTION FAILED';
-            modalContent.innerHTML = `
+            dom.modalTitle.textContent = 'REACTION FAILED';
+            dom.modalContent.innerHTML = `
                 <div style="text-align: center; color: #ffaa44;">
                     <p>The mixture fizzles and produces smoke...</p>
                     <p>Nothing happens. The chemicals were wasted.</p>
@@ -790,7 +790,7 @@ function attemptReaction(labData) {
                     <p style="font-size: 0.9em;">Hint: Check the lab notebook for the correct formula.</p>
                 </div>
             `;
-            optionsContainer.innerHTML = '';
+            dom.optionsContainer.innerHTML = '';
         }
     }
     showModalElement();
@@ -798,13 +798,12 @@ function attemptReaction(labData) {
 
 // Lab Notebook handler
 function handleLabNotebook() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
     labState.foundFormulaHint = true;
 
-    modalTitle.textContent = 'LAB NOTEBOOK';
-    modalContent.innerHTML = `
+    dom.modalTitle.textContent = 'LAB NOTEBOOK';
+    dom.modalContent.innerHTML = `
         <div style="background: #f5f5dc; color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Courier New', monospace;">
             <p style="text-decoration: underline; font-weight: bold;">Experiment Log - Day 47</p>
             <p>The synthesis requires precise order:</p>
@@ -827,13 +826,12 @@ function handleLabNotebook() {
 
 // Microscope handler
 function handleMicroscope() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
     labState.microscopeViewed = true;
 
-    modalTitle.textContent = 'MICROSCOPE';
-    modalContent.innerHTML = `
+    dom.modalTitle.textContent = 'MICROSCOPE';
+    dom.modalContent.innerHTML = `
         <div style="text-align: center;">
             <div style="background: #111; border-radius: 50%; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 3px solid #444;">
                 <div style="background: radial-gradient(circle, #1a3a1a 0%, #0a1a0a 100%); width: 180px; height: 180px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -852,23 +850,21 @@ function handleMicroscope() {
 
 // Lab Computer handler
 function handleLabComputer() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'LAB COMPUTER';
+    dom.modalTitle.textContent = 'LAB COMPUTER';
 
     if (labState.reactionComplete) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <div style="background: #0a0a0a; padding: 15px; border: 2px solid #4caf50; font-family: monospace;">
                 <p style="color: #4caf50;">> EXPERIMENT STATUS: COMPLETE</p>
-                <p style="color: #4caf50;">> SAFE CODE GENERATED: 2731</p>
+                <p style="color: #4caf50;">> SAFE CODE GENERATED: ${labState.safeCode}</p>
                 <p style="color: #4caf50;">> KEYCARD LOCATION: SAFE</p>
                 <p style="color: #888; margin-top: 10px;">Use the safe code to retrieve the exit keycard.</p>
             </div>
         `;
     } else {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <div style="background: #0a0a0a; padding: 15px; border: 2px solid #333; font-family: monospace;">
                 <p style="color: #00ff00;">> WELCOME TO LABSYS v2.4</p>
                 <p style="color: #ffaa00;">> WARNING: EXPERIMENT INCOMPLETE</p>
@@ -882,33 +878,31 @@ function handleLabComputer() {
 
 // Lab Fridge handler
 function handleLabFridge(labData) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'LABORATORY REFRIGERATOR';
+    dom.modalTitle.textContent = 'LABORATORY REFRIGERATOR';
 
     if (!labState.fridgeOpened) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>A laboratory refrigerator for storing temperature-sensitive chemicals.</p>
             <p style="color: #4ca6ff;">Temperature: 4°C</p>
         `;
         const openBtn = createButton('OPEN FRIDGE', () => {
             labState.fridgeOpened = true;
-            if (labData.yellowChemical) {
+            if (labData && labData.yellowChemical) {
                 labData.yellowChemical.visible = true;
             }
             handleLabFridge(labData);
         });
-        optionsContainer.appendChild(openBtn);
+        dom.optionsContainer.appendChild(openBtn);
     } else {
         if (labState.hasYellowChemical) {
-            modalContent.innerHTML = `
+            dom.modalContent.innerHTML = `
                 <p>The refrigerator is open. It's mostly empty now.</p>
                 <p style="font-size: 0.9em; color: #888;">You already took the yellow chemical.</p>
             `;
         } else {
-            modalContent.innerHTML = `
+            dom.modalContent.innerHTML = `
                 <p>The refrigerator is open.</p>
                 <p>Inside you see a flask with <strong style="color: #ffff44;">yellow liquid</strong>.</p>
             `;
@@ -919,21 +913,18 @@ function handleLabFridge(labData) {
 
 // Lab Safe handler
 function handleLabSafe() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
-    const modalFeedback = document.getElementById('modalFeedback');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'LABORATORY SAFE';
+    dom.modalTitle.textContent = 'LABORATORY SAFE';
 
     if (labState.safeUnlocked) {
         if (labState.hasKeycard) {
-            modalContent.innerHTML = `
+            dom.modalContent.innerHTML = `
                 <p>The safe is open and empty.</p>
                 <p style="color: #888;">You already took the keycard.</p>
             `;
         } else {
-            modalContent.innerHTML = `
+            dom.modalContent.innerHTML = `
                 <div style="text-align: center;">
                     <p style="color: #4caf50;">The safe is open!</p>
                     <p>Inside you find an <strong>EXIT KEYCARD</strong>.</p>
@@ -948,14 +939,14 @@ function handleLabSafe() {
                 }, 300);
             });
             takeBtn.style.backgroundColor = '#4caf50';
-            optionsContainer.appendChild(takeBtn);
+            dom.optionsContainer.appendChild(takeBtn);
         }
         showModalElement();
         return;
     }
 
     if (!labState.foundSafeCode) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>A heavy-duty laboratory safe.</p>
             <p style="color: #e57373;">LOCKED - 4-digit code required</p>
             <p style="font-size: 0.9em; color: #888;">Complete the experiment to discover the code.</p>
@@ -965,7 +956,7 @@ function handleLabSafe() {
     }
 
     // Show keypad
-    modalContent.innerHTML = `
+    dom.modalContent.innerHTML = `
         <p>Enter the 4-digit code:</p>
         <div id="safeCodeDisplay" style="font-size: 32px; font-family: monospace; letter-spacing: 10px; margin: 15px 0; color: #4caf50;">____</div>
         <p style="font-size: 0.9em; color: #888;">Attempts remaining: ${labState.safeAttempts}</p>
@@ -1009,27 +1000,27 @@ function handleLabSafe() {
     const enterBtn = createKeypadButton('E', () => {
         if (currentInput === labState.safeCode) {
             labState.safeUnlocked = true;
-            modalFeedback.style.color = '#4caf50';
-            modalFeedback.textContent = 'ACCESS GRANTED';
+            dom.modalFeedback.style.color = '#4caf50';
+            dom.modalFeedback.textContent = 'ACCESS GRANTED';
             setTimeout(() => handleLabSafe(), 500);
         } else {
             labState.safeAttempts--;
             currentInput = '';
             updateSafeDisplay(currentInput);
-            modalFeedback.style.color = '#e57373';
+            dom.modalFeedback.style.color = '#e57373';
 
             if (labState.safeAttempts <= 0) {
-                modalFeedback.textContent = 'LOCKOUT - Try again later';
+                dom.modalFeedback.textContent = 'LOCKOUT - Try again later';
                 labState.safeAttempts = 3;
             } else {
-                modalFeedback.textContent = `INVALID CODE - ${labState.safeAttempts} attempts left`;
+                dom.modalFeedback.textContent = `INVALID CODE - ${labState.safeAttempts} attempts left`;
             }
         }
     });
     enterBtn.style.backgroundColor = '#44aa44';
     keypad.appendChild(enterBtn);
 
-    modalContent.appendChild(keypad);
+    dom.modalContent.appendChild(keypad);
     showModalElement();
 }
 
@@ -1042,11 +1033,10 @@ function updateSafeDisplay(code) {
 
 // Whiteboard handler
 function handleWhiteboard() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'WHITEBOARD';
-    modalContent.innerHTML = `
+    dom.modalTitle.textContent = 'WHITEBOARD';
+    dom.modalContent.innerHTML = `
         <div style="background: #fff; color: #333; padding: 20px; border-radius: 4px;">
             <p style="font-weight: bold; color: #cc0000;">SAFETY REMINDER:</p>
             <ul style="text-align: left; margin: 10px 0;">
@@ -1065,11 +1055,10 @@ function handleWhiteboard() {
 
 // Periodic Table handler
 function handlePeriodicTable() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'PERIODIC TABLE';
-    modalContent.innerHTML = `
+    dom.modalTitle.textContent = 'PERIODIC TABLE';
+    dom.modalContent.innerHTML = `
         <p>A standard periodic table of elements.</p>
         <p style="font-size: 0.9em; color: #888;">Nothing unusual here, just good science!</p>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px; font-family: monospace; font-size: 12px;">
@@ -1084,14 +1073,12 @@ function handlePeriodicTable() {
 
 // Centrifuge handler
 function handleCentrifuge() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'CENTRIFUGE';
+    dom.modalTitle.textContent = 'CENTRIFUGE';
 
     if (labState.centrifugeRunning) {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>The centrifuge is spinning rapidly.</p>
             <p style="color: #ffaa44;">Status: RUNNING (5000 RPM)</p>
             <p style="font-size: 0.9em; color: #888;">Do not open while in operation.</p>
@@ -1100,9 +1087,9 @@ function handleCentrifuge() {
             labState.centrifugeRunning = false;
             handleCentrifuge();
         });
-        optionsContainer.appendChild(stopBtn);
+        dom.optionsContainer.appendChild(stopBtn);
     } else {
-        modalContent.innerHTML = `
+        dom.modalContent.innerHTML = `
             <p>A laboratory centrifuge for separating samples.</p>
             <p style="color: #888;">Status: IDLE</p>
         `;
@@ -1110,18 +1097,17 @@ function handleCentrifuge() {
             labState.centrifugeRunning = true;
             handleCentrifuge();
         });
-        optionsContainer.appendChild(startBtn);
+        dom.optionsContainer.appendChild(startBtn);
     }
     showModalElement();
 }
 
 // Chemical Cabinet handler
 function handleChemicalCabinet() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
-    modalTitle.textContent = 'CHEMICAL STORAGE';
-    modalContent.innerHTML = `
+    dom.modalTitle.textContent = 'CHEMICAL STORAGE';
+    dom.modalContent.innerHTML = `
         <p>A cabinet for storing laboratory chemicals.</p>
         <div style="margin-top: 15px;">
             <p><strong>Contents:</strong></p>
@@ -1143,8 +1129,7 @@ function handleChemicalCabinet() {
 
 // Flavor text for misc objects
 function showFlavorText(name) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
+    const dom = getDomElements();
 
     const flavorTexts = {
         'fume_hood': ['A standard laboratory fume hood.', 'Good for handling volatile chemicals.'],
@@ -1163,8 +1148,8 @@ function showFlavorText(name) {
     const text = texts[Math.floor(Math.random() * texts.length)];
 
     const displayName = name.replace(/_/g, ' ').toUpperCase();
-    modalTitle.textContent = displayName;
-    modalContent.innerHTML = `<p>${text}</p>`;
+    dom.modalTitle.textContent = displayName;
+    dom.modalContent.innerHTML = `<p>${text}</p>`;
     showModalElement();
 }
 
@@ -1186,36 +1171,37 @@ function createKeypadButton(text, onClick) {
 }
 
 function showModalElement() {
-    const modal = document.getElementById('clueModal');
-    modal.style.display = 'block';
-    // Set isInteracting flag (imported from ui.js, but we need to manage it locally too)
+    const dom = getDomElements();
+    if (dom.modal) {
+        dom.modal.style.display = 'block';
+    }
 }
 
 function showMessage(title, content) {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const optionsContainer = document.getElementById('optionsContainer');
+    const dom = getDomElements();
 
-    modalTitle.textContent = title;
-    modalContent.innerHTML = `<p style="text-align: center;">${content}</p>`;
-    optionsContainer.innerHTML = '';
+    dom.modalTitle.textContent = title;
+    dom.modalContent.innerHTML = `<p style="text-align: center;">${content}</p>`;
+    dom.optionsContainer.innerHTML = '';
     showModalElement();
 }
 
+// Store engine reference locally for victory calculation
+let engineRef = null;
+
 function triggerVictory() {
-    const victoryModal = document.getElementById('victoryModal');
-    const victoryTime = document.getElementById('victoryTime');
+    const dom = getDomElements();
 
     // Calculate time from engine timer
-    if (victoryTime && window.engine) {
-        const timeLeft = window.engine.timeLeft || 0;
+    if (dom.victoryTime && engineRef) {
+        const timeLeft = engineRef.timeLeft || 0;
         const minutes = Math.floor(timeLeft / 60);
         const seconds = Math.floor(timeLeft % 60);
-        victoryTime.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        dom.victoryTime.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    if (victoryModal) {
-        victoryModal.style.display = 'flex';
+    if (dom.victoryModal) {
+        dom.victoryModal.style.display = 'flex';
     }
 }
 
@@ -1266,13 +1252,31 @@ async function initScienceLab() {
     labLight2.position.set(3, 2.5, 3);
     engine.scene.add(labLight2);
 
+    // Store engine reference for victory screen
+    engineRef = engine;
+
     // Start the engine
     engine.start();
 
-    // Expose for debugging
-    window.engine = engine;
-    window.labState = labState;
-    window.labData = labData;
+    // Setup keyboard shortcuts for inventory
+    document.addEventListener('keydown', (e) => {
+        // Number keys 1-3 for inventory slots
+        if (e.key >= '1' && e.key <= '3') {
+            const slotIndex = parseInt(e.key) - 1;
+            const slots = document.querySelectorAll('.inventory-slot');
+            if (slots[slotIndex]) {
+                slots[slotIndex].click();
+            }
+        }
+    });
+
+    // Debug access only in development (check for localhost or file://)
+    if (typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' ||
+         window.location.hostname === '127.0.0.1' ||
+         window.location.protocol === 'file:')) {
+        window._debug = { engine, labState, labData };
+    }
 }
 
 // Start

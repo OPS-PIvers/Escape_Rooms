@@ -1,0 +1,164 @@
+/**
+ * science_lab.css
+ * Science Lab escape room theme overrides
+ */
+
+/* Lab-specific theme overrides */
+body {
+    background: #0a0f1a;
+}
+
+#instructions {
+    background: rgba(10, 20, 40, 0.95);
+    border: 2px solid #00ffff;
+}
+
+#instructions h1 {
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+}
+
+#instructions b {
+    color: #00ffff;
+}
+
+/* Inventory container */
+#inventory-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 30, 60, 0.9);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #00ffff;
+    z-index: 100;
+}
+
+.inventory-slot {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 60, 80, 0.5);
+    border: 2px solid #006080;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.inventory-slot:hover {
+    background: rgba(0, 100, 120, 0.6);
+    border-color: #00aacc;
+}
+
+.inventory-slot.selected {
+    border-color: #00ffff;
+    box-shadow: 0 0 10px #00ffff;
+}
+
+.inventory-slot.filled {
+    background: rgba(0, 80, 100, 0.7);
+}
+
+.slot-number {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 10px;
+    color: #00aacc;
+}
+
+.slot-icon {
+    font-size: 24px;
+}
+
+/* Modal lab theme */
+#clueModal {
+    background: rgba(10, 30, 50, 0.98);
+    border: 2px solid #00ffff;
+}
+
+#modalTitle {
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff;
+}
+
+.option-btn {
+    background: #005566;
+    border: 1px solid #00aacc;
+}
+
+.option-btn:hover {
+    background: #007788;
+    border-color: #00ffff;
+}
+
+#closeModalBtn {
+    background: #004455;
+    border: 1px solid #00aacc;
+}
+
+#closeModalBtn:hover {
+    background: #005566;
+}
+
+/* Victory modal lab theme */
+#victoryModal {
+    background: rgba(10, 30, 50, 0.98);
+}
+
+#victoryModal h1 {
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff;
+}
+
+/* Crosshair */
+#crosshair {
+    border-color: #00ffff;
+}
+
+/* Keypad styling */
+#keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    max-width: 200px;
+    margin: 15px auto;
+}
+
+.key-btn {
+    padding: 15px;
+    font-size: 18px;
+    background: #003344;
+    color: #00ffff;
+    border: 1px solid #00aacc;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.key-btn:hover {
+    background: #005566;
+}
+
+#codeDisplay {
+    font-size: 32px;
+    font-family: monospace;
+    letter-spacing: 10px;
+    color: #00ffff;
+    text-align: center;
+    margin: 15px 0;
+}
+
+/* Question box styling */
+.question-box {
+    background: rgba(0, 60, 80, 0.5);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #00ffff;
+    margin: 10px 0;
+}

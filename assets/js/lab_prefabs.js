@@ -101,15 +101,22 @@ export function createLabCounter(width = 3, depth = 0.6) {
     top.castShadow = true;
     group.add(top);
 
-    // Cabinet doors
-    const doorWidth = width / 3 - 0.02;
+    // Cabinet doors - calculate positions to distribute evenly across width
+    const doorCount = 3;
+    const doorGap = 0.02;
+    const totalGaps = (doorCount - 1) * doorGap;
+    const doorWidth = (width - totalGaps) / doorCount;
     const doorMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, roughness: 0.5 });
-    for (let i = 0; i < 3; i++) {
+
+    for (let i = 0; i < doorCount; i++) {
+        // Calculate door center position: start from left edge + half door width + door index * (door width + gap)
+        const doorX = -width / 2 + doorWidth / 2 + i * (doorWidth + doorGap);
+
         const door = new THREE.Mesh(
             new THREE.BoxGeometry(doorWidth, height - 0.1, 0.02),
             doorMat
         );
-        door.position.set(-width/3 + doorWidth/2 + i * (doorWidth + 0.02), height/2, depth/2 + 0.01);
+        door.position.set(doorX, height / 2, depth / 2 + 0.01);
         group.add(door);
 
         // Door handle
@@ -117,7 +124,7 @@ export function createLabCounter(width = 3, depth = 0.6) {
             new THREE.BoxGeometry(0.1, 0.02, 0.02),
             metalMat
         );
-        handle.position.set(-width/3 + doorWidth/2 + i * (doorWidth + 0.02), height/2 + 0.15, depth/2 + 0.03);
+        handle.position.set(doorX, height / 2 + 0.15, depth / 2 + 0.03);
         group.add(handle);
     }
 
@@ -187,12 +194,15 @@ export function createBeaker(color = 'red') {
     glass.position.y = 0.1;
     group.add(glass);
 
-    // Liquid
-    let liqMat = liquidRedMat;
-    if (color === 'blue') liqMat = liquidBlueMat;
-    else if (color === 'green') liqMat = liquidGreenMat;
-    else if (color === 'yellow') liqMat = liquidYellowMat;
-    else if (color === 'clear') liqMat = glassMat;
+    // Liquid - use map lookup for cleaner code
+    const liquidMaterialMap = {
+        red: liquidRedMat,
+        blue: liquidBlueMat,
+        green: liquidGreenMat,
+        yellow: liquidYellowMat,
+        clear: glassMat
+    };
+    const liqMat = liquidMaterialMap[color] || liquidRedMat;
 
     if (color !== 'clear') {
         const liquidGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.12, 16);
@@ -223,11 +233,14 @@ export function createChemicalFlask(color = 'red') {
     neck.position.y = 0.19;
     group.add(neck);
 
-    // Liquid inside
-    let liqMat = liquidRedMat;
-    if (color === 'blue') liqMat = liquidBlueMat;
-    else if (color === 'green') liqMat = liquidGreenMat;
-    else if (color === 'yellow') liqMat = liquidYellowMat;
+    // Liquid inside - use map lookup for cleaner code
+    const liquidMaterialMap = {
+        red: liquidRedMat,
+        blue: liquidBlueMat,
+        green: liquidGreenMat,
+        yellow: liquidYellowMat
+    };
+    const liqMat = liquidMaterialMap[color] || liquidRedMat;
 
     const liquidGeo = new THREE.CylinderGeometry(0.025, 0.085, 0.1, 16);
     const liquid = new THREE.Mesh(liquidGeo, liqMat);
